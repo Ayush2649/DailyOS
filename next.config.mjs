@@ -6,6 +6,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["firebase-admin", "web-push"],
   },
+  serverExternalPackages: ["firebase-admin", "web-push"],
 };
 
 export default nextConfig;

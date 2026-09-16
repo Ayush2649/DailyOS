@@ -1,9 +1,10 @@
 import NotificationSettings from "@/components/settings/NotificationSettings";
-import { Bell } from "lucide-react";
+import HealthSyncSettings from "@/components/settings/HealthSyncSettings";
+import { Bell, Watch } from "lucide-react";
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-black tracking-tight" style={{ color: "var(--text-1)" }}>
@@ -23,6 +24,17 @@ export default function SettingsPage() {
           </p>
         </div>
         <NotificationSettings />
+      </div>
+
+      {/* Health Sync section */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Watch className="w-4 h-4" style={{ color: "var(--text-3)" }} />
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
+            Health Sync
+          </p>
+        </div>
+        <HealthSyncSettings />
       </div>
     </div>
   );

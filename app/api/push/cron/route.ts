@@ -3,11 +3,21 @@ import webpush from "web-push";
 import { adminDb } from "@/lib/firebaseAdmin";
 import type { NotificationPrefs } from "@/types";
 
-webpush.setVapidDetails(
-  "mailto:" + (process.env.VAPID_EMAIL ?? "admin@dailyos.app"),
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "",
-  process.env.VAPID_PRIVATE_KEY ?? ""
-);
+function initVapid() {
+  const pubKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privKey = process.env.VAPID_PRIVATE_KEY;
+  if (!pubKey || !privKey || pubKey.includes("your_vapid")) return false;
+  try {
+    webpush.setVapidDetails(
+      "mailto:" + (process.env.VAPID_EMAIL ?? "admin@dailyos.app"),
+      pubKey,
+      privKey
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

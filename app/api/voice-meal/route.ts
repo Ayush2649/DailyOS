@@ -65,7 +65,7 @@ Return exactly this shape:
 {"meals":[{"name":"2 roti, dal & curd","calories":420,"proteinG":18,"carbsG":60,"fatG":10,"fiberG":8}]}`;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "qwen/qwen3.8-27b",
       messages: [{ role: "user", content: parsePrompt }],
       max_tokens: 600,
       temperature: 0,

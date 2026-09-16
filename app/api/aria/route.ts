@@ -128,24 +128,37 @@ Focus on task prioritization, habit building, focus strategies, breaking down go
 The user has opened Orbit without selecting a specific mode. Give helpful, grounded advice across fitness, nutrition, and productivity. Suggest they type /workout, /diet, or /tasks for more focused coaching.`;
   }
 
-  try {
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: system },
-        ...messages.map((m: { role: string; content: string }) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
-      ],
-      max_tokens: 550,
-      temperature: 0.65,
-    });
+  const MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"];
+  let reply = "";
+  let lastErr: any = null;
 
-    const reply = completion.choices[0].message.content ?? "";
-    return NextResponse.json({ reply });
-  } catch (err: any) {
-    console.error("Orbit API error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  for (const model of MODELS) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: system },
+          ...messages.map((m: { role: string; content: string }) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })),
+        ],
+        max_tokens: 550,
+        temperature: 0.65,
+      });
+
+      reply = completion.choices[0]?.message?.content ?? "";
+      if (reply) break;
+    } catch (err: any) {
+      console.warn(`Orbit model ${model} failed:`, err?.message || err);
+      lastErr = err;
+    }
   }
+
+  if (reply) {
+    return NextResponse.json({ reply });
+  }
+
+  console.error("Orbit API error (all models failed):", lastErr);
+  return NextResponse.json({ error: lastErr?.message || "AI response failed" }, { status: 500 });
 }

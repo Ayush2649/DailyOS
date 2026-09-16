@@ -189,54 +189,71 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { imageBase64, mimeType } = body;
 
-  try {
-    const completion = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
-      temperature: 0,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: USER_PROMPT },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
-              },
-            },
-          ],
-        },
-      ],
-      max_tokens: 650,
-    });
+  const VISION_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"];
+  let content = "";
+  let lastErr: any = null;
 
-    const content = completion.choices[0].message.content ?? "{}";
-    const cleaned = content.replace(/```(?:json)?\n?|\n?```/g, "").trim();
-
-    let parsed: Record<string, unknown>;
+  for (const model of VISION_MODELS) {
     try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("No JSON found in response");
-      parsed = JSON.parse(jsonMatch[0]);
+      const completion = await groq.chat.completions.create({
+        model,
+        temperature: 0,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: USER_PROMPT },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${imageBase64}`,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 650,
+      });
+
+      content = completion.choices[0]?.message?.content ?? "";
+      if (content) break;
+    } catch (err: any) {
+      console.warn(`Vision model ${model} failed:`, err?.message || err);
+      lastErr = err;
     }
-
-    const result = {
-      name:       String(parsed.name ?? "Scanned meal"),
-      calories:   Math.round(Number(parsed.calories ?? 0)),
-      proteinG:   Math.round(Number(parsed.proteinG ?? 0)),
-      carbsG:     Math.round(Number(parsed.carbsG ?? 0)),
-      fatG:       Math.round(Number(parsed.fatG ?? 0)),
-      fiberG:     Math.round(Number(parsed.fiberG ?? 0)),
-      confidence: String(parsed.confidence ?? "medium"),
-      notes:      String(parsed.notes ?? ""),
-    };
-
-    return NextResponse.json(result);
-  } catch (err: any) {
-    console.error("analyze-meal error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
   }
+
+  if (!content) {
+    console.error("analyze-meal error (all vision models failed):", lastErr);
+    return NextResponse.json({ error: lastErr?.message || "Failed to analyze meal image" }, { status: 500 });
+  }
+
+  const cleaned = content.replace(/```(?:json)?\n?|\n?```/g, "").trim();
+
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return NextResponse.json({ error: "No JSON found in AI response" }, { status: 500 });
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON from AI response" }, { status: 500 });
+    }
+  }
+
+  const result = {
+    name:       String(parsed.name ?? "Scanned meal"),
+    calories:   Math.round(Number(parsed.calories ?? 0)),
+    proteinG:   Math.round(Number(parsed.proteinG ?? 0)),
+    carbsG:     Math.round(Number(parsed.carbsG ?? 0)),
+    fatG:       Math.round(Number(parsed.fatG ?? 0)),
+    fiberG:     Math.round(Number(parsed.fiberG ?? 0)),
+    confidence: String(parsed.confidence ?? "medium"),
+    notes:      String(parsed.notes ?? ""),
+  };
+
+  return NextResponse.json(result);
 }

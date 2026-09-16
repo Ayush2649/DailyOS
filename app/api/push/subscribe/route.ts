@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebaseAdmin";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -17,7 +16,9 @@ export async function POST(req: NextRequest) {
 
   // Store subscription keyed by endpoint hash so multiple devices work
   const key = Buffer.from(subscription.endpoint).toString("base64").slice(-32);
-  await setDoc(doc(db, "push_subscriptions", `${userId}_${key}`), {
+  const docId = `${userId}_${key}`;
+
+  await adminDb.collection("push_subscriptions").doc(docId).set({
     userId,
     subscription,
     createdAt: Date.now(),
@@ -37,7 +38,9 @@ export async function DELETE(req: NextRequest) {
   if (!endpoint) return NextResponse.json({ error: "Missing endpoint" }, { status: 400 });
 
   const key = Buffer.from(endpoint).toString("base64").slice(-32);
-  await deleteDoc(doc(db, "push_subscriptions", `${userId}_${key}`));
+  const docId = `${userId}_${key}`;
+
+  await adminDb.collection("push_subscriptions").doc(docId).delete();
 
   return NextResponse.json({ ok: true });
 }

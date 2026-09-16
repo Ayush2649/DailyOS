@@ -3,16 +3,30 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import webpush from "web-push";
 
-// Configure VAPID — set these in .env.local
-webpush.setVapidDetails(
-  "mailto:" + (process.env.VAPID_EMAIL ?? "admin@dailyos.app"),
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "",
-  process.env.VAPID_PRIVATE_KEY ?? ""
-);
+function initVapid() {
+  const pubKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privKey = process.env.VAPID_PRIVATE_KEY;
+  if (!pubKey || !privKey || pubKey.includes("your_vapid")) return false;
+  try {
+    webpush.setVapidDetails(
+      "mailto:" + (process.env.VAPID_EMAIL ?? "admin@dailyos.app"),
+      pubKey,
+      privKey
+    );
+    return true;
+  } catch (err) {
+    console.warn("VAPID init failed:", err);
+    return false;
+  }
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!initVapid()) {
+    return NextResponse.json({ error: "Push notifications not configured" }, { status: 500 });
+  }
 
   const { subscription, title, body, url, tag } = await req.json();
 

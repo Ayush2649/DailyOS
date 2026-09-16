@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 import { adminDb } from "@/lib/firebaseAdmin";
 
-webpush.setVapidDetails(
-  "mailto:" + (process.env.VAPID_EMAIL ?? "admin@dailyos.app"),
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "",
-  process.env.VAPID_PRIVATE_KEY ?? ""
-);
+function initVapid() {
+  const pubKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privKey = process.env.VAPID_PRIVATE_KEY;
+  if (!pubKey || !privKey || pubKey.includes("your_vapid")) return false;
+  try {
+    webpush.setVapidDetails(
+      "mailto:" + (process.env.VAPID_EMAIL ?? "admin@dailyos.app"),
+      pubKey,
+      privKey
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // GET /api/push/debug          → list all subscriptions + their push host
 // GET /api/push/debug?send=1    → also fire a real push to each, report the actual result

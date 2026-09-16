@@ -69,7 +69,7 @@ Return ONLY raw JSON, no markdown, exactly in this shape:
 {"exercises":[{"name":"Bench Press","sets":[{"reps":10,"weight":60,"unit":"kg"}]}],"cardio":[{"activity":"running","durationMinutes":30,"distanceKm":5}]}`;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "qwen/qwen3.8-27b",
       messages: [{ role: "user", content: parsePrompt }],
       max_tokens: 800,
       temperature: 0,
