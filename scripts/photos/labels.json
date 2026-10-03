@@ -1,0 +1,80 @@
+[
+  {
+    "file": "Aloo_ka_paratha.jpg",
+    "mustContain": ["paratha"],
+    "expectClarification": true,
+    "expectedDishes": ["aloo paratha", "stuffed paratha", "paratha with curd", "paratha with dahi"],
+    "expectedItems": ["aloo paratha ~120g", "curd / dahi ~100g", "butter ~10g"],
+    "expectedKcalRange": [300, 650]
+  },
+  {
+    "file": "Besan Cheela.jpg",
+    "mustContain": ["cheela", "chilla"],
+    "expectedDishes": ["besan cheela", "besan chilla", "cheela", "chilla"],
+    "expectedItems": ["besan cheela ~100g"],
+    "expectedKcalRange": [150, 350]
+  },
+  {
+    "file": "Dal_Bhat_Tarkari_2.jpg",
+    "mustContain": ["dal bhat", "dal chawal", "thali"],
+    "expectedDishes": ["dal bhat tarkari", "dal bhat", "dal chawal with sabzi", "dal chawal", "thali", "nepali thali"],
+    "expectedItems": ["rice ~150g", "dal ~120g", "tarkari / sabzi ~100g", "pickle ~15g"],
+    "expectedKcalRange": [450, 750]
+  },
+  {
+    "file": "Dosa.jpg",
+    "mustContain": ["dosa"],
+    "expectedDishes": ["dosa", "plain dosa", "masala dosa", "sada dosa"],
+    "expectedItems": ["dosa ~100g", "sambar ~100g", "chutney ~30g"],
+    "expectedKcalRange": [130, 450]
+  },
+  {
+    "file": "Idli_sambar_and_coconut_chutney.jpg",
+    "mustContain": ["idli"],
+    "expectedDishes": ["idli with sambar and chutney", "idli sambar", "idli with chutney", "idli", "idli sambar chutney"],
+    "expectedItems": ["idli (2-3 pcs) ~120g", "sambar ~120g", "coconut chutney ~40g"],
+    "expectedKcalRange": [180, 400]
+  },
+  {
+    "file": "Indori_Poha,_New_Delhi.jpg",
+    "mustContain": ["poha"],
+    "expectedDishes": ["indori poha", "poha", "kanda poha"],
+    "expectedItems": ["poha ~150g", "sev ~20g"],
+    "expectedKcalRange": [200, 420]
+  },
+  {
+    "file": "Khichdi_(Khichrri).jpeg",
+    "mustContain": ["khichdi", "khichri"],
+    "expectedDishes": ["khichdi", "khichri", "dal khichdi", "moong dal khichdi"],
+    "expectedItems": ["khichdi ~200g"],
+    "expectedKcalRange": [180, 400]
+  },
+  {
+    "file": "Rajma_Chawal_from_India(1).jpg",
+    "mustContain": ["rajma"],
+    "expectedDishes": ["rajma chawal", "rajma with rice", "rajma chawal with salad"],
+    "expectedItems": ["rajma ~150g", "rice ~150g", "onion salad ~30g"],
+    "expectedKcalRange": [380, 700]
+  },
+  {
+    "file": "Roti-Sabzi-Raita.jpeg",
+    "mustContain": ["roti", "chapati", "thali"],
+    "expectedDishes": ["roti with sabzi and raita", "roti sabzi raita", "roti sabzi", "chapati with sabzi and raita", "thali"],
+    "expectedItems": ["roti ~60g", "sabzi ~120g", "raita ~100g"],
+    "expectedKcalRange": [280, 550]
+  },
+  {
+    "file": "Sooji_Halwa_(Rava_Sheera).jpg",
+    "mustContain": ["halwa", "sheera"],
+    "expectedDishes": ["sooji halwa", "rava halwa", "rava sheera", "halwa", "sheera"],
+    "expectedItems": ["sooji halwa ~120g"],
+    "expectedKcalRange": [200, 450]
+  },
+  {
+    "file": "Vegetable Pulao.jpeg",
+    "mustContain": ["pulao", "biryani"],
+    "expectedDishes": ["vegetable pulao", "veg pulao", "pulao", "veg biryani", "vegetable biryani"],
+    "expectedItems": ["vegetable pulao ~200g"],
+    "expectedKcalRange": [220, 500]
+  }
+]

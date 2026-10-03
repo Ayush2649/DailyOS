@@ -53,3 +53,9 @@ Thumbs.db
 
 # Local editor (uncomment if your team does not share VS Code settings)
 # .vscode/
+
+# AI eval artifacts
+scripts/photos/*.jpg
+scripts/photos/*.jpeg
+scripts/photos/*.png
+scripts/photos/results*.json

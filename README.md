@@ -107,3 +107,25 @@ service cloud.firestore {
   }
 }
 ```
+
+---
+
+## Scheduled Reminders Setup (External Cron)
+
+The reminders route (`/api/push/cron`) evaluates user notification preferences (meals, workouts, and tasks) and sends web push notifications when the current minute matches a user's scheduled reminder time.
+
+Because Vercel's Hobby plan limits Vercel Cron jobs to at most **once per day**, minute-by-minute execution requires an external cron scheduler (such as [cron-job.org](https://cron-job.org), Upstash QStash, or EasyCron).
+
+### Setup with cron-job.org (Free):
+1. Sign up for a free account at [cron-job.org](https://cron-job.org).
+2. Create a new Cronjob:
+   - **Title:** `DailyOS Push Reminders`
+   - **URL:** `https://<your-vercel-domain>/api/push/cron`
+   - **Execution Schedule:** Every minute (`* * * * *`)
+   - **Request Method:** `GET`
+   - **Headers:** Add authorization header:
+     - Header Key: `Authorization`
+     - Header Value: `Bearer <YOUR_CRON_SECRET>`
+3. In your Vercel Project Settings (`Settings -> Environment Variables`), ensure `CRON_SECRET` matches `<YOUR_CRON_SECRET>`.
+4. Enable the cron job. Requests without this header return `401 Unauthorized`.
+

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import Groq from "groq-sdk";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { callTextWithFallback } from "@/lib/ai/groq";
+import { TEXT_FALLBACK, MAX_TOKENS } from "@/lib/ai/models";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -128,37 +129,24 @@ Focus on task prioritization, habit building, focus strategies, breaking down go
 The user has opened Orbit without selecting a specific mode. Give helpful, grounded advice across fitness, nutrition, and productivity. Suggest they type /workout, /diet, or /tasks for more focused coaching.`;
   }
 
-  const MODELS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"];
-  let reply = "";
-  let lastErr: any = null;
+  try {
+    const result = await callTextWithFallback(TEXT_FALLBACK, {
+      messages: [
+        { role: "system", content: system },
+        ...messages.map((m: { role: string; content: string }) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+      ],
+      maxTokens: MAX_TOKENS.aria,
+      temperature: 0.65,
+      feature: "aria",
+    });
 
-  for (const model of MODELS) {
-    try {
-      const completion = await groq.chat.completions.create({
-        model,
-        messages: [
-          { role: "system", content: system },
-          ...messages.map((m: { role: string; content: string }) => ({
-            role: m.role as "user" | "assistant",
-            content: m.content,
-          })),
-        ],
-        max_tokens: 550,
-        temperature: 0.65,
-      });
-
-      reply = completion.choices[0]?.message?.content ?? "";
-      if (reply) break;
-    } catch (err: any) {
-      console.warn(`Orbit model ${model} failed:`, err?.message || err);
-      lastErr = err;
-    }
+    return NextResponse.json({ reply: result.data });
+  } catch (err: any) {
+    console.error("[aria] AI error:", err?.code, err?.message);
+    return NextResponse.json({ error: err.message || "AI response failed" }, { status: 500 });
   }
-
-  if (reply) {
-    return NextResponse.json({ reply });
-  }
-
-  console.error("Orbit API error (all models failed):", lastErr);
-  return NextResponse.json({ error: lastErr?.message || "AI response failed" }, { status: 500 });
 }
+
