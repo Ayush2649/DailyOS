@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import {
   Plus, Minus, Utensils, Camera, Trash2, X, Loader2, Settings,
   Flame, ChevronLeft, ChevronRight, Sparkles, CheckCircle2,
-  Bookmark, BookmarkPlus, Search, Mic
+  Bookmark, BookmarkPlus, Search, Mic, Edit3
 } from "lucide-react";
 import VoiceMealModal from "@/components/diet/VoiceMealModal";
 import { cn, todayString, formatDate, localDateString } from "@/lib/utils";
@@ -402,7 +402,20 @@ export default function DietPage() {
         />
       )}
       {showScanner && (
-        <MealScannerModal userId={userId} date={date} onSave={handleAddMeal} onClose={() => setShowScanner(false)} />
+        <MealScannerModal
+          userId={userId}
+          date={date}
+          onSave={handleAddMeal}
+          onClose={() => setShowScanner(false)}
+          onSwitchToManual={() => {
+            setShowScanner(false);
+            setShowAddMeal(true);
+          }}
+          onSwitchToVoice={() => {
+            setShowScanner(false);
+            setShowVoiceMeal(true);
+          }}
+        />
       )}
       {showGoals && (
         <GoalsModal goals={goals} onSave={handleSaveGoals} onClose={() => setShowGoals(false)} />
@@ -675,20 +688,40 @@ function AddMealModal({ userId, date, onSave, onSaveTemplate, onClose }: {
   );
 }
 
+// TODO: When dedicated user AI consent modal/settings are implemented, ensure consent disclosure states: "Photos are processed by Google Gemini for nutritional identification."
+
 // ── MealScannerModal ──────────────────────────────────────────────────────────
-function MealScannerModal({ userId, date, onSave, onClose }: {
-  userId: string; date: string; onSave: (m: Omit<MealEntry, "id">) => void; onClose: () => void;
+function MealScannerModal({
+  userId,
+  date,
+  onSave,
+  onClose,
+  onSwitchToManual,
+  onSwitchToVoice,
+}: {
+  userId: string;
+  date: string;
+  onSave: (m: Omit<MealEntry, "id">) => void;
+  onClose: () => void;
+  onSwitchToManual?: () => void;
+  onSwitchToVoice?: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string>("");
   const [scanning, setScanning] = useState(false);
+  const [reestimating, setReestimating] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [hint, setHint] = useState("");
+  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [calorieRange, setCalorieRange] = useState<{ low: number; high: number } | null>(null);
   const [editedName, setEditedName] = useState("");
   const [editedMacros, setEditedMacros] = useState({ calories: "", protein: "", carbs: "", fat: "", fiber: "" });
   const [error, setError] = useState("");
+  const [isPhotoUnavailable, setIsPhotoUnavailable] = useState(false);
 
   const handleFile = async (file: File) => {
     setError("");
+    setIsPhotoUnavailable(false);
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target?.result as string;
@@ -700,20 +733,35 @@ function MealScannerModal({ userId, date, onSave, onClose }: {
         const res = await fetch("/api/analyze-meal", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64: base64, mimeType }),
+          body: JSON.stringify({
+            imageBase64: base64,
+            mimeType,
+            hint: hint.trim() || undefined,
+          }),
         });
         const data = await res.json();
         if (data.error) {
-          setError(data.error);
+          if (data.error === "PHOTO_UNAVAILABLE" || data.message?.includes("Photo scan is busy")) {
+            setIsPhotoUnavailable(true);
+            setError("Photo scan is busy. Type or speak your meal instead.");
+          } else {
+            setError(data.error);
+          }
         } else {
           setResult(data);
           setEditedName(data.name || "");
+          setSelectedOption(data.name || "");
+          if (data.calorieRange) {
+            setCalorieRange(data.calorieRange);
+          } else {
+            setCalorieRange(null);
+          }
           setEditedMacros({
-            calories: String(data.calories || ""),
-            protein: String(data.proteinG || ""),
-            carbs: String(data.carbsG || ""),
-            fat: String(data.fatG || ""),
-            fiber: String(data.fiberG || ""),
+            calories: String(data.calories ?? ""),
+            protein: String(data.proteinG ?? ""),
+            carbs: String(data.carbsG ?? ""),
+            fat: String(data.fatG ?? ""),
+            fiber: String(data.fiberG ?? ""),
           });
         }
       } catch {
@@ -723,6 +771,46 @@ function MealScannerModal({ userId, date, onSave, onClose }: {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleSelectOption = async (optionName: string) => {
+    setSelectedOption(optionName);
+    setReestimating(true);
+    setError("");
+    try {
+      // Re-run ONLY Stage 2: text macro estimate with the chosen dish
+      // Preserve any non-flatbread visible accompaniments from stage 1 (e.g. dahi, dal, sabzi)
+      const visibleAcc = (result?.visibleItems || [])
+        .filter((item: string) => !/\b(roti|chapati|phulka|paratha|naan|puri|bhatura|thepla)\b/i.test(item))
+        .join(", ");
+      const dishDescription = visibleAcc ? `${optionName} with ${visibleAcc}` : optionName;
+
+      const res = await fetch("/api/estimate-meal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dishName: dishDescription }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setEditedName(optionName);
+        if (data.calorieRange) {
+          setCalorieRange(data.calorieRange);
+        }
+        setEditedMacros({
+          calories: String(data.calories ?? ""),
+          protein: String(data.proteinG ?? ""),
+          carbs: String(data.carbsG ?? ""),
+          fat: String(data.fatG ?? ""),
+          fiber: String(data.fiberG ?? ""),
+        });
+      }
+    } catch {
+      setError("Failed to recalculate macros. Please try again.");
+    } finally {
+      setReestimating(false);
+    }
   };
 
   const handleLog = () => {
@@ -739,16 +827,38 @@ function MealScannerModal({ userId, date, onSave, onClose }: {
     });
   };
 
+  const isAmbiguous =
+    result?.ambiguity === "medium" ||
+    result?.ambiguity === "high" ||
+    Boolean(result?.needsClarification);
+
   const confidenceColor = result?.confidence === "high"
     ? "bg-emerald-100 text-emerald-700"
     : result?.confidence === "medium"
     ? "bg-amber-100 text-amber-700"
     : "bg-red-100 text-red-700";
 
+  // Derive options chips to display
+  const optionsToDisplay: string[] = result?.needsClarification?.options
+    ? result.needsClarification.options
+    : (result?.candidates || []).map((c: any) => c.name);
+
   return (
     <Modal title="Scan meal with AI" onClose={onClose}>
       {!preview ? (
-        <div>
+        <div className="space-y-3">
+          <div>
+            <label className="label text-xs font-semibold text-gray-600 dark:text-gray-300">
+              Optional hint (helps identify flatbreads / hidden fillings)
+            </label>
+            <input
+              type="text"
+              placeholder="What is this? (optional, e.g. 2 aloo parathas, sugar-free chai)"
+              value={hint}
+              onChange={(e) => setHint(e.target.value)}
+              className="input text-sm"
+            />
+          </div>
           <div
             onClick={() => fileRef.current?.click()}
             className="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/30 transition-all group"
@@ -757,7 +867,7 @@ function MealScannerModal({ userId, date, onSave, onClose }: {
               <Camera className="w-7 h-7 text-white" />
             </div>
             <p className="text-sm font-bold text-gray-700">Tap to upload a photo</p>
-            <p className="text-xs text-gray-400 mt-1">JPG, PNG, HEIC · AI Model will analyze</p>
+            <p className="text-xs text-gray-400 mt-1">JPG, PNG, HEIC · Photos are processed by Google Gemini</p>
           </div>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
@@ -766,77 +876,208 @@ function MealScannerModal({ userId, date, onSave, onClose }: {
         <div className="space-y-4">
           <div className="relative">
             <img src={preview} alt="meal" className="w-full h-44 object-cover rounded-xl" />
-            {scanning && (
+            {(scanning || reestimating) && (
               <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center gap-2 text-white">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm font-semibold">Analyzing the meal for you...</span>
+                <span className="text-sm font-semibold">
+                  {scanning ? "Analyzing the meal for you..." : "Recalculating macros..."}
+                </span>
               </div>
             )}
           </div>
 
-          {error && (
+          {isPhotoUnavailable ? (
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-center space-y-3">
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                Photo scan is busy. Type or speak your meal instead.
+              </p>
+              <div className="flex gap-2 justify-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onSwitchToManual?.();
+                  }}
+                  className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-2 font-medium"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-emerald-600" /> Type meal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onSwitchToVoice?.();
+                  }}
+                  className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-2 font-medium"
+                >
+                  <Mic className="w-3.5 h-3.5 text-emerald-600" /> Speak meal
+                </button>
+              </div>
+            </div>
+          ) : error ? (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600 font-medium">
               {error}
             </div>
-          )}
+          ) : null}
 
           {!scanning && result && (
             <div className="space-y-3">
-              {result.confidence && (
-                <div className="flex items-center gap-2">
+              {/* Confidence / Ambiguity Badge & Notes */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {isAmbiguous ? (
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                    Check this
+                  </span>
+                ) : result?.confidence ? (
                   <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full", confidenceColor)}>
                     {result.confidence} confidence
                   </span>
-                  {result.notes && <span className="text-xs text-gray-400 truncate">{result.notes}</span>}
+                ) : null}
+                {result.notes && (
+                  <span className="text-xs text-gray-400 truncate flex-1">{result.notes}</span>
+                )}
+              </div>
+
+              {/* One-Tap Option Chips */}
+              {optionsToDisplay.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                      {result?.needsClarification ? "Choose flatbread type:" : "Suggested options:"}
+                    </span>
+                    {reestimating && (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Updating...
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {optionsToDisplay.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        disabled={reestimating}
+                        onClick={() => handleSelectOption(opt)}
+                        className={cn(
+                          "text-xs px-2.5 py-1 rounded-lg border font-medium transition-all",
+                          selectedOption.toLowerCase() === opt.toLowerCase()
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                            : "bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                        )}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
+
               <div>
                 <label className="label">Meal name</label>
-                <input className="input text-sm" value={editedName} onChange={(e) => setEditedName(e.target.value)} />
+                <input
+                  className="input text-sm"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                />
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="label">Calories (kcal)</label>
-                  <input type="number" className="input text-sm" value={editedMacros.calories}
-                    onChange={(e) => setEditedMacros(m => ({ ...m, calories: e.target.value }))} />
+                  <div className="flex justify-between items-baseline mb-1">
+                    <label className="label mb-0">Calories (kcal)</label>
+                    {calorieRange && (
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                        ≈{editedMacros.calories} kcal ({calorieRange.low}–{calorieRange.high})
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="number"
+                    className="input text-sm"
+                    value={editedMacros.calories}
+                    onChange={(e) => setEditedMacros((m) => ({ ...m, calories: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="label">Protein (g)</label>
-                  <input type="number" className="input text-sm" value={editedMacros.protein}
-                    onChange={(e) => setEditedMacros(m => ({ ...m, protein: e.target.value }))} />
+                  <input
+                    type="number"
+                    className="input text-sm"
+                    value={editedMacros.protein}
+                    onChange={(e) => setEditedMacros((m) => ({ ...m, protein: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="label">Carbs (g)</label>
-                  <input type="number" className="input text-sm" value={editedMacros.carbs}
-                    onChange={(e) => setEditedMacros(m => ({ ...m, carbs: e.target.value }))} />
+                  <input
+                    type="number"
+                    className="input text-sm"
+                    value={editedMacros.carbs}
+                    onChange={(e) => setEditedMacros((m) => ({ ...m, carbs: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="label">Fat (g)</label>
-                  <input type="number" className="input text-sm" value={editedMacros.fat}
-                    onChange={(e) => setEditedMacros(m => ({ ...m, fat: e.target.value }))} />
+                  <input
+                    type="number"
+                    className="input text-sm"
+                    value={editedMacros.fat}
+                    onChange={(e) => setEditedMacros((m) => ({ ...m, fat: e.target.value }))}
+                  />
                 </div>
                 <div className="col-span-2">
                   <label className="label">Fiber (g)</label>
-                  <input type="number" className="input text-sm" value={editedMacros.fiber} placeholder="0"
-                    onChange={(e) => setEditedMacros(m => ({ ...m, fiber: e.target.value }))} />
+                  <input
+                    type="number"
+                    className="input text-sm"
+                    value={editedMacros.fiber}
+                    placeholder="0"
+                    onChange={(e) => setEditedMacros((m) => ({ ...m, fiber: e.target.value }))}
+                  />
                 </div>
               </div>
+
               <div className="flex gap-2">
-                <button onClick={() => { setPreview(""); setResult(null); setError(""); }} className="btn-secondary flex-1 text-sm">
+                <button
+                  onClick={() => {
+                    setPreview("");
+                    setResult(null);
+                    setError("");
+                    setIsPhotoUnavailable(false);
+                    setCalorieRange(null);
+                    setSelectedOption("");
+                  }}
+                  className="btn-secondary flex-1 text-sm"
+                >
                   Retake
                 </button>
-                <button onClick={handleLog} className="btn-primary flex-1 text-sm flex items-center justify-center gap-1.5">
+                <button
+                  onClick={handleLog}
+                  className="btn-primary flex-1 text-sm flex items-center justify-center gap-1.5"
+                >
                   <CheckCircle2 className="w-4 h-4" /> Log meal
                 </button>
               </div>
             </div>
           )}
 
-          {!scanning && !result && !error && (
-            <button onClick={() => { setPreview(""); }} className="btn-secondary w-full text-sm">Try again</button>
+          {!scanning && !result && (
+            <button
+              onClick={() => {
+                setPreview("");
+                setError("");
+                setIsPhotoUnavailable(false);
+              }}
+              className="btn-secondary w-full text-sm"
+            >
+              Try again with another photo
+            </button>
           )}
         </div>
       )}
+      <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center pt-2">
+        Photos are processed by Google Gemini for nutritional identification.
+      </p>
     </Modal>
   );
 }

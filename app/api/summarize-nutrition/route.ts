@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import Groq from "groq-sdk";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { callText } from "@/lib/ai/groq";
+import { MODELS, MAX_TOKENS } from "@/lib/ai/models";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
   const carbRemaining = Math.max(goals.carbsG    - totals.carbsG,    0);
   const fatRemaining  = Math.max(goals.fatG      - totals.fatG,      0);
 
+  // Prompt unchanged from original
   const prompt = `You are a personal nutrition coach specializing in Indian cuisine. Analyze today's meals and give practical, specific advice to help meet daily macro goals.
 
 DAILY GOALS:
@@ -54,15 +56,19 @@ Provide a structured response:
 Be concise, motivating, and specific. Under 220 words. No generic advice.`;
 
   try {
-    const completion = await groq.chat.completions.create({
-      model: "qwen/qwen3.8-27b",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 600,
+    const result = await callText({
+      model:      MODELS.summarizeNutrition,
+      messages:   [{ role: "user", content: prompt }],
+      maxTokens:   MAX_TOKENS.summarizeNutrition,
       temperature: 0.6,
+      feature:     "summarizeNutrition",
     });
-    const summary = completion.choices[0].message.content ?? "";
-    return NextResponse.json({ summary });
+
+    // Response shape unchanged — frontend reads { summary }
+    return NextResponse.json({ summary: result.data });
   } catch (err: any) {
+    console.error("[summarize-nutrition] AI error:", err?.code, err?.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

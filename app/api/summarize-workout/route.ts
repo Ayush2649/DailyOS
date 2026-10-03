@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import Groq from "groq-sdk";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { callText } from "@/lib/ai/groq";
+import { MODELS, MAX_TOKENS } from "@/lib/ai/models";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const CARDIO_MET: Record<string, number> = {
+  walking: 3.5, running: 9.8, cycling: 7.5, hiking: 5.3,
+  mountain_climbing: 8.0, swimming: 7.0, jump_rope: 11.8,
+  elliptical: 5.0, stair_climbing: 9.0, rowing: 7.0,
+};
+
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { exercises, cardioLogs, durationMinutes, bodyWeightKg } = await req.json();
-
-  const CARDIO_MET: Record<string, number> = {
-    walking: 3.5, running: 9.8, cycling: 7.5, hiking: 5.3,
-    mountain_climbing: 8.0, swimming: 7.0, jump_rope: 11.8,
-    elliptical: 5.0, stair_climbing: 9.0, rowing: 7.0,
-  };
 
   const weight = bodyWeightKg ?? 70;
 
@@ -45,8 +46,9 @@ export async function POST(req: NextRequest) {
     : "None";
 
   const hasStrength = (exercises ?? []).length > 0;
-  const hasCardio = cardioWithCalories.length > 0;
+  const hasCardio   = cardioWithCalories.length > 0;
 
+  // Prompt unchanged from original
   const prompt = `You are a professional fitness coach. Analyze this workout and provide a concise, motivating summary.
 
 Athlete body weight: ${bodyWeightKg ? `${bodyWeightKg} kg` : "not provided"}
@@ -65,27 +67,32 @@ ${hasCardio ? "6. **Cardio Insight** – brief comment on the cardio work and it
 Keep it encouraging, specific, and under 280 words.`;
 
   try {
-    const completion = await groq.chat.completions.create({
-      model: "qwen/qwen3.8-27b",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 700,
+    const result = await callText({
+      model:      MODELS.summarizeWorkout,
+      messages:   [{ role: "user", content: prompt }],
+      maxTokens:   MAX_TOKENS.summarizeWorkout,
       temperature: 0.6,
+      feature:     "summarizeWorkout",
     });
 
-    const summary = completion.choices[0].message.content ?? "";
+    const summary = result.data;
 
+    // Intensity extraction logic unchanged
     const lowerSummary = summary.toLowerCase();
     let strengthMet = 5.0;
     if (lowerSummary.includes("very high")) strengthMet = 8.5;
-    else if (lowerSummary.includes("high")) strengthMet = 6.5;
+    else if (lowerSummary.includes("high"))     strengthMet = 6.5;
     else if (lowerSummary.includes("moderate")) strengthMet = 5.0;
-    else if (lowerSummary.includes("low")) strengthMet = 3.5;
+    else if (lowerSummary.includes("low"))      strengthMet = 3.5;
 
     const strengthCals = hasStrength ? Math.round(strengthMet * weight * (durationMinutes / 60)) : 0;
     const caloriesBurned = strengthCals + totalCardioCals;
 
+    // Response shape unchanged — frontend reads { summary, caloriesBurned, cardioWithCalories }
     return NextResponse.json({ summary, caloriesBurned, cardioWithCalories });
   } catch (err: any) {
+    console.error("[summarize-workout] AI error:", err?.code, err?.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
