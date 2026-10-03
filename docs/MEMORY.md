@@ -65,9 +65,9 @@ Source hierarchy: repository (reality) → MEMORY (state) → PRD (what) → ARC
 
 ## 6. Test state
 
-- Automated tests: **0**. CI: **none**. `[repo]`
+- Automated tests: **6** (Vitest unit tests covering `/api/push/cron` fail-closed auth). CI: **none**. `[repo]`
 - Manual scripts: `npm run check:models`, `smoke:ai`, `eval:photos` (live calls, quota-limited). `[repo]`
-- Known failing tests: none (none exist).
+- Known failing tests: none (all 6 pass).
 
 ## 7. Security state
 
@@ -75,8 +75,8 @@ Source hierarchy: repository (reality) → MEMORY (state) → PRD (what) → ARC
 |---|---|---|
 | Firestore access | Client SDK direct; no `firestore.rules` in repo; `request.auth` null; published console rules `[UNKNOWN]` | `[repo]` |
 | Authentication | NextAuth JWT, Google OAuth | `[repo]` |
-| Per-route auth checks | Not fully audited | `[UNKNOWN]` |
-| Cron and debug push routes | Fail open if `CRON_SECRET` unset. `CRON_SECRET` exists in Vercel (Production and Preview) | `[repo]`, `[dash]` |
+| Per-route auth checks | Audited: 12 NextAuth-protected, 1 custom token (health ingest), 1 cron secret (fail-closed) | `[repo]` |
+| Cron and debug push routes | Resolved: `/api/push/cron` fails closed (500 if unset/empty, constant-time Bearer match); `/api/push/debug` deleted | `[repo]` |
 | Rate limiting | None on any of the 14 routes | `[repo]` |
 | Input validation | 0 of 14 routes validate request bodies | `[repo]` |
 | Hardcoded secrets | None in tracked files | `[repo]` |
@@ -89,10 +89,10 @@ Source hierarchy: repository (reality) → MEMORY (state) → PRD (what) → ARC
 ## 8. Launch blockers (ranked)
 
 1. Firestore effectively open to any visitor with the public Firebase config.
-2. Cron and debug routes fail open.
+2. [RESOLVED 2026-10-03] Cron route fails closed; debug route deleted.
 3. No rate limiting; AI quotas and costs exposed to abuse.
 4. No request validation.
-5. No tests or CI.
+5. No CI (Vitest test runner installed with 6 automated tests).
 6. AI migration branch unmerged; production may use retired models.
 7. No credits, billing, privacy policy, terms, AI consent, export or deletion.
 8. Hosting plan not suitable for commercial use.
