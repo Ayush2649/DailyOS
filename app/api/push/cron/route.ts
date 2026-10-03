@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import webpush from "web-push";
 import { adminDb } from "@/lib/firebaseAdmin";
 import type { NotificationPrefs } from "@/types";
@@ -118,15 +119,29 @@ function pick(key: string): { title: string; body: string } {
   return variants[dayOfYear(new Date()) % variants.length];
 }
 
+/** Constant-time string comparison to prevent timing attacks */
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const hashA = crypto.createHash("sha256").update(a).digest();
+  const hashB = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
 // ── Cron handler ──────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  // Verify Vercel cron secret
+  // Verify Vercel cron secret (fail closed: missing or empty secret returns 500)
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!secret || !secret.trim()) {
+    console.error("CRON_SECRET is not configured or empty.");
+    return NextResponse.json(
+      { error: "Server misconfiguration: CRON_SECRET is missing or empty" },
+      { status: 500 }
+    );
+  }
+
+  const auth = req.headers.get("authorization") || "";
+  if (!timingSafeEqualStr(auth, `Bearer ${secret}`)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   let sent = 0;

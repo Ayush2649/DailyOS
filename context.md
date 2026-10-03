@@ -49,7 +49,6 @@
 | `/api/push/subscribe` | Save/delete push notification subscriptions |
 | `/api/push/send` | Send immediate push notification |
 | `/api/push/cron` | Cron-triggered scheduled notification reminders |
-| `/api/push/debug` | Debug push subscriptions and preferences |
 
 ### Key Libraries & Files
 | Path | Purpose |
