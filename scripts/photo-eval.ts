@@ -538,7 +538,9 @@ async function main() {
   // Build prompt with optional vocabulary list
   let userPrompt = VISION_USER_PROMPT;
   if (options.vocab) {
-    const vocabFile = path.resolve(__dirname, "dish-vocab.json");
+    const vocabFile = fs.existsSync(path.resolve(__dirname, "../lib/ai/data/dish-vocab.json"))
+      ? path.resolve(__dirname, "../lib/ai/data/dish-vocab.json")
+      : path.resolve(process.cwd(), "lib/ai/data/dish-vocab.json");
     if (fs.existsSync(vocabFile)) {
       const vocabData = JSON.parse(fs.readFileSync(vocabFile, "utf-8")) as { name: string }[];
       const namesList = vocabData.map((d) => d.name).join(", ");

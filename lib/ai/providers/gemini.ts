@@ -20,8 +20,7 @@
 
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
-import * as fs from "fs";
-import * as path from "path";
+import dishVocab from "../data/dish-vocab.json";
 
 // ── Circuit Breaker State (Module-Level) ──────────────────────────────────────
 
@@ -85,20 +84,7 @@ Return ONLY raw JSON matching this schema:
   "notes": "<visual deduction explanation>"
 }`;
 
-function loadDishNames(): string {
-  try {
-    const vocabPath = path.resolve(process.cwd(), "scripts", "dish-vocab.json");
-    if (fs.existsSync(vocabPath)) {
-      const data = JSON.parse(fs.readFileSync(vocabPath, "utf-8")) as { name: string }[];
-      return data.map((d) => d.name).join(", ");
-    }
-  } catch (err) {
-    console.warn("[ai/gemini] Failed to load scripts/dish-vocab.json:", err);
-  }
-  return "";
-}
-
-const DISH_NAMES_LIST = loadDishNames();
+const DISH_NAMES_LIST = (dishVocab as { name: string }[]).map((d) => d.name).join(", ");
 
 const STATIC_INSTRUCTIONS_AND_VOCAB = `Identify all visible food items with approximate gram weights and up to 3 distinct candidate dishes with numeric confidence (0.0 to 1.0).
 

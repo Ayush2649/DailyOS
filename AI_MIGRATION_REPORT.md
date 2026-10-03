@@ -258,7 +258,8 @@ Empirical testing on real Indian food photos demonstrated that **Gemini 3.8 Flas
    - Built with the official `@google/genai` SDK and server-only `GEMINI_API_KEY`.
    - **Primary Model:** `gemini-3.8-flash` with `ThinkingLevel.LOW`.
    - **Fallback Model:** `gemini-3.7-flash` (verified natively multimodal, supports images and `ThinkingLevel.LOW`).
-   - **Prefix Prompt Caching:** Static instructions and canonical Indian dish vocabulary (`scripts/dish-vocab.json`) placed **FIRST**, dynamic image base64 placed **LAST** to maximize provider-side caching.
+   - **Static Bundling for Vercel Deployment:** Moved canonical dish vocabulary from `scripts/dish-vocab.json` to `lib/ai/data/dish-vocab.json`. It is now imported via static TypeScript JSON import (`import dishVocab from "../data/dish-vocab.json"` with `resolveJsonModule: true`), eliminating all runtime filesystem lookups (`fs.readFileSync`) so Next.js embeds the vocabulary directly into the serverless bundle on Vercel.
+   - **Prefix Prompt Caching:** Static instructions and canonical Indian dish vocabulary placed **FIRST**, dynamic image base64 placed **LAST** to maximize provider-side caching.
    - Logs `cachedContentTokenCount` when available.
 
 2. **High-Reliability & Fault-Tolerance Engine**:
@@ -292,4 +293,27 @@ Empirical testing on real Indian food photos demonstrated that **Gemini 3.8 Flas
    - **Photo 1 (`Aloo_ka_paratha.jpg`):** `gemini-3.8-flash` reached per-model daily quota $\rightarrow$ failed fast $\rightarrow$ fell back to `gemini-3.7-flash` $\rightarrow$ Succeeded in 8.0s (Prompt: 2,141, Completion: 213 tokens, Ambiguity: High).
    - **Photo 2 (`Dal_Bhat_Tarkari_2.jpg`):** Primary hit quota $\rightarrow$ fallback hit 503 high demand spike $\rightarrow$ exponential backoff retry in 1.19s $\rightarrow$ Succeeded in 17.5s (Top dish: `Dal Bhat Tarkari` at 0.85 confidence, exact match; Prompt: 2,141, Completion: 278 tokens).
    - **Photo 3 (`Khichdi_(Khichrri).jpeg`):** Primary hit quota $\rightarrow$ fallback hit 503 spike $\rightarrow$ retry in 1.20s $\rightarrow$ Succeeded in 11.2s (Prompt: 2,141, Completion: 193 tokens).
+
+---
+
+## 12. Vercel Configuration & Cron Fix (`vercel.json`)
+
+### Problem
+Vercel build failed with `"Invalid vercel.json file provided"` due to:
+1. **JSON Syntax Error:** Missing comma between lines 6 and 7 in `vercel.json`.
+2. **Duplicate Keys & Invalid Cron Schedule:**
+   ```json
+   {
+     "path": "/api/push/cron",
+     "schedule": "* * * * *"
+     "schedule": "0 0 * * *"
+   }
+   ```
+3. **Vercel Hobby Plan Limit Violation:** The Vercel Hobby plan only permits cron jobs running at most **once per day** (minimum interval 1 day / 86,400s) with a maximum of 2 cron jobs. The push notifications route (`/api/push/cron`) requires minute-by-minute execution (`* * * * *`) to deliver reminders at the user's specific scheduled minute in their timezone.
+
+### Resolution
+- **`vercel.json` Cleaned:** Removed the unsupported `crons` entry, leaving valid configuration (`{ "framework": "nextjs" }`). No functions, rewrites, or headers are broken.
+- **Route Protected:** `/api/push/cron` remains secured by `CRON_SECRET` header check (`Authorization: Bearer <CRON_SECRET>`).
+- **External Cron Setup Documented:** Added step-by-step instructions to `README.md` for configuring a free 1-minute external trigger (e.g., [cron-job.org](https://cron-job.org)) with the bearer secret.
+
 
