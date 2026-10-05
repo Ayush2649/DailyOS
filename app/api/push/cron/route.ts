@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import webpush from "web-push";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { getUserKey } from "@/lib/auth/userKey";
+import { validatePushEndpoint } from "@/lib/push/allowlist";
 import type { NotificationPrefs } from "@/types";
 
 function initVapid() {
@@ -55,6 +57,11 @@ interface PushPayload {
 }
 
 async function sendPush(sub: PushSubscription["subscription"], payload: PushPayload) {
+  const check = validatePushEndpoint(sub?.endpoint);
+  if (!check.valid) {
+    console.warn(`[push/cron] Skipped invalid endpoint: host=${check.hostname ?? "unknown"}, reason=${check.reason}`);
+    return;
+  }
   try {
     await webpush.sendNotification(
       sub,
@@ -161,8 +168,10 @@ export async function GET(req: NextRequest) {
     const subsByUser = new Map<string, PushSubscription["subscription"][]>();
     subsSnap.docs.forEach(d => {
       const data = d.data() as PushSubscription;
-      if (!subsByUser.has(data.userId)) subsByUser.set(data.userId, []);
-      subsByUser.get(data.userId)!.push(data.subscription);
+      const userId = getUserKey({ id: data.userId }) || data.userId;
+      if (!userId) return;
+      if (!subsByUser.has(userId)) subsByUser.set(userId, []);
+      subsByUser.get(userId)!.push(data.subscription);
     });
 
     // For each user, check which reminders are due right now

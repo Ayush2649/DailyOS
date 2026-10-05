@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getNotificationPrefs, saveNotificationPrefs } from "@/lib/firestore";
+import { getUserKey } from "@/lib/auth/userKey";
 import { DEFAULT_NOTIFICATION_PREFS } from "@/types";
 import type { NotificationPrefs } from "@/types";
 
@@ -194,10 +195,11 @@ function IOSInstallGuide() {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { data: session } = useSession();
-  const userId = (session?.user as any)?.id ?? session?.user?.email ?? "";
+  const userId = getUserKey(session) ?? "";
   const { isIOS, isStandalone, notifSupported } = useIOSPWAStatus();
 
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [unsupportedMsg, setUnsupportedMsg] = useState<string | null>(null);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -231,12 +233,24 @@ export default function NotificationSettings() {
               userVisibleOnly: true,
               applicationServerKey: urlBase64ToUint8Array(vapidKey),
             });
-            await fetch("/api/push/subscribe", {
+            const res = await fetch("/api/push/subscribe", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ subscription: sub }),
             });
-          } catch { /* push subscribe failed — in-app reminders still work */ }
+            if (res.status === 422) {
+              setUnsupportedMsg("Notifications aren't supported in this browser");
+            } else if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              if (data?.error && String(data.error).includes("Notifications aren't supported")) {
+                setUnsupportedMsg("Notifications aren't supported in this browser");
+              }
+            } else {
+              setUnsupportedMsg(null);
+            }
+          } catch {
+            setUnsupportedMsg("Notifications aren't supported in this browser");
+          }
         }
       }
     } catch {
@@ -284,6 +298,21 @@ export default function NotificationSettings() {
     <div className="space-y-4">
       {/* ── iOS: must install as PWA first ── */}
       {needsIOSInstall && <IOSInstallGuide />}
+
+      {/* ── Browser unsupported notification banner ── */}
+      {unsupportedMsg && (
+        <div
+          className="rounded-2xl px-4 py-3 flex items-center gap-3 text-xs"
+          style={{
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.2)",
+            color: "#f87171",
+          }}
+        >
+          <BellOff className="w-4 h-4 shrink-0 text-red-400" />
+          <span className="font-semibold">{unsupportedMsg}</span>
+        </div>
+      )}
 
       {/* ── Non-iOS or installed PWA: permission banner ── */}
       {!needsIOSInstall && !isGranted && (

@@ -65,9 +65,9 @@ Source hierarchy: repository (reality) → MEMORY (state) → PRD (what) → ARC
 
 ## 6. Test state
 
-- Automated tests: **6** (Vitest unit tests covering `/api/push/cron` fail-closed auth). CI: **none**. `[repo]`
+- Automated tests: **59** (Vitest unit tests covering `/api/push/cron` fail-closed auth & stored sub validation, `/api/push/subscribe` Zod validation & lookalike rejection, `/api/push/send` IDOR prevention & stored sub validation, `getUserKey` helper, `validatePushEndpoint` allow-list). CI: **none**. `[repo]`
 - Manual scripts: `npm run check:models`, `smoke:ai`, `eval:photos` (live calls, quota-limited). `[repo]`
-- Known failing tests: none (all 6 pass).
+- Known failing tests: none (all 59 pass).
 
 ## 7. Security state
 
@@ -77,8 +77,9 @@ Source hierarchy: repository (reality) → MEMORY (state) → PRD (what) → ARC
 | Authentication | NextAuth JWT, Google OAuth | `[repo]` |
 | Per-route auth checks | Audited: 12 NextAuth-protected, 1 custom token (health ingest), 1 cron secret (fail-closed) | `[repo]` |
 | Cron and debug push routes | Resolved: `/api/push/cron` fails closed (500 if unset/empty, constant-time Bearer match); `/api/push/debug` deleted | `[repo]` |
-| Rate limiting | None on any of the 14 routes | `[repo]` |
-| Input validation | 0 of 14 routes validate request bodies | `[repo]` |
+| Push send IDOR | Resolved: `/api/push/send` sends only to caller's own subscriptions with fixed templates; client-supplied subscriptions ignored; URLs restricted to relative | `[repo]` |
+| Rate limiting | None on any of the 13 routes | `[repo]` |
+| Input validation | 1 of 13 routes validates request bodies with Zod (`/api/push/subscribe`); 1 validates relative URL & allow-list (`/api/push/send`); others pending | `[repo]` |
 | Hardcoded secrets | None in tracked files | `[repo]` |
 | `.env.example` | Missing | `[repo]` |
 | Dependency audit | Not run | `[UNKNOWN]` |
