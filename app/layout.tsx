@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   description: "Manage tasks, track workouts, and log meals — all in one place.",
   manifest: "/manifest.json",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "DailyOS" },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   icons: {
     icon: [{ url: "/BrandLogo_Header.png", sizes: "512x512", type: "image/png" }],
     apple: [{ url: "/BrandLogo_Header.png", sizes: "512x512", type: "image/png" }],
@@ -42,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
