@@ -54,6 +54,8 @@ function isValidRelativeUrl(url: string): boolean {
   return typeof url === "string" && url.startsWith("/") && !url.startsWith("//") && !url.includes("://");
 }
 
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -93,8 +95,8 @@ export async function POST(req: NextRequest) {
 
   // Look up only the caller's own subscriptions from Firestore
   const snap = await adminDb.collection("push_subscriptions").where("userId", "==", userId).get();
-  if (snap.empty) {
-    return NextResponse.json({ ok: true, sent: 0 });
+  if (snap.empty || !snap.docs || snap.docs.length === 0) {
+    return NextResponse.json({ ok: true, sent: 0, reason: "no_subscriptions" });
   }
 
   const payload = JSON.stringify({
@@ -105,6 +107,7 @@ export async function POST(req: NextRequest) {
   });
 
   let sent = 0;
+  let lastErrorStatus: number | null = null;
   for (const doc of snap.docs) {
     const data = doc.data() as any;
     const sub = data?.subscription;
@@ -118,11 +121,19 @@ export async function POST(req: NextRequest) {
         await webpush.sendNotification(sub, payload);
         sent++;
       } catch (err: any) {
+        const statusCode = typeof err?.statusCode === "number" ? err.statusCode : null;
+        if (statusCode) {
+          lastErrorStatus = statusCode;
+        }
         // Never log endpoints, keys or notification bodies. Log status code only.
-        console.error("Push dispatch failed with status:", err?.statusCode ?? "unknown");
+        console.error("Push dispatch failed with status:", statusCode ?? "unknown");
       }
     }
   }
 
-  return NextResponse.json({ ok: true, sent });
+  return NextResponse.json({
+    ok: true,
+    sent,
+    ...(sent === 0 && lastErrorStatus !== null ? { errorStatus: lastErrorStatus } : {}),
+  });
 }

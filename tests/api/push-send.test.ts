@@ -33,7 +33,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { POST } from "@/app/api/push/send/route";
+import { POST, maxDuration } from "@/app/api/push/send/route";
 
 const FAKE_SESSION_USER_123 = {
   user: { id: "user-123", email: "user@example.com" },
@@ -326,5 +326,50 @@ describe("POST /api/push/send", () => {
     expect(body.sent).toBe(1);
     expect(mockSendNotification).toHaveBeenCalledTimes(1);
     expect(mockSendNotification.mock.calls[0][0]).toEqual(STORED_SUBSCRIPTION);
+  });
+
+  it("exports maxDuration = 30", () => {
+    expect(maxDuration).toBe(30);
+  });
+
+  it("returns errorStatus when push service rejects the subscription", async () => {
+    vi.mocked(getServerSession).mockResolvedValueOnce(FAKE_SESSION_USER_123 as any);
+    mockCollectionDocs.mockResolvedValueOnce({
+      docs: [
+        { data: () => ({ userId: "user-123", subscription: STORED_SUBSCRIPTION }) },
+      ],
+    });
+    const pushError: any = new Error("Push service rejected");
+    pushError.statusCode = 410;
+    mockSendNotification.mockRejectedValueOnce(pushError);
+
+    const req = new NextRequest("http://localhost/api/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "test" }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.sent).toBe(0);
+    expect(body.errorStatus).toBe(410);
+  });
+
+  it("returns reason: 'no_subscriptions' when caller has no subscriptions", async () => {
+    vi.mocked(getServerSession).mockResolvedValueOnce(FAKE_SESSION_USER_123 as any);
+    mockCollectionDocs.mockResolvedValueOnce({ docs: [] });
+
+    const req = new NextRequest("http://localhost/api/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "test" }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.sent).toBe(0);
+    expect(body.reason).toBe("no_subscriptions");
   });
 });
