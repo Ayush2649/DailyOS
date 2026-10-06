@@ -354,9 +354,9 @@ function CalorieCard({
 
           {/* Macro bars */}
           {[
-            { label: "Protein", val: totals.p, goal: g.proteinG,  unit: "g", color: "var(--macro-protein)" },
-            { label: "Carbs",   val: totals.c, goal: g.carbsG,    unit: "g", color: "var(--macro-carbs)" },
-            { label: "Fat",     val: totals.f, goal: g.fatG,      unit: "g", color: "var(--macro-fat)" },
+            { label: "Protein", val: totals.p, goal: goals?.proteinG,  unit: "g", color: "var(--macro-protein)" },
+            { label: "Carbs",   val: totals.c, goal: goals?.carbsG,    unit: "g", color: "var(--macro-carbs)" },
+            { label: "Fat",     val: totals.f, goal: goals?.fatG,      unit: "g", color: "var(--macro-fat)" },
           ].map(({ label, val, goal: macroGoal, unit, color }) => (
             <div key={label} className="space-y-1">
               <div className="flex items-center justify-between">
@@ -364,7 +364,7 @@ function CalorieCard({
                   {label}
                 </span>
                 <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-2)" }}>
-                  {Math.round(val)}<span>/{macroGoal}{unit}</span>
+                  {Math.round(val)}{macroGoal ? <span>/{macroGoal}{unit}</span> : <span>{unit}</span>}
                 </span>
               </div>
               {macroGoal ? (

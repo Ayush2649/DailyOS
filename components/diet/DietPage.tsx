@@ -21,19 +21,23 @@ import EmptyState from "@/components/ui/EmptyState";
 const defaultGoals: MacroGoals = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 };
 
 function MacroProgress({ label, value, goal, unit, color }: {
-  label: string; value: number; goal: number; unit: string; color: string;
+  label: string; value: number; goal?: number | null; unit: string; color: string;
 }) {
-  const percent = goal > 0 ? Math.min((value / goal) * 100, 100) : 0;
+  const percent = goal && goal > 0 ? Math.min((value / goal) * 100, 100) : 0;
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2 mb-1.5">
         <span className="text-sm font-medium" style={{ color: "var(--text-1)" }}>{label}</span>
         <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-2)" }}>
-          {Math.round(value)}<span className="text-xs font-normal" style={{ color: "var(--text-3)" }}> / {goal}{unit}</span>
+          {Math.round(value)}{goal ? <span className="text-xs font-normal" style={{ color: "var(--text-3)" }}> / {goal}{unit}</span> : <span className="text-xs font-normal" style={{ color: "var(--text-3)" }}> {unit}</span>}
         </span>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-inset)" }}>
-        <div className="h-full rounded-full transition-all duration-300" style={{ width: `${percent}%`, background: color }} />
+        {goal && goal > 0 ? (
+          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${percent}%`, background: color }} />
+        ) : (
+          <div className="h-full rounded-full bg-surface-2" />
+        )}
       </div>
     </div>
   );
@@ -131,12 +135,14 @@ export default function DietPage() {
         carbsG: Math.round(totals.carbsG),
         fatG: Math.round(totals.fatG),
       },
-      goals: {
-        calories: Math.round(goals.calories),
-        proteinG: Math.round(goals.proteinG),
-        carbsG: Math.round(goals.carbsG),
-        fatG: Math.round(goals.fatG),
-      },
+      goals: goals
+        ? {
+            calories: Math.round(goals.calories),
+            proteinG: Math.round(goals.proteinG),
+            carbsG: Math.round(goals.carbsG),
+            fatG: Math.round(goals.fatG),
+          }
+        : null,
       date,
     } as any);
   }, [userId, date, meals, goals, totals.calories, totals.proteinG, totals.carbsG, totals.fatG]);
@@ -359,27 +365,35 @@ export default function DietPage() {
                 </span>
                 <span className="text-sm" style={{ color: "var(--text-3)" }}>kcal</span>
               </div>
-              <p className="secondary-text mt-1">
-                {totals.calories > goals.calories
-                  ? `${Math.round(totals.calories - goals.calories)} kcal above goal`
-                  : `${Math.max(0, Math.round(goals.calories - totals.calories))} kcal remaining`}
-                <span style={{ color: "var(--text-3)" }}> · goal {goals.calories.toLocaleString()}</span>
-              </p>
-              <div className="h-1.5 rounded-full overflow-hidden mt-3" style={{ background: "var(--surface-inset)" }}>
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${Math.min((totals.calories / Math.max(goals.calories, 1)) * 100, 100)}%`,
-                    background: totals.calories > goals.calories ? "var(--warning)" : "var(--accent)",
-                  }}
-                />
-              </div>
+              {goals ? (
+                <>
+                  <p className="secondary-text mt-1">
+                    {totals.calories > goals.calories
+                      ? `${Math.round(totals.calories - goals.calories)} kcal above goal`
+                      : `${Math.max(0, Math.round(goals.calories - totals.calories))} kcal remaining`}
+                    <span style={{ color: "var(--text-3)" }}> · goal {goals.calories.toLocaleString()}</span>
+                  </p>
+                  <div className="h-1.5 rounded-full overflow-hidden mt-3" style={{ background: "var(--surface-inset)" }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min((totals.calories / Math.max(goals.calories, 1)) * 100, 100)}%`,
+                        background: totals.calories > goals.calories ? "var(--warning)" : "var(--accent)",
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="secondary-text mt-1">
+                  Intuitive Habit Tracking Active
+                </p>
+              )}
             </div>
 
             <div className="space-y-3">
-              <MacroProgress label="Protein" value={totals.proteinG} goal={goals.proteinG} unit="g" color="var(--macro-protein)" />
-              <MacroProgress label="Carbs" value={totals.carbsG} goal={goals.carbsG} unit="g" color="var(--macro-carbs)" />
-              <MacroProgress label="Fat" value={totals.fatG} goal={goals.fatG} unit="g" color="var(--macro-fat)" />
+              <MacroProgress label="Protein" value={totals.proteinG} goal={goals?.proteinG} unit="g" color="var(--macro-protein)" />
+              <MacroProgress label="Carbs" value={totals.carbsG} goal={goals?.carbsG} unit="g" color="var(--macro-carbs)" />
+              <MacroProgress label="Fat" value={totals.fatG} goal={goals?.fatG} unit="g" color="var(--macro-fat)" />
             </div>
           </div>
         </div>
