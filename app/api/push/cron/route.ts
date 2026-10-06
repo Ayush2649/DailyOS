@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import webpush from "web-push";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { getUserKey } from "@/lib/auth/userKey";
+import { validatePushEndpoint } from "@/lib/push/allowlist";
 import type { NotificationPrefs } from "@/types";
 
 function initVapid() {
@@ -36,9 +39,11 @@ function matchesNow(time: string, tz: string): boolean {
   return nowHHMM(tz) === time;
 }
 
-interface PushSubscription {
+interface StoredSubscriptionDoc {
+  id: string;
   userId: string;
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } };
+  lastSent?: Record<string, string>;
 }
 
 interface PushAction {
@@ -51,18 +56,6 @@ interface PushPayload {
   body: string;
   url: string;
   actions?: PushAction[];
-}
-
-async function sendPush(sub: PushSubscription["subscription"], payload: PushPayload) {
-  try {
-    await webpush.sendNotification(
-      sub,
-      JSON.stringify({ ...payload, tag: `${payload.url}-${Date.now()}` }),
-    );
-  } catch (err: any) {
-    // 410 Gone = subscription expired — could clean it up here
-    if (err.statusCode !== 410) console.error("Push failed:", err.message);
-  }
 }
 
 // ── Notification copy ───────────────────────────────────────────────────────────
@@ -118,18 +111,45 @@ function pick(key: string): { title: string; body: string } {
   return variants[dayOfYear(new Date()) % variants.length];
 }
 
+/** Constant-time string comparison to prevent timing attacks */
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const hashA = crypto.createHash("sha256").update(a).digest();
+  const hashB = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
+export const maxDuration = 60;
+
 // ── Cron handler ──────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  // Verify Vercel cron secret
+  // Initialize VAPID details for webpush signing
+  initVapid();
+
+  // Verify Vercel cron secret (fail closed: missing or empty secret returns 500)
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!secret || !secret.trim()) {
+    console.error("CRON_SECRET is not configured or empty.");
+    return NextResponse.json(
+      { error: "Server misconfiguration: CRON_SECRET is missing or empty" },
+      { status: 500 }
+    );
   }
 
+  const auth = req.headers.get("authorization") || "";
+  if (!timingSafeEqualStr(auth, `Bearer ${secret}`)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let due = 0;
   let sent = 0;
+  let failed = 0;
+  let removed = 0;
+  let skipped = 0;
+
+  const now = new Date();
+  const currentMinute = now.toISOString().slice(0, 16); // e.g. "2026-10-05T10:45"
+  const sentInRun = new Set<string>();
 
   try {
     // Load all push subscriptions + notification prefs in parallel
@@ -142,46 +162,161 @@ export async function GET(req: NextRequest) {
     const prefsMap = new Map<string, NotificationPrefs>();
     prefsSnap.docs.forEach(d => prefsMap.set(d.id, d.data() as NotificationPrefs));
 
-    // Group subscriptions by userId
-    const subsByUser = new Map<string, PushSubscription["subscription"][]>();
+    // Group subscriptions by userId, preserving doc id and lastSent tracking
+    const subsByUser = new Map<string, StoredSubscriptionDoc[]>();
     subsSnap.docs.forEach(d => {
-      const data = d.data() as PushSubscription;
-      if (!subsByUser.has(data.userId)) subsByUser.set(data.userId, []);
-      subsByUser.get(data.userId)!.push(data.subscription);
-    });
-
-    // For each user, check which reminders are due right now
-    const tasks: Promise<void>[] = [];
-
-    subsByUser.forEach((subs, userId) => {
-      const prefs = prefsMap.get(userId);
-      if (!prefs) return;
-
-      const tz = prefs.timezone || "UTC";
-
-      const reminders: Array<{ enabled: boolean; time: string; key: string; url: string; actions: PushAction[] }> = [
-        { enabled: prefs.mealReminders,    time: prefs.breakfastTime,    key: "breakfast", url: "/dashboard/diet",    actions: ACTIONS.meal },
-        { enabled: prefs.mealReminders,    time: prefs.lunchTime,        key: "lunch",     url: "/dashboard/diet",    actions: ACTIONS.meal },
-        { enabled: prefs.mealReminders,    time: prefs.dinnerTime,       key: "dinner",    url: "/dashboard/diet",    actions: ACTIONS.meal },
-        { enabled: prefs.workoutReminders, time: prefs.workoutTime,      key: "workout",   url: "/dashboard/workout", actions: ACTIONS.workout },
-        { enabled: prefs.taskReminders,    time: prefs.taskReminderTime, key: "tasks",     url: "/dashboard/tasks",   actions: ACTIONS.tasks },
-      ];
-
-      reminders.forEach(r => {
-        if (!r.enabled || !matchesNow(r.time, tz)) return;
-        const { title, body } = pick(r.key);
-        subs.forEach(sub => {
-          tasks.push(sendPush(sub, { title, body, url: r.url, actions: r.actions }));
-          sent++;
-        });
+      const data = d.data() as any;
+      const rawUserId = data?.userId;
+      const userId = getUserKey({ id: rawUserId }) || rawUserId;
+      if (!userId || !data?.subscription) return;
+      if (!subsByUser.has(userId)) subsByUser.set(userId, []);
+      subsByUser.get(userId)!.push({
+        id: d.id,
+        userId,
+        subscription: data.subscription,
+        lastSent: data.lastSent,
       });
     });
 
-    await Promise.all(tasks);
+    // For each user, check which reminders are due right now
+    for (const [userId, subs] of Array.from(subsByUser.entries())) {
+      const prefs = prefsMap.get(userId);
+      if (!prefs) continue;
+
+      const tz = prefs.timezone || "UTC";
+
+      const reminders: Array<{
+        enabled: boolean;
+        time: string;
+        key: string;
+        url: string;
+        actions: PushAction[];
+      }> = [
+        { enabled: !!prefs.mealReminders,    time: prefs.breakfastTime,    key: "breakfast", url: "/dashboard/diet",    actions: ACTIONS.meal },
+        { enabled: !!prefs.mealReminders,    time: prefs.lunchTime,        key: "lunch",     url: "/dashboard/diet",    actions: ACTIONS.meal },
+        { enabled: !!prefs.mealReminders,    time: prefs.dinnerTime,       key: "dinner",    url: "/dashboard/diet",    actions: ACTIONS.meal },
+        { enabled: !!prefs.workoutReminders, time: prefs.workoutTime,      key: "workout",   url: "/dashboard/workout", actions: ACTIONS.workout },
+        { enabled: !!prefs.taskReminders,    time: prefs.taskReminderTime, key: "tasks",     url: "/dashboard/tasks",   actions: ACTIONS.tasks },
+      ];
+
+      for (const r of reminders) {
+        if (!r.enabled || !matchesNow(r.time, tz)) continue;
+        const { title, body } = pick(r.key);
+
+        // Send to EVERY subscription of the user whose reminder is due, one by one;
+        // one failure must not stop the others.
+        for (const subDoc of subs) {
+          due++;
+          const sub = subDoc.subscription;
+          const docId = subDoc.id;
+          const inMemoryDocKey = `${docId}_${r.key}_${currentMinute}`;
+          const inMemoryEndpointKey = `${sub?.endpoint}_${r.key}_${currentMinute}`;
+
+          // Deduplication: do not send same reminder to same subscription twice in same minute
+          if (
+            subDoc.lastSent?.[r.key] === currentMinute ||
+            sentInRun.has(inMemoryDocKey) ||
+            sentInRun.has(inMemoryEndpointKey)
+          ) {
+            skipped++;
+            continue;
+          }
+
+          // Endpoint allowlist validation
+          const check = validatePushEndpoint(sub?.endpoint);
+          if (!check.valid) {
+            console.warn(
+              `[push/cron] Skipped invalid endpoint: host=${check.hostname ?? "unknown"}, reason=${check.reason}`
+            );
+            skipped++;
+            continue;
+          }
+
+          const payload = JSON.stringify({
+            title,
+            body,
+            url: r.url,
+            actions: r.actions,
+            tag: `${r.url}-${Date.now()}`,
+          });
+
+          try {
+            await webpush.sendNotification(sub, payload);
+            sent++;
+            sentInRun.add(inMemoryDocKey);
+            if (sub?.endpoint) sentInRun.add(inMemoryEndpointKey);
+
+            // Record that this reminder was sent to this subscription at this minute
+            try {
+              if (typeof adminDb?.collection === "function") {
+                const col = adminDb.collection("push_subscriptions");
+                if (typeof col?.doc === "function") {
+                  const docRef = col.doc(docId);
+                  if (typeof docRef?.set === "function") {
+                    await docRef.set(
+                      {
+                        lastSent: {
+                          ...(subDoc.lastSent || {}),
+                          [r.key]: currentMinute,
+                        },
+                        updatedAt: Date.now(),
+                      },
+                      { merge: true }
+                    );
+                  }
+                }
+              }
+            } catch {
+              // Non-fatal error updating lastSent in Firestore
+            }
+          } catch (err: any) {
+            const statusCode = typeof err?.statusCode === "number" ? err.statusCode : "unknown";
+            const host = check.hostname ?? "unknown";
+            const shortDocId = typeof docId === "string" ? docId.slice(-6) : "unknown";
+
+            // Log ONLY route, error.statusCode, host, last 6 chars of docId, and reminderType
+            console.error(
+              `[push/cron] Push error: route=/api/push/cron, statusCode=${statusCode}, host=${host}, docId=${shortDocId}, reminderType=${r.key}`
+            );
+
+            // 404 or 410 -> delete subscription document and count as removed
+            if (statusCode === 404 || statusCode === 410) {
+              try {
+                if (typeof adminDb?.collection === "function") {
+                  const col = adminDb.collection("push_subscriptions");
+                  if (typeof col?.doc === "function") {
+                    const docRef = col.doc(docId);
+                    if (typeof docRef?.delete === "function") {
+                      await docRef.delete();
+                    }
+                  }
+                }
+              } catch (delErr) {
+                console.error(
+                  `[push/cron] Failed to delete push_subscription docId=${shortDocId}`
+                );
+              }
+              removed++;
+            } else {
+              // 400, 401, 403 or other errors: keep document and count as failed
+              failed++;
+            }
+          }
+        }
+      }
+    }
   } catch (err) {
     console.error("Cron error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, sent, time: new Date().toISOString() });
+  return NextResponse.json({
+    ok: true,
+    due,
+    sent,
+    failed,
+    removed,
+    skipped,
+    time: now.toISOString(),
+  });
 }

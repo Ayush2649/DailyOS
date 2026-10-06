@@ -46,11 +46,14 @@ export default function NotificationBell({ className }: { className?: string }) 
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(vapidKey),
               });
-              await fetch("/api/push/subscribe", {
+              const res = await fetch("/api/push/subscribe", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ subscription: sub }),
               });
+              if (res.status === 422) {
+                setState("unsupported");
+              }
             } catch { /* VAPID subscribe failed — local notifications still work */ }
           }
         }
@@ -60,10 +63,9 @@ export default function NotificationBell({ className }: { className?: string }) 
     }
   }, [state]);
 
-  if (state === "unsupported") return null;
-
   const isGranted = state === "granted";
   const isDenied  = state === "denied";
+  const isUnsupported = state === "unsupported";
   const isLoading = state === "loading";
 
   return (
@@ -145,6 +147,13 @@ export default function NotificationBell({ className }: { className?: string }) 
               <p className="text-sm font-bold mb-1" style={{ color: "var(--text-1)" }}>Notifications blocked</p>
               <p className="text-xs" style={{ color: "var(--text-3)" }}>
                 To enable, go to your browser settings and allow notifications for this site.
+              </p>
+            </>
+          ) : isUnsupported ? (
+            <>
+              <p className="text-sm font-bold mb-1 text-amber-400">Not supported</p>
+              <p className="text-xs" style={{ color: "var(--text-3)" }}>
+                Notifications aren't supported in this browser.
               </p>
             </>
           ) : null}

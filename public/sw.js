@@ -11,40 +11,31 @@ self.addEventListener("activate", (event) => {
 
 // ── Push event — show notification ──────────────────────────────────────────
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
-
-  let payload;
-  try {
-    payload = event.data.json();
-  } catch {
-    payload = { title: "DailyOS", body: event.data.text() };
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data = { title: "DailyOS", body: event.data.text() };
+    }
   }
 
-  const { title, body, icon, badge, tag, url, image, actions, data } = payload;
-
+  const title = data.title || "DailyOS Reminder";
   const options = {
-    body: body || "",
-    icon: icon || "/BrandLogo_Header.png",
-    badge: badge || "/BrandLogo_Header.png",
-    tag: tag || "dailyos-notification",
+    body: data.body || "Time to check your daily goals!",
+    icon: "/BrandLogo_Header.png",
+    badge: "/BrandLogo_Header.png",
+    data: { url: data.url || "/dashboard" },
+    vibrate: [100, 50, 100],
+    actions: data.actions || [
+      { action: "open", title: "Open" },
+      { action: "dismiss", title: "Dismiss" },
+    ],
+    tag: data.tag || "dailyos-reminder",
     renotify: true,
-    requireInteraction: false,
-    silent: false,
-    vibrate: [80, 40, 80, 40, 120],
-    timestamp: Date.now(),
-    // Large hero image (Android / desktop only — iOS ignores it gracefully)
-    ...(image ? { image } : {}),
-    data: { url: url || "/dashboard", ...data },
-    // Use the action buttons sent from the server, falling back to a sensible default
-    actions: Array.isArray(actions) && actions.length
-      ? actions
-      : [
-          { action: "open",    title: "Open DailyOS" },
-          { action: "dismiss", title: "Dismiss" },
-        ],
   };
 
-  event.waitUntil(self.registration.showNotification(title || "DailyOS", options));
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 // ── Notification click — open the relevant page ──────────────────────────────

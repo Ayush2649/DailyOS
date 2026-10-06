@@ -46,7 +46,7 @@ export default function DietPage() {
 
   const [date, setDate] = useState(todayString());
   const [meals, setMeals] = useState<MealEntry[]>([]);
-  const [goals, setGoals] = useState<MacroGoals>(defaultGoals);
+  const [goals, setGoals] = useState<MacroGoals | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [showAddMeal, setShowAddMeal] = useState(false);
@@ -1147,21 +1147,26 @@ function MealScannerModal({
 
 // ── GoalsModal ────────────────────────────────────────────────────────────────
 function GoalsModal({ goals, onSave, onClose }: {
-  goals: MacroGoals; onSave: (g: MacroGoals) => void; onClose: () => void;
+  goals: MacroGoals | null; onSave: (g: MacroGoals) => void; onClose: () => void;
 }) {
   const [form, setForm] = useState({
-    calories: String(goals.calories),
-    proteinG: String(goals.proteinG),
-    carbsG: String(goals.carbsG),
-    fatG: String(goals.fatG),
+    calories: goals ? String(goals.calories) : "",
+    proteinG: goals ? String(goals.proteinG) : "",
+    carbsG: goals ? String(goals.carbsG) : "",
+    fatG: goals ? String(goals.fatG) : "",
   });
 
   const handleSave = () => {
+    const cal = Number(form.calories);
+    const p = Number(form.proteinG);
+    const c = Number(form.carbsG);
+    const f = Number(form.fatG);
+    if (!cal || !p || !c || !f || cal <= 0 || p <= 0 || c <= 0 || f <= 0) return;
     onSave({
-      calories: Number(form.calories) || 2000,
-      proteinG: Number(form.proteinG) || 150,
-      carbsG: Number(form.carbsG) || 200,
-      fatG: Number(form.fatG) || 65,
+      calories: Math.round(cal),
+      proteinG: Math.round(p),
+      carbsG: Math.round(c),
+      fatG: Math.round(f),
     });
   };
 

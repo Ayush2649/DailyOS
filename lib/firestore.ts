@@ -3,7 +3,7 @@ import {
   getDocs, getDoc, query, where, setDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Task, Project, WorkoutSession, BodyWeightEntry, MealEntry, MacroGoals, WorkoutTemplate, NotificationPrefs, MealTemplate } from "@/types";
+import type { Task, Project, WorkoutSession, BodyWeightEntry, MealEntry, MacroGoals, WorkoutTemplate, NotificationPrefs, MealTemplate, UserProfileDocument } from "@/types";
 
 // ── Projects ───────────────────────────────────────────────────────────────────
 export async function getProjects(userId: string): Promise<Project[]> {
@@ -179,4 +179,11 @@ export async function getNotificationPrefs(userId: string): Promise<Notification
 
 export async function saveNotificationPrefs(userId: string, prefs: NotificationPrefs) {
   await setDoc(doc(db, "notificationPrefs", userId), prefs);
+}
+
+// ── User Profile / Baseline ───────────────────────────────────────────────────
+export async function getUserProfile(userId: string): Promise<UserProfileDocument | null> {
+  const snap = await getDoc(doc(db, "userProfiles", userId));
+  if (!snap.exists()) return null;
+  return snap.data() as UserProfileDocument;
 }

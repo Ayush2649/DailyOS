@@ -11,6 +11,7 @@ export const WORKOUT_PRESETS: WorkoutTemplate[] = [
     name: "Push Day",
     description: "Chest, shoulders & triceps",
     isPreset: true,
+    source: "system",
     createdAt: 0,
     exercises: [
       ex("pp-1", "Bench Press",          4, 8,  60),
@@ -27,6 +28,7 @@ export const WORKOUT_PRESETS: WorkoutTemplate[] = [
     name: "Pull Day",
     description: "Back & biceps",
     isPreset: true,
+    source: "system",
     createdAt: 0,
     exercises: [
       ex("pl-1", "Deadlift",         4, 5,  100),
@@ -43,6 +45,7 @@ export const WORKOUT_PRESETS: WorkoutTemplate[] = [
     name: "Leg Day",
     description: "Quads, hamstrings & calves",
     isPreset: true,
+    source: "system",
     createdAt: 0,
     exercises: [
       ex("lg-1", "Squats",                4, 6,  80),
@@ -59,6 +62,7 @@ export const WORKOUT_PRESETS: WorkoutTemplate[] = [
     name: "Upper Body",
     description: "Full upper body — push & pull",
     isPreset: true,
+    source: "system",
     createdAt: 0,
     exercises: [
       ex("ub-1", "Bench Press",    4, 8,  60),
@@ -75,6 +79,7 @@ export const WORKOUT_PRESETS: WorkoutTemplate[] = [
     name: "Full Body",
     description: "Compound movements — all muscle groups",
     isPreset: true,
+    source: "system",
     createdAt: 0,
     exercises: [
       ex("fb-1", "Squat",          3, 6,  80),

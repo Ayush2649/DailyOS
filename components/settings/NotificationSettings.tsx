@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getNotificationPrefs, saveNotificationPrefs } from "@/lib/firestore";
+import { getUserKey } from "@/lib/auth/userKey";
 import { DEFAULT_NOTIFICATION_PREFS } from "@/types";
 import type { NotificationPrefs } from "@/types";
 
@@ -26,14 +27,14 @@ function useIOSPWAStatus() {
     isIOS: boolean;
     isStandalone: boolean;
     notifSupported: boolean;
-  }>({ isIOS: false, isStandalone: false, notifSupported: true });
+  }>({ isIOS: false, isStandalone: false, notifSupported: false });
 
   useEffect(() => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as any).standalone === true;
-    const notifSupported = "Notification" in window;
+    const notifSupported = typeof window !== "undefined" && "Notification" in window;
     setStatus({ isIOS, isStandalone, notifSupported });
   }, []);
 
@@ -193,28 +194,37 @@ function IOSInstallGuide() {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
-  const { data: session } = useSession();
-  const userId = (session?.user as any)?.id ?? session?.user?.email ?? "";
+  const { data: session, status: sessionStatus } = useSession();
+  const userId = getUserKey(session) ?? "";
   const { isIOS, isStandalone, notifSupported } = useIOSPWAStatus();
 
+  const [mounted, setMounted] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [unsupportedMsg, setUnsupportedMsg] = useState<string | null>(null);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window === "undefined") return;
     if (!("Notification" in window) || typeof Notification === "undefined") { setPermission("unsupported"); return; }
     setPermission(Notification.permission);
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
+    if (sessionStatus === "loading") return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     getNotificationPrefs(userId).then(p => {
       if (p) setPrefs(p);
     }).finally(() => setLoading(false));
-  }, [userId]);
+  }, [userId, sessionStatus]);
 
   const requestPermission = async () => {
     if (!("Notification" in window) || typeof Notification === "undefined") return;
@@ -231,12 +241,24 @@ export default function NotificationSettings() {
               userVisibleOnly: true,
               applicationServerKey: urlBase64ToUint8Array(vapidKey),
             });
-            await fetch("/api/push/subscribe", {
+            const res = await fetch("/api/push/subscribe", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ subscription: sub }),
             });
-          } catch { /* push subscribe failed — in-app reminders still work */ }
+            if (res.status === 422) {
+              setUnsupportedMsg("Notifications aren't supported in this browser");
+            } else if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              if (data?.error && String(data.error).includes("Notifications aren't supported")) {
+                setUnsupportedMsg("Notifications aren't supported in this browser");
+              }
+            } else {
+              setUnsupportedMsg(null);
+            }
+          } catch {
+            setUnsupportedMsg("Notifications aren't supported in this browser");
+          }
         }
       }
     } catch {
@@ -259,17 +281,37 @@ export default function NotificationSettings() {
     }
   };
 
-  const isGranted = permission === "granted";
-  const isDenied  = permission === "denied";
-  const needsIOSInstall = isIOS && !isStandalone;
+  const isGranted = mounted && permission === "granted";
+  const isDenied  = mounted && permission === "denied";
+  const needsIOSInstall = mounted && isIOS && !isStandalone;
 
-  const sendTestNotification = () => {
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-    new Notification("🔔 DailyOS test", {
-      body: "Notifications are working! You'll get reminders at your configured times.",
-      icon: "/BrandLogo_Header.png",
-      tag: `test-${Date.now()}`,
-    });
+  const sendTestNotification = async () => {
+    setSendingTest(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/push/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "test" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const code = data?.errorStatus || data?.statusCode || res.status;
+        setTestResult(`push service rejected it (code ${code})`);
+        return;
+      }
+      if (typeof data?.sent === "number" && data.sent > 0) {
+        setTestResult(`${data.sent} sent`);
+      } else if (data?.errorStatus) {
+        setTestResult(`push service rejected it (code ${data.errorStatus})`);
+      } else {
+        setTestResult("this device has no subscription");
+      }
+    } catch {
+      setTestResult("this device has no subscription");
+    } finally {
+      setSendingTest(false);
+    }
   };
 
   if (loading) {
@@ -284,6 +326,21 @@ export default function NotificationSettings() {
     <div className="space-y-4">
       {/* ── iOS: must install as PWA first ── */}
       {needsIOSInstall && <IOSInstallGuide />}
+
+      {/* ── Browser unsupported notification banner ── */}
+      {unsupportedMsg && (
+        <div
+          className="rounded-2xl px-4 py-3 flex items-center gap-3 text-xs"
+          style={{
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.2)",
+            color: "#f87171",
+          }}
+        >
+          <BellOff className="w-4 h-4 shrink-0 text-red-400" />
+          <span className="font-semibold">{unsupportedMsg}</span>
+        </div>
+      )}
 
       {/* ── Non-iOS or installed PWA: permission banner ── */}
       {!needsIOSInstall && !isGranted && (
@@ -380,14 +437,24 @@ export default function NotificationSettings() {
             <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>
               Fire one right now to confirm they're working
             </p>
+            {testResult && (
+              <p
+                className={cn(
+                  "text-xs mt-1.5 font-semibold",
+                  testResult.includes("sent") ? "text-emerald-400" : "text-amber-400"
+                )}
+              >
+                {testResult}
+              </p>
+            )}
           </div>
           <button
             onClick={sendTestNotification}
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
             style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
           >
-            <Send style={{ width: 13, height: 13 }} />
-            Send test
+            {sendingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send style={{ width: 13, height: 13 }} />}
+            {sendingTest ? "Sending…" : "Send test"}
           </button>
         </div>
       )}
@@ -396,7 +463,7 @@ export default function NotificationSettings() {
       <div className="flex items-center gap-2 px-1">
         <div className={`w-2 h-2 rounded-full ${isGranted ? "bg-emerald-400" : isDenied ? "bg-red-400" : "bg-amber-400"}`} />
         <span className="text-xs" style={{ color: "var(--text-3)" }}>
-          Browser permission: <span className="font-semibold">{permission}</span>
+          Browser permission: <span className="font-semibold">{mounted ? permission : "default"}</span>
           {isGranted && " — reminders will fire when this tab is open"}
           {isDenied && " — blocked in browser settings"}
           {!isGranted && !isDenied && " — click \"Allow notifications\" above"}

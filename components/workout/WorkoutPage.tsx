@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import {
   Plus, Dumbbell, Trash2, ChevronDown, ChevronUp, Sparkles, Scale, Clock,
@@ -8,8 +8,9 @@ import {
   BookOpen, Check, Pencil, Mic,
 } from "lucide-react";
 import { cn, generateId, todayString, formatDate, localDateString } from "@/lib/utils";
-import { saveWorkoutSession, getWorkoutSessions, getBodyWeightEntries, logBodyWeight, getWorkoutTemplates, saveWorkoutTemplate, deleteWorkoutTemplate } from "@/lib/firestore";
+import { saveWorkoutSession, getWorkoutSessions, getBodyWeightEntries, logBodyWeight, getWorkoutTemplates, saveWorkoutTemplate, deleteWorkoutTemplate, getUserProfile } from "@/lib/firestore";
 import { WORKOUT_PRESETS } from "@/lib/workoutPresets";
+import { partitionWorkoutTemplates } from "@/lib/workouts/classification";
 import { setWorkoutContext } from "@/lib/orbitContext";
 import { useToast } from "@/components/ui/Toast";
 import { MarkdownText } from "@/components/ui/MarkdownText";
@@ -52,6 +53,21 @@ export default function WorkoutPage() {
 
   // Templates
   const [userTemplates, setUserTemplates] = useState<WorkoutTemplate[]>([]);
+  const [assignedRoutine, setAssignedRoutine] = useState<{
+    planName: string;
+    templateIds: string[];
+    daysPerWeek: number;
+  } | null>(null);
+
+  const { assignedTemplates, starterLibrary, customTemplates } = useMemo(() => {
+    return partitionWorkoutTemplates({
+      userTemplates,
+      systemPresets: WORKOUT_PRESETS,
+      assignedRoutine,
+      userId,
+    });
+  }, [userTemplates, assignedRoutine, userId]);
+
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
@@ -109,6 +125,11 @@ export default function WorkoutPage() {
       });
     });
     getWorkoutTemplates(userId).then(setUserTemplates);
+    getUserProfile(userId).then((profile) => {
+      if (profile?.workoutPlanAssignment) {
+        setAssignedRoutine(profile.workoutPlanAssignment);
+      }
+    });
     getBodyWeightEntries(userId).then((entries) => {
       setBodyWeightEntries(entries);
       if (entries.length > 0) {
@@ -225,6 +246,8 @@ export default function WorkoutPage() {
           defaultUnit: ex.sets[0]?.unit ?? "kg",
         })),
         isPreset: false,
+        isOnboarding: false,
+        source: "custom",
         createdAt: Date.now(),
       };
       const saved = await saveWorkoutTemplate(tpl);
@@ -484,6 +507,61 @@ export default function WorkoutPage() {
           </div>
         ) : (
         <div className="space-y-4">
+          {/* Assigned Starter Routine Quick-Launch */}
+          {assignedRoutine && exercises.length === 0 && (
+            <div className="card p-4 rounded-2xl border-indigo-500/30 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-transparent animate-fade-in">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                    <Dumbbell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                        Assigned Routine
+                      </span>
+                      <span className="text-xs font-semibold" style={{ color: "var(--text-3)" }}>
+                        {assignedRoutine.daysPerWeek} days / week
+                      </span>
+                    </div>
+                    <p className="text-sm font-black mt-0.5" style={{ color: "var(--text-1)" }}>
+                      {assignedRoutine.planName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3.5 pt-3 border-t border-indigo-500/10">
+                <p className="text-xs font-medium mb-2.5" style={{ color: "var(--text-3)" }}>
+                  Choose a session to load exercises and start logging:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {assignedTemplates.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => handleLoadTemplate(tpl)}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-1.5 transition-all active:scale-95"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      <span>Start {tpl.name}</span>
+                    </button>
+                  ))}
+                  {assignedTemplates.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setView("templates")}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-all flex items-center gap-1.5"
+                    >
+                      <LayoutTemplate className="w-3 h-3" />
+                      <span>View routine in Templates</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Date & Duration */}
           <div className="card">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -694,6 +772,30 @@ export default function WorkoutPage() {
         ) /* end: no todaySession */
       ) : view === "templates" ? (
         <div className="space-y-6 animate-fade-in">
+          {/* Assigned Routine from Onboarding */}
+          {assignedRoutine && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--text-2)" }}>
+                  Your Assigned Routine ({assignedRoutine.planName})
+                </h2>
+                <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>
+                  {assignedRoutine.daysPerWeek} sessions / wk
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                {assignedTemplates.map((tpl) => (
+                  <TemplateCard
+                    key={tpl.id}
+                    template={tpl}
+                    onLoad={() => handleLoadTemplate(tpl)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Preset library */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -701,7 +803,7 @@ export default function WorkoutPage() {
               <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--text-2)" }}>Starter Library</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {WORKOUT_PRESETS.map((tpl) => (
+              {starterLibrary.map((tpl) => (
                 <TemplateCard key={tpl.id} template={tpl} onLoad={() => handleLoadTemplate(tpl)} />
               ))}
             </div>
@@ -713,10 +815,10 @@ export default function WorkoutPage() {
               <LayoutTemplate className="w-4 h-4 text-violet-400" />
               <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--text-2)" }}>My Templates</h2>
               <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-2)", color: "var(--text-3)" }}>
-                {userTemplates.length}
+                {customTemplates.length}
               </span>
             </div>
-            {userTemplates.length === 0 ? (
+            {customTemplates.length === 0 ? (
               <div className="card border-2 border-dashed text-center py-8" style={{ borderColor: "var(--border)" }}>
                 <LayoutTemplate className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
                 <p className="font-bold text-sm" style={{ color: "var(--text-2)" }}>No saved templates yet</p>
@@ -724,7 +826,7 @@ export default function WorkoutPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {userTemplates.map((tpl) => (
+                {customTemplates.map((tpl) => (
                   <TemplateCard key={tpl.id} template={tpl}
                     onLoad={() => handleLoadTemplate(tpl)}
                     onDelete={() => handleDeleteTemplate(tpl.id)} />
@@ -1096,6 +1198,11 @@ function TemplateCard({ template: tpl, onLoad, onDelete }: {
             {tpl.isPreset && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 Preset
+              </span>
+            )}
+            {(tpl.source === "onboarding" || tpl.isOnboarding) && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                Assigned
               </span>
             )}
           </div>
