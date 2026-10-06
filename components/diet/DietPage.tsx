@@ -1,9 +1,9 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from "next-auth/react";
 import {
   Plus, Minus, Utensils, Camera, Trash2, X, Loader2, Settings,
-  Flame, ChevronLeft, ChevronRight, Sparkles, CheckCircle2,
+  ChevronLeft, ChevronRight, Sparkles, CheckCircle2,
   Bookmark, BookmarkPlus, Search, Mic, Edit3
 } from "lucide-react";
 import VoiceMealModal from "@/components/diet/VoiceMealModal";
@@ -13,12 +13,7 @@ import {
   getMealTemplates, saveMealTemplate, updateMealTemplate, deleteMealTemplate,
 } from "@/lib/firestore";
 import { setDietContext } from "@/lib/orbitContext";
-import { useToast } from "@/components/ui/Toast";
-import AddMealModal from "@/components/diet/AddMealModal";
-import MealScannerModal from "@/components/diet/MealScannerModal";
-import SavedMealsModal from "@/components/diet/SavedMealsModal";
-import GoalsModal from "@/components/diet/GoalsModal";
-import SaveTemplateModal from "@/components/diet/SaveTemplateModal";
+
 import type { MealEntry, MealMacros, MacroGoals, MealTemplate } from "@/types";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -355,36 +350,37 @@ export default function DietPage() {
         </div>
 
         <div className="card p-4 rounded-lg" style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}>
-  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] gap-5 sm:gap-6">
-          <div className="min-w-0">
-            <p className="metadata">Calories</p>
-            <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: "var(--text-1)" }}>
-                {Math.round(totals.calories).toLocaleString()}
-              </span>
-              <span className="text-sm" style={{ color: "var(--text-3)" }}>kcal</span>
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] gap-5 sm:gap-6">
+            <div className="min-w-0">
+              <p className="metadata">Calories</p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: "var(--text-1)" }}>
+                  {Math.round(totals.calories).toLocaleString()}
+                </span>
+                <span className="text-sm" style={{ color: "var(--text-3)" }}>kcal</span>
+              </div>
+              <p className="secondary-text mt-1">
+                {totals.calories > goals.calories
+                  ? `${Math.round(totals.calories - goals.calories)} kcal above goal`
+                  : `${Math.max(0, Math.round(goals.calories - totals.calories))} kcal remaining`}
+                <span style={{ color: "var(--text-3)" }}> · goal {goals.calories.toLocaleString()}</span>
+              </p>
+              <div className="h-1.5 rounded-full overflow-hidden mt-3" style={{ background: "var(--surface-inset)" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min((totals.calories / Math.max(goals.calories, 1)) * 100, 100)}%`,
+                    background: totals.calories > goals.calories ? "var(--warning)" : "var(--accent)",
+                  }}
+                />
+              </div>
             </div>
-            <p className="secondary-text mt-1">
-              {totals.calories > goals.calories
-                ? `${Math.round(totals.calories - goals.calories)} kcal above goal`
-                : `${Math.max(0, Math.round(goals.calories - totals.calories))} kcal remaining`}
-              <span style={{ color: "var(--text-3)" }}> · goal {goals.calories.toLocaleString()}</span>
-            </p>
-            <div className="h-1.5 rounded-full overflow-hidden mt-3" style={{ background: "var(--surface-inset)" }}>
-              <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{
-                  width: `${Math.min((totals.calories / Math.max(goals.calories, 1)) * 100, 100)}%`,
-                  background: totals.calories > goals.calories ? "var(--warning)" : "var(--accent)",
-                }}
-              />
-            </div>
-          </div>
 
-          <div className="space-y-3">
-            <MacroProgress label="Protein" value={totals.proteinG} goal={goals.proteinG} unit="g" color="var(--macro-protein)" />
-            <MacroProgress label="Carbs" value={totals.carbsG} goal={goals.carbsG} unit="g" color="var(--macro-carbs)" />
-            <MacroProgress label="Fat" value={totals.fatG} goal={goals.fatG} unit="g" color="var(--macro-fat)" />
+            <div className="space-y-3">
+              <MacroProgress label="Protein" value={totals.proteinG} goal={goals.proteinG} unit="g" color="var(--macro-protein)" />
+              <MacroProgress label="Carbs" value={totals.carbsG} goal={goals.carbsG} unit="g" color="var(--macro-carbs)" />
+              <MacroProgress label="Fat" value={totals.fatG} goal={goals.fatG} unit="g" color="var(--macro-fat)" />
+            </div>
           </div>
         </div>
       </div>
@@ -419,13 +415,11 @@ export default function DietPage() {
           </div>
         ) : meals.length === 0 ? (
           <EmptyState
-  title="No meals logged today"
-  description="Add a meal to start tracking your nutrition."
-  actionLabel="Log meal"
-  onAction={() => setShowAddMeal(true)}
-/>
-
-          
+            title="No meals logged today"
+            description="Add a meal to start tracking your nutrition."
+            actionLabel="Log meal"
+            onAction={() => setShowAddMeal(true)}
+          />
         ) : (
           <div className="space-y-2 stagger">
             {meals.map((meal) => (
@@ -439,10 +433,12 @@ export default function DietPage() {
           </div>
         )}
       </div>
-<div className="card mt-4 p-4 rounded-lg" style={{ background: "var(--surface-subtle)", border: "1px solid var(--border-subtle)" }}>
-  <h2 className="card-title" style={{ color: "var(--text-1)" }}>Nutrition Insights</h2>
-  <p className="text-sm" style={{ color: "var(--text-2)" }}>Your nutrition is on track today. Keep up the good work and stay hydrated!</p>
-</div>
+
+      <div className="card mt-4 p-4 rounded-lg" style={{ background: "var(--surface-subtle)", border: "1px solid var(--border-subtle)" }}>
+        <h2 className="card-title" style={{ color: "var(--text-1)" }}>Nutrition Insights</h2>
+        <p className="text-sm" style={{ color: "var(--text-2)" }}>Your nutrition is on track today. Keep up the good work and stay hydrated!</p>
+      </div>
+
 
       {/* ── Modals ── */}
       {showAddMeal && (
@@ -723,7 +719,7 @@ function AddMealModal({ userId, date, onSave, onSaveTemplate, onClose }: {
         </div>
 
         {estimated && (
-            <p className="field-helper flex items-center gap-1" style={{ color: "var(--success)" }}>
+          <p className="field-helper flex items-center gap-1" style={{ color: "var(--success)" }}>
             <CheckCircle2 className="w-3.5 h-3.5" /> Estimated values — review before logging
           </p>
         )}
