@@ -82,9 +82,9 @@ function Skel({ className }: { className?: string }) {
 
 function Bar({ pct, color }: { pct: number; color: string }) {
   return (
-    <div className="h-1.5 rounded-full overflow-hidden w-full" style={{ background: "var(--surface-3)" }}>
+    <div className="h-1 rounded-full overflow-hidden w-full" style={{ background: "var(--surface-inset)" }}>
       <div
-        className="h-full rounded-full transition-all duration-700"
+        className="h-full rounded-full transition-all duration-350"
         style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: color }}
       />
     </div>
@@ -100,11 +100,114 @@ function Card({
 }) {
   return (
     <div
-      className={cn("rounded-2xl p-5 flex flex-col", className)}
-      style={{ background: "var(--surface-1)", border: "1px solid var(--border)" }}
+      className={cn("rounded-xl p-4 sm:p-5 flex flex-col", className)}
+      style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}
     >
       {children}
     </div>
+  );
+}
+
+function SummaryMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="metadata">{label}</p>
+      <p className="text-base font-semibold tabular-nums mt-0.5 truncate" style={{ color: "var(--text-1)" }}>{value}</p>
+      <p className="metadata truncate">{detail}</p>
+    </div>
+  );
+}
+
+function TodaySummary({
+  tasks,
+  meals,
+  goals,
+  sessions,
+  loading,
+}: {
+  tasks: Task[];
+  meals: MealEntry[];
+  goals: MacroGoals | null;
+  sessions: WorkoutSession[];
+  loading: boolean;
+}) {
+  const today = todayString();
+  const todayStart = new Date(`${today}T00:00:00`).getTime();
+  const dueTasks = tasks.filter((task) =>
+    task.status === "pending" && (!task.dueDate || task.dueDate === today)
+  );
+  const overdueTasks = tasks.filter((task) =>
+    task.status === "pending" && task.dueDate && task.dueDate < today
+  );
+  const completedTasks = tasks.filter((task) =>
+    task.status === "completed" && task.completedAt != null && task.completedAt >= todayStart
+  );
+  const todayWorkout = sessions.find((session) => session.date === today);
+  const calorieTotal = meals.reduce((total, meal) => total + meal.macros.calories, 0);
+  const proteinTotal = meals.reduce((total, meal) => total + meal.macros.proteinG, 0);
+  const nutritionGoals = goals ?? { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 };
+  const remainingTasks = dueTasks.length + overdueTasks.length;
+
+  const nextAction = overdueTasks.length > 0
+    ? { href: "/dashboard/tasks", label: "Review overdue" }
+    : dueTasks.length > 0
+      ? { href: "/dashboard/tasks", label: "View today's tasks" }
+      : !todayWorkout
+        ? { href: "/dashboard/workout", label: "Log workout" }
+        : meals.length === 0 || calorieTotal < nutritionGoals.calories
+          ? { href: "/dashboard/diet", label: "Log a meal" }
+          : { href: "/dashboard/diet", label: "Review nutrition" };
+
+  const headline = overdueTasks.length > 0
+    ? `${overdueTasks.length} overdue task${overdueTasks.length === 1 ? "" : "s"}`
+    : remainingTasks > 0
+      ? `${remainingTasks} task${remainingTasks === 1 ? "" : "s"} left today`
+      : "Tasks are clear for today";
+
+  return (
+    <section className="rounded-xl border p-4 sm:p-5" style={{ background: "var(--surface-base)", borderColor: "var(--border-subtle)" }} aria-labelledby="today-summary-title">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="metadata">TODAY AT A GLANCE</p>
+          <h2 id="today-summary-title" className="text-lg font-semibold mt-1" style={{ color: "var(--text-1)" }}>
+            {loading ? "Loading today's progress" : headline}
+          </h2>
+          <p className="secondary-text mt-1">
+            {loading
+              ? "Your activity will appear here."
+              : `${completedTasks.length} completed · ${todayWorkout ? `Workout logged${todayWorkout.durationMinutes ? ` · ${todayWorkout.durationMinutes} min` : ""}` : "No workout logged"}`}
+          </p>
+        </div>
+        {!loading && (
+          <Link href={nextAction.href} className="btn-primary w-full sm:w-auto shrink-0">
+            {nextAction.label}
+          </Link>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 mt-4 pt-4 border-t" style={{ borderColor: "var(--border-subtle)" }}>
+        <SummaryMetric
+          label="Calories"
+          value={loading ? "—" : `${Math.round(calorieTotal).toLocaleString()} kcal`}
+          detail={`of ${nutritionGoals.calories.toLocaleString()} kcal`}
+        />
+        <SummaryMetric
+          label="Protein"
+          value={loading ? "—" : `${Math.round(proteinTotal)} g`}
+          detail={`of ${nutritionGoals.proteinG} g`}
+        />
+        <SummaryMetric
+          label="Tasks"
+          value={loading ? "—" : `${completedTasks.length}/${completedTasks.length + remainingTasks}`}
+          detail={loading ? "Loading" : `${remainingTasks} remaining`}
+        />
+        <SummaryMetric
+          label="Training"
+          value={loading ? "—" : todayWorkout ? "Logged" : "Not logged"}
+          detail={todayWorkout?.exercises.length ? `${todayWorkout.exercises.length} exercises` : todayWorkout?.durationMinutes ? `${todayWorkout.durationMinutes} min` : "Today"}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -122,16 +225,16 @@ function CalorieRing({ consumed, goal, size = 120 }: { consumed: number; goal: n
         <circle
           cx="50" cy="50" r={R} fill="none" strokeWidth="7"
           strokeLinecap="round"
-          stroke={over ? "#f97316" : "#10b981"}
+          stroke={over ? "var(--status-warning)" : "var(--status-success)"}
           strokeDasharray={`${pct * C} ${C}`}
           style={{ transition: "stroke-dasharray 0.8s ease" }}
         />
       </svg>
       <div className="absolute flex flex-col items-center leading-none">
-        <span className={size < 110 ? "text-[16px] font-black" : "text-[22px] font-black"} style={{ color: "var(--text-1)" }}>
+        <span className={size < 110 ? "text-base font-semibold tabular-nums" : "text-xl font-semibold tabular-nums"} style={{ color: "var(--text-1)" }}>
           {consumed}
         </span>
-        <span className="text-[9px] font-semibold mt-0.5" style={{ color: "var(--text-3)" }}>
+        <span className="text-[10px] font-medium mt-0.5" style={{ color: "var(--text-3)" }}>
           / {goal} kcal
         </span>
       </div>
@@ -187,11 +290,11 @@ function CalorieCard({
         <div className="flex items-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(16,185,129,0.12)" }}
+            style={{ background: "color-mix(in srgb, var(--status-success) 12%, transparent)" }}
           >
-            <Flame className="w-4 h-4 text-emerald-500" />
+            <Flame className="w-4 h-4" style={{ color: "var(--success)" }} />
           </div>
-          <span className="text-sm font-bold" style={{ color: "var(--text-1)" }}>
+          <span className="card-title">
             Today's Nutrition
           </span>
         </div>
@@ -228,14 +331,13 @@ function CalorieCard({
           {/* Status pill */}
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={cn(
-                "text-xs font-bold px-2.5 py-1 rounded-full",
-                hasGoals
-                  ? over
-                    ? "bg-orange-500/10 text-orange-500"
-                    : "bg-emerald-500/10 text-emerald-500"
-                  : "bg-emerald-500/10 text-emerald-500"
-              )}
+              className="text-xs font-medium px-2 py-1 rounded-md"
+              style={{
+                color: over ? "var(--warning)" : "var(--success)",
+                background: over
+                  ? "color-mix(in srgb, var(--warning) 12%, transparent)"
+                  : "color-mix(in srgb, var(--success) 12%, transparent)",
+              }}
             >
               {hasGoals
                 ? over
@@ -252,16 +354,16 @@ function CalorieCard({
 
           {/* Macro bars */}
           {[
-            { label: "Protein", val: totals.p, goal: goals?.proteinG, unit: "g", color: "#6366f1" },
-            { label: "Carbs",   val: totals.c, goal: goals?.carbsG,   unit: "g", color: "#f59e0b" },
-            { label: "Fat",     val: totals.f, goal: goals?.fatG,     unit: "g", color: "#ec4899" },
+            { label: "Protein", val: totals.p, goal: goals?.proteinG,  unit: "g", color: "var(--macro-protein)" },
+            { label: "Carbs",   val: totals.c, goal: goals?.carbsG,    unit: "g", color: "var(--macro-carbs)" },
+            { label: "Fat",     val: totals.f, goal: goals?.fatG,      unit: "g", color: "var(--macro-fat)" },
           ].map(({ label, val, goal: macroGoal, unit, color }) => (
             <div key={label} className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold" style={{ color: "var(--text-2)" }}>
+                <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>
                   {label}
                 </span>
-                <span className="text-xs font-mono tabular-nums" style={{ color: "var(--text-3)" }}>
+                <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-2)" }}>
                   {Math.round(val)}{macroGoal ? <span>/{macroGoal}{unit}</span> : <span>{unit}</span>}
                 </span>
               </div>
@@ -313,8 +415,8 @@ function WeightSparkline({ entries }: { entries: BodyWeightEntry[] }) {
     >
       <defs>
         <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#818cf8" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#818cf8" stopOpacity="0"    />
+          <stop offset="0%"   stopColor="var(--accent)" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0"    />
         </linearGradient>
       </defs>
       {/* Fill */}
@@ -323,13 +425,13 @@ function WeightSparkline({ entries }: { entries: BodyWeightEntry[] }) {
       <polyline
         points={pts}
         fill="none"
-        stroke="#818cf8"
+        stroke="var(--accent)"
         strokeWidth="1.8"
         strokeLinejoin="round"
         strokeLinecap="round"
       />
       {/* Latest value dot */}
-      <circle cx={parseFloat(lastX)} cy={parseFloat(lastY)} r="3" fill="#818cf8" />
+      <circle cx={parseFloat(lastX)} cy={parseFloat(lastY)} r="3" fill="var(--accent)" />
     </svg>
   );
 }
@@ -359,17 +461,17 @@ function WeightCard({ entries, loading }: { entries: BodyWeightEntry[]; loading:
         <div className="flex items-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(99,102,241,0.12)" }}
+            style={{ background: "var(--accent-soft)" }}
           >
-            <Scale className="w-4 h-4 text-indigo-400" />
+            <Scale className="w-4 h-4" style={{ color: "var(--accent)" }} />
           </div>
-          <span className="text-sm font-bold" style={{ color: "var(--text-1)" }}>
+          <span className="card-title">
             Body Weight
           </span>
         </div>
         <Link
           href="/dashboard/workout"
-          className="flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+          className="flex items-center gap-1 text-xs font-medium text-accent hover:opacity-80 transition-opacity"
         >
           Log <ArrowUpRight className="w-3 h-3" />
         </Link>
@@ -379,13 +481,13 @@ function WeightCard({ entries, loading }: { entries: BodyWeightEntry[]; loading:
         <div className="flex-1 flex flex-col justify-center">
           <div className="flex items-end gap-1.5">
             <span
-              className="text-4xl font-black tracking-tight"
+              className="text-3xl font-semibold tabular-nums"
               style={{ color: "var(--text-1)" }}
             >
               {latest.weightKg}
             </span>
             <span
-              className="text-lg font-semibold mb-1"
+              className="text-sm font-medium mb-1"
               style={{ color: "var(--text-3)" }}
             >
               kg
@@ -395,14 +497,8 @@ function WeightCard({ entries, loading }: { entries: BodyWeightEntry[]; loading:
           <div className="flex items-center gap-2 mt-1.5">
             {delta !== null && (
               <span
-                className={cn(
-                  "flex items-center gap-0.5 text-xs font-bold",
-                  delta > 0
-                    ? "text-orange-400"
-                    : delta < 0
-                    ? "text-emerald-400"
-                    : "text-gray-400"
-                )}
+                className="flex items-center gap-1 text-xs font-medium tabular-nums"
+                style={{ color: "var(--text-2)" }}
               >
                 {delta > 0 ? (
                   <TrendingUp className="w-3 h-3" />
@@ -412,7 +508,7 @@ function WeightCard({ entries, loading }: { entries: BodyWeightEntry[]; loading:
                   <Minus className="w-3 h-3" />
                 )}
                 {delta > 0 ? "+" : ""}
-                {delta} kg
+                {delta} kg vs previous
               </span>
             )}
             <span className="text-xs" style={{ color: "var(--text-3)" }}>
@@ -426,10 +522,10 @@ function WeightCard({ entries, loading }: { entries: BodyWeightEntry[]; loading:
           <WeightSparkline entries={entries} />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center gap-2 py-6">
-          <Scale className="w-8 h-8 opacity-20" style={{ color: "var(--text-3)" }} />
-          <p className="text-xs text-center" style={{ color: "var(--text-3)" }}>
-            No weight logged yet
+        <div className="flex-1 flex items-center gap-2 py-3">
+          <Scale className="w-5 h-5" style={{ color: "var(--text-3)" }} />
+          <p className="text-sm" style={{ color: "var(--text-3)" }}>
+            No weight logged
           </p>
         </div>
       )}
@@ -439,9 +535,9 @@ function WeightCard({ entries, loading }: { entries: BodyWeightEntry[]; loading:
 
 /* ─── Tasks Card ─────────────────────────────────────────────────────────── */
 const PRIORITY_COLOR: Record<string, string> = {
-  high:   "text-red-400 bg-red-500/10",
-  medium: "text-amber-400 bg-amber-500/10",
-  low:    "text-emerald-400 bg-emerald-500/10",
+  high:   "badge-danger",
+  medium: "badge-warning",
+  low:    "badge-success",
 };
 
 function TasksCard({ tasks, loading }: { tasks: Task[]; loading: boolean }) {
@@ -492,30 +588,24 @@ function TasksCard({ tasks, loading }: { tasks: Task[]; loading: boolean }) {
         <div className="flex items-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(139,92,246,0.12)" }}
+            style={{ background: "var(--accent-soft)" }}
           >
-            <CheckSquare className="w-4 h-4 text-violet-500" />
+            <CheckSquare className="w-4 h-4" style={{ color: "var(--accent)" }} />
           </div>
-          <span className="text-sm font-bold" style={{ color: "var(--text-1)" }}>
+          <span className="card-title">
             Today's Tasks
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {streak >= 2 && (
-            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400">
-              <Flame className="w-3 h-3" />
-              {streak}d
-            </span>
-          )}
           {overdue.length > 0 && (
-            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400">
+            <span className="badge-danger flex items-center gap-1 rounded-md">
               <AlertCircle className="w-3 h-3" />
               {overdue.length} overdue
             </span>
           )}
           <Link
             href="/dashboard/tasks"
-            className="flex items-center gap-1 text-xs font-semibold text-violet-500 hover:text-violet-400 transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-accent hover:opacity-80 transition-opacity"
           >
             Open <ArrowUpRight className="w-3 h-3" />
           </Link>
@@ -526,17 +616,24 @@ function TasksCard({ tasks, loading }: { tasks: Task[]; loading: boolean }) {
       <div className="mb-4">
         <div className="flex items-end justify-between mb-2">
           <div>
-            <span className="text-3xl font-black" style={{ color: "var(--text-1)" }}>
+            <span className="text-2xl font-semibold tabular-nums" style={{ color: "var(--text-1)" }}>
               {completed.length}
             </span>
             <span className="text-sm font-semibold ml-1.5" style={{ color: "var(--text-3)" }}>
               / {total} done today
             </span>
           </div>
-          <span className="text-sm font-bold text-violet-500">{Math.round(pct)}%</span>
+          <span className="text-sm font-medium tabular-nums" style={{ color: "var(--accent)" }}>{Math.round(pct)}%</span>
         </div>
-        <Bar pct={pct} color="#8b5cf6" />
+        <Bar pct={pct} color="var(--accent)" />
       </div>
+
+      {streak >= 2 && (
+        <p className="metadata mb-3 flex items-center gap-1">
+          <Flame className="w-3 h-3" style={{ color: "var(--accent)" }} />
+          {streak}-day task streak
+        </p>
+      )}
 
       {/* Task list */}
       {pending.length > 0 ? (
@@ -544,8 +641,8 @@ function TasksCard({ tasks, loading }: { tasks: Task[]; loading: boolean }) {
           {pending.slice(0, 3).map((task) => (
             <div
               key={task.id}
-              className="flex items-center gap-2.5 py-2 px-3 rounded-xl"
-              style={{ background: "var(--surface-2)" }}
+              className="flex items-center gap-2 py-2 px-2.5 rounded-md"
+              style={{ background: "var(--surface-raised)" }}
             >
               <div
                 className="w-3.5 h-3.5 rounded-full border-2 shrink-0"
@@ -560,7 +657,7 @@ function TasksCard({ tasks, loading }: { tasks: Task[]; loading: boolean }) {
               {task.priority && (
                 <span
                   className={cn(
-                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                    "text-[10px] font-medium px-1.5 py-0.5 rounded-md shrink-0",
                     PRIORITY_COLOR[task.priority] ?? "text-gray-400 bg-gray-500/10"
                   )}
                 >
@@ -576,20 +673,17 @@ function TasksCard({ tasks, loading }: { tasks: Task[]; loading: boolean }) {
           )}
         </div>
       ) : completed.length > 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-1.5 py-3">
-          <CheckCircle2 className="w-7 h-7 text-violet-500" />
-          <p className="text-xs font-semibold" style={{ color: "var(--text-2)" }}>
-            All done for today!
+        <div className="flex-1 flex items-center gap-2 py-2">
+          <CheckCircle2 className="w-5 h-5" style={{ color: "var(--success)" }} />
+          <p className="text-sm font-medium" style={{ color: "var(--text-2)" }}>
+            All tasks done today
           </p>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center gap-1.5 py-3">
-          <CheckSquare
-            className="w-8 h-8 opacity-20"
-            style={{ color: "var(--text-3)" }}
-          />
-          <p className="text-xs" style={{ color: "var(--text-3)" }}>
-            No tasks scheduled today
+        <div className="flex-1 flex items-center gap-2 py-2">
+          <CheckSquare className="w-5 h-5" style={{ color: "var(--text-3)" }} />
+          <p className="text-sm" style={{ color: "var(--text-3)" }}>
+            No tasks due today
           </p>
         </div>
       )}
@@ -619,8 +713,8 @@ function WorkoutFrequencyBars({ sessions }: { sessions: WorkoutSession[] }) {
 
   const BAR_W  = 18;
   const GAP    = 7;
-  const CHART_H = 36;
-  const LABEL_H = 12;
+  const CHART_H = 32;
+  const LABEL_H = 14;
   const TOTAL_W = 7 * BAR_W + 6 * GAP;
   const W = TOTAL_W;
   const H = CHART_H + LABEL_H;
@@ -628,7 +722,7 @@ function WorkoutFrequencyBars({ sessions }: { sessions: WorkoutSession[] }) {
   return (
     <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border-subtle)" }}>
       <p
-        className="text-[10px] font-semibold uppercase tracking-wider mb-2"
+        className="text-xs font-medium mb-2"
         style={{ color: "var(--text-3)" }}
       >
         Last 7 days
@@ -653,13 +747,13 @@ function WorkoutFrequencyBars({ sessions }: { sessions: WorkoutSession[] }) {
                 x={x} y={y}
                 width={BAR_W} height={barH}
                 rx="4"
-                style={{ fill: trained ? "#3b82f6" : "var(--surface-3)" }}
+                style={{ fill: trained ? "var(--accent)" : "var(--surface-3)" }}
               />
               <text
                 x={x + BAR_W / 2}
                 y={CHART_H + LABEL_H - 1}
                 textAnchor="middle"
-                style={{ fill: "var(--text-3)", fontSize: "8px", fontFamily: "system-ui" }}
+                style={{ fill: "var(--text-3)", fontSize: "10px", fontFamily: "var(--font-sans)" }}
               >
                 {label}
               </text>
@@ -717,24 +811,24 @@ function WorkoutCard({
         <div className="flex items-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(59,130,246,0.12)" }}
+            style={{ background: "var(--accent-soft)" }}
           >
-            <Dumbbell className="w-4 h-4 text-blue-500" />
+            <Dumbbell className="w-4 h-4" style={{ color: "var(--accent)" }} />
           </div>
-          <span className="text-sm font-bold" style={{ color: "var(--text-1)" }}>
+          <span className="card-title">
             Workout
           </span>
         </div>
         <div className="flex items-center gap-2">
           {streak >= 2 && (
-            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
+            <span className="text-xs font-medium" style={{ color: "var(--text-3)" }}>
               <Flame className="w-3 h-3" />
-              {streak}d
+              {streak}-day streak
             </span>
           )}
           <Link
             href="/dashboard/workout"
-            className="flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-accent hover:opacity-80 transition-opacity"
           >
             {todaySession ? "View" : "Log"} <ArrowUpRight className="w-3 h-3" />
           </Link>
@@ -744,8 +838,8 @@ function WorkoutCard({
       {todaySession ? (
         <div className="space-y-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400">
-              <Zap className="w-3 h-3" /> Trained today
+            <span className="flex items-center gap-1 text-xs font-medium" style={{ color: "var(--success)" }}>
+              <CheckCircle2 className="w-3.5 h-3.5" /> Workout logged today
             </span>
             {todaySession.durationMinutes > 0 && (
               <span className="text-xs" style={{ color: "var(--text-3)" }}>
@@ -757,10 +851,10 @@ function WorkoutCard({
             {todaySession.exercises.slice(0, 3).map((ex) => (
               <div
                 key={ex.id}
-                className="flex items-center gap-2 py-2 px-3 rounded-xl"
-                style={{ background: "var(--surface-2)" }}
+                className="flex items-center gap-2 py-2 px-2.5 rounded-md"
+                style={{ background: "var(--surface-raised)" }}
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--accent)" }} />
                 <span
                   className="text-xs font-medium flex-1 truncate"
                   style={{ color: "var(--text-2)" }}
@@ -804,10 +898,10 @@ function WorkoutCard({
             {lastSession.exercises.slice(0, 2).map((ex) => (
               <div
                 key={ex.id}
-                className="flex items-center gap-2 py-2 px-3 rounded-xl"
-                style={{ background: "var(--surface-2)" }}
+                className="flex items-center gap-2 py-2 px-2.5 rounded-md"
+                style={{ background: "var(--surface-raised)" }}
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-400/60 shrink-0" />
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--border)" }} />
                 <span
                   className="text-xs font-medium flex-1 truncate"
                   style={{ color: "var(--text-2)" }}
@@ -819,7 +913,7 @@ function WorkoutCard({
           </div>
           <Link
             href="/dashboard/workout"
-            className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-blue-500 hover:bg-blue-500/10 transition-all"
+            className="flex items-center justify-center gap-1.5 min-h-10 rounded-md text-sm font-medium text-accent hover:bg-accent-soft transition-colors"
             style={{ border: "1px dashed var(--border)" }}
           >
             Log today's workout
@@ -845,19 +939,15 @@ function WorkoutCard({
           </Link>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center gap-2 py-6">
-          <Dumbbell
-            className="w-8 h-8 opacity-20"
-            style={{ color: "var(--text-3)" }}
-          />
-          <p className="text-xs" style={{ color: "var(--text-3)" }}>
+        <div className="flex-1 flex items-center justify-between gap-3 py-2">
+          <p className="text-sm" style={{ color: "var(--text-3)" }}>
             No workouts logged yet
           </p>
           <Link
             href="/dashboard/workout"
-            className="text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors mt-1"
+            className="text-sm font-medium text-accent hover:opacity-80 transition-opacity shrink-0"
           >
-            Start your first session →
+            Log workout
           </Link>
         </div>
       )}
@@ -902,79 +992,104 @@ export default function HomeView() {
     }).finally(() => setLoading(false));
   }, [userId]);
 
-  // ── Streak computation ──────────────────────────────────────────────────────
-  const workoutStreak = computeStreak(sessions.map((s) => s.date));
-  const taskStreak    = computeStreak(
-    tasks
-      .filter((t) => t.status === "completed" && t.completedAt != null)
-      .map((t) => {
+  const taskStreak = computeStreak(
+    tasks.filter(t => t.status === "completed" && t.completedAt != null)
+      .map(t => {
         const d = new Date(t.completedAt!);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       })
   );
+  const workoutStreak = computeStreak(sessions.map(s => s.date));
 
+  // --- Helper components for the new hierarchy ---
+  function ConsistencyInfo({ tasks, sessions, loading }: { tasks: Task[]; sessions: WorkoutSession[]; loading: boolean }) {
+    const taskStreak = computeStreak(
+      tasks.filter(t => t.status === "completed" && t.completedAt != null)
+        .map(t => {
+          const d = new Date(t.completedAt!);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        })
+    );
+    const workoutStreak = computeStreak(sessions.map(s => s.date));
+    if (loading) return <Skel className="h-6 w-40" />;
+    return (
+      <Card className="p-3">
+        <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-2)" }}>
+          <Flame className="w-3 h-3" style={{ color: "var(--accent)" }} />
+          <span>{taskStreak}-day task streak</span>
+          <span className="mx-1">·</span>
+          <span>{workoutStreak}-day workout streak</span>
+        </div>
+      </Card>
+    );
+  }
+
+  function TodayFocus({ tasks, meals, sessions, loading }: { tasks: Task[]; meals: MealEntry[]; sessions: WorkoutSession[]; loading: boolean }) {
+    const today = todayString();
+    const overdue = tasks.filter(t => t.status === "pending" && t.dueDate && t.dueDate < today);
+    const due = tasks.filter(t => t.status === "pending" && (!t.dueDate || t.dueDate === today));
+    const todayWorkout = sessions.find(s => s.date === today);
+    const calorieTotal = meals.reduce((c, m) => c + m.macros.calories, 0);
+    const nutritionGoals = (goals ?? { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 });
+    const actions = [] as { href: string; label: string; icon: React.ReactNode }[];
+    if (overdue.length > 0) actions.push({ href: "/dashboard/tasks", label: `${overdue.length} overdue`, icon: <AlertCircle className="w-4 h-4" /> });
+    else if (due.length > 0) actions.push({ href: "/dashboard/tasks", label: `${due.length} tasks today`, icon: <CheckSquare className="w-4 h-4" /> });
+    else if (!todayWorkout) actions.push({ href: "/dashboard/workout", label: "Log workout", icon: <Dumbbell className="w-4 h-4" /> });
+    else if (meals.length === 0 || calorieTotal < nutritionGoals.calories) actions.push({ href: "/dashboard/diet", label: "Log a meal", icon: <Flame className="w-4 h-4" /> });
+    else actions.push({ href: "/dashboard/diet", label: "Review nutrition", icon: <Flame className="w-4 h-4" /> });
+    return (
+      <Card className="p-4">
+        <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--text-1)" }}>Today's Focus</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {actions.map(a => (
+            <Link key={a.href} href={a.href} className="flex items-center gap-2 p-2 rounded-md bg-accent-soft hover:bg-accent transition-colors">
+              {a.icon}
+              <span className="font-medium" style={{ color: "var(--accent)" }}>{a.label}</span>
+            </Link>
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
+  function SatatInsight({ loading }: { loading: boolean }) {
+    return (
+      <Card className="p-4">
+        <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--text-1)" }}>Satat Insight</h2>
+        {loading ? <Skel className="h-6 w-40" /> : <p className="text-sm" style={{ color: "var(--text-2)" }}>Your progress is steady. Keep the consistency and consider a short cardio session tomorrow.</p>}
+      </Card>
+    );
+  }
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-6">
       {/* ── Greeting ── */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight" style={{ color: "var(--text-1)" }}>
+        <h1 className="page-title">
           {getGreeting(firstName)}
         </h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-3)" }}>
+        <p className="page-description mt-1">
           {formatDate()}
         </p>
-
-        {/* Streak chips — only shown once data is loaded and streak > 0 */}
-        {!loading && (workoutStreak > 0 || taskStreak > 0) && (
-          <div className="flex items-center gap-2 flex-wrap mt-3">
-            {workoutStreak > 0 && (
-              <span
-                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: "rgba(59,130,246,0.1)",
-                  color: "#3b82f6",
-                  border: "1px solid rgba(59,130,246,0.2)",
-                }}
-              >
-                <Dumbbell className="w-3 h-3" />
-                {workoutStreak === 1
-                  ? "Workout streak started"
-                  : `${workoutStreak}-day workout streak`}
-              </span>
-            )}
-            {taskStreak > 0 && (
-              <span
-                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: "rgba(139,92,246,0.1)",
-                  color: "#8b5cf6",
-                  border: "1px solid rgba(139,92,246,0.2)",
-                }}
-              >
-                <CheckSquare className="w-3 h-3" />
-                {taskStreak === 1
-                  ? "Task streak started"
-                  : `${taskStreak}-day task streak`}
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* ── Row 1: Nutrition (2/3) + Weight (1/3) ── */}
+      {/* Today's Focus */}
+      <TodayFocus tasks={tasks} meals={meals} sessions={sessions} loading={loading} />
+      {/* Consistency */}
+      <ConsistencyInfo tasks={tasks} sessions={sessions} loading={loading} />
+        <SatatInsight loading={loading} />
+
+      {/* ── Today's actions and nutrition ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <TasksCard tasks={tasks} loading={loading} />
         <CalorieCard meals={meals} goals={goals} loading={loading} />
-        <WeightCard  entries={weights}            loading={loading} />
       </div>
 
-      {/* ── Row 2: Tasks (1/2) + Workout (1/2) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TasksCard   tasks={tasks}       loading={loading} />
-        <WorkoutCard
-          sessions={sessions}
-          loading={loading}
-          assignedRoutine={profile?.workoutPlanAssignment ?? null}
-        />
+      {/* ── Training and weight trend ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <WorkoutCard sessions={sessions} loading={loading} />
+        </div>
+        <WeightCard entries={weights} loading={loading} />
       </div>
 
       {/* ── Activity Heatmap ── */}

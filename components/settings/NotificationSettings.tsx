@@ -151,7 +151,7 @@ function IOSInstallGuide() {
   return (
     <div
       className="rounded-2xl px-4 py-4 space-y-3"
-      style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}
+      style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-glow)" }}
     >
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-indigo-500/12">
@@ -177,7 +177,7 @@ function IOSInstallGuide() {
           <div key={i} className="flex items-center gap-3">
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black"
-              style={{ background: "rgba(99,102,241,0.15)", color: "#818cf8" }}
+              style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
             >
               {i + 1}
             </div>
@@ -347,12 +347,12 @@ export default function NotificationSettings() {
         <div
           className="rounded-2xl px-4 py-4 flex items-start gap-3"
           style={{
-            background: isDenied ? "rgba(239,68,68,0.07)" : "rgba(99,102,241,0.08)",
-            border: `1px solid ${isDenied ? "rgba(239,68,68,0.18)" : "rgba(99,102,241,0.2)"}`,
+            background: isDenied ? "color-mix(in srgb, var(--status-danger) 8%, transparent)" : "var(--accent-soft)",
+            border: `1px solid ${isDenied ? "color-mix(in srgb, var(--status-danger) 18%, transparent)" : "var(--accent-glow)"}`,
           }}
         >
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: isDenied ? "rgba(239,68,68,0.12)" : "rgba(99,102,241,0.12)" }}>
+            style={{ background: isDenied ? "color-mix(in srgb, var(--status-danger) 12%, transparent)" : "var(--accent-soft)" }}>
             {isDenied
               ? <BellOff style={{ width: 18, height: 18 }} className="text-red-400" />
               : <Bell    style={{ width: 18, height: 18 }} className="text-indigo-400" />}
@@ -370,7 +370,7 @@ export default function NotificationSettings() {
               <button
                 onClick={requestPermission}
                 className="mt-3 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
-                style={{ background: "rgba(99,102,241,0.9)" }}
+                style={{ background: "var(--accent)", color: "var(--on-accent)" }}
               >
                 Allow notifications
               </button>
@@ -450,9 +450,8 @@ export default function NotificationSettings() {
           </div>
           <button
             onClick={sendTestNotification}
-            disabled={sendingTest}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
-            style={{ background: "rgba(99,102,241,0.12)", color: "#818cf8" }}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
+            style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
           >
             {sendingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send style={{ width: 13, height: 13 }} />}
             {sendingTest ? "Sending…" : "Send test"}

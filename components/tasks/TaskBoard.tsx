@@ -16,9 +16,9 @@ import type { Task, Project, TaskPriority } from "@/types";
 type ViewMode = "schedule" | "history";
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; textClass: string; bgClass: string }> = {
-  high:   { label: "High",   color: "#EF4444", textClass: "text-red-400",    bgClass: "bg-red-500/10"    },
-  medium: { label: "Medium", color: "#F59E0B", textClass: "text-amber-400",  bgClass: "bg-amber-500/10"  },
-  low:    { label: "Low",    color: "#6366F1", textClass: "text-indigo-400", bgClass: "bg-indigo-500/10" },
+  high:   { label: "High",   color: "var(--danger)", textClass: "text-danger", bgClass: "bg-danger-soft" },
+  medium: { label: "Medium", color: "var(--warning)", textClass: "text-warning", bgClass: "bg-warning-soft" },
+  low:    { label: "Low",    color: "var(--accent)", textClass: "text-accent", bgClass: "bg-accent-soft" },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -268,59 +268,69 @@ export default function TaskBoard() {
     <div className="animate-fade-in">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-2xl font-black tracking-tight" style={{ color: "var(--text-1)" }}>Tasks</h1>
-          <p className="text-sm mt-0.5 font-medium" style={{ color: "var(--text-3)" }}>Stay on top of what matters</p>
+          <h1 className="page-title" style={{ color: "var(--text-primary)" }}>Tasks</h1>
+          <p className="page-description mt-1" style={{ color: "var(--text-secondary)" }}>Your daily routine at a glance</p>
         </div>
-        <button onClick={openAddTask} className="btn-primary flex items-center gap-1.5 text-sm flex-shrink-0">
+        <button onClick={openAddTask} className="btn-primary min-h-11 flex items-center gap-1.5 text-sm flex-shrink-0">
           <Plus className="w-4 h-4" /> New task
         </button>
       </div>
 
       {/* ── Project strip ── */}
-      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
+      <div className="mb-4">
+        <p className="metadata mb-2">Project</p>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {projects.map(p => {
           const active = selectedProject === p.id;
           return (
             <button key={p.id} onClick={() => setSelectedProject(p.id)}
-              className={cn("flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-150 border",
-                active ? "text-white border-transparent shadow-sm" : "hover:border-white/10")}
-              style={active ? { backgroundColor: p.color } : { background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}>
+              type="button"
+              aria-pressed={active}
+              className="inline-flex min-h-11 items-center gap-2 px-3 rounded-md text-sm font-medium whitespace-nowrap border transition-colors"
+              style={{
+                background: active ? `color-mix(in srgb, ${p.color} 12%, var(--surface-base))` : "var(--surface-base)",
+                color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                borderColor: active ? p.color : "var(--border-subtle)",
+              }}>
               <span className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: active ? "rgba(255,255,255,0.6)" : p.color }} />
+                style={{ backgroundColor: p.color }} />
               {p.name}
             </button>
           );
         })}
         <button onClick={() => setShowAddProject(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border border-dashed hover:border-indigo-400/40 hover:text-indigo-400"
-          style={{ color: "var(--text-3)", borderColor: "var(--border)", background: "var(--surface-2)" }}>
-          <Plus className="w-3.5 h-3.5" /> New project
+          type="button"
+          className="btn-secondary min-h-11 inline-flex items-center gap-1.5 whitespace-nowrap border-dashed">
+          <Plus className="w-4 h-4" /> New project
         </button>
+        </div>
       </div>
 
       {/* ── No project state ── */}
       {!selectedProject ? (
-        <div className="text-center py-16 card">
-          <FolderOpen className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-          <p className="font-bold" style={{ color: "var(--text-2)" }}>No project selected</p>
-          <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>Create a project to start tracking tasks</p>
-          <button onClick={() => setShowAddProject(true)} className="btn-primary mt-4 text-sm">Create project</button>
+        <div className="py-8 border-y text-center" style={{ borderColor: "var(--border-subtle)" }}>
+          <FolderOpen className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+          <p className="text-sm font-medium" style={{ color: "var(--text-2)" }}>Choose a project to see its tasks</p>
+          <button onClick={() => setShowAddProject(true)} className="btn-secondary mt-3 text-sm">Create project</button>
         </div>
       ) : (
         <>
           {/* ── View toggle ── */}
-          <div className="flex gap-1 p-1 rounded-xl mb-5 w-fit"
-            style={{ background: "var(--surface-2)", border: "1px solid var(--border-subtle)" }}>
+          <div className="inline-flex gap-1 p-1 rounded-lg mb-4 border"
+            style={{ background: "var(--surface-raised)", borderColor: "var(--border-subtle)" }} role="tablist" aria-label="Task view">
             {([
               { id: "schedule" as ViewMode, icon: CalendarClock, label: "Schedule" },
               { id: "history"  as ViewMode, icon: History,       label: "History"  },
             ] as const).map(({ id, icon: Icon, label }) => (
               <button key={id} onClick={() => setView(id)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                type="button"
+                role="tab"
+                aria-selected={view === id}
+                className="flex min-h-10 items-center gap-1.5 px-3 rounded-md text-sm font-medium transition-colors"
                 style={view === id
-                  ? { background: "var(--surface-0)", color: "var(--text-1)", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }
+                  ? { background: "var(--surface-base)", color: "var(--text-1)", boxShadow: "var(--shadow-card)" }
                   : { color: "var(--text-3)" }}>
                 <Icon className="w-3.5 h-3.5" /> {label}
               </button>
@@ -404,38 +414,41 @@ function ScheduleView({
   onToggle: (t: Task) => void; onDelete: (id: string) => void; onEdit: (t: Task) => void;
   onAddTask: () => void;
 }) {
-  const isCurrentWeek = weekDates.includes(today);
   const totalForDate = tasksForDate.length + overdueTasks.length;
 
   return (
     <>
-      {/* ── Week strip ── */}
-      <div className="card mb-5 p-3 sm:p-4">
-        {/* Week label + nav */}
-        <div className="flex items-center justify-between mb-3">
-          <button onClick={() => onNavigateWeek(-1)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
-            style={{ color: "var(--text-2)" }}>
+      <section className="mb-5" aria-label="Schedule">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <h2 className="section-title truncate" style={{ fontSize: "1.125rem" }}>{formatDateLabel(selectedDate)}</h2>
+            <p className="metadata mt-0.5">
+              {totalForDate === 0
+                ? completedForDate.length > 0 ? `${completedForDate.length} completed` : "No tasks scheduled"
+                : `${tasksForDate.length + overdueTasks.length} open${completedForDate.length > 0 ? ` · ${completedForDate.length} completed` : ""}`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {selectedDate !== today && (
+              <button onClick={onJumpToToday} type="button" className="btn-secondary px-3 text-sm">Today</button>
+            )}
+            <button onClick={onAddTask} type="button" className="btn-primary min-h-11 px-3 text-sm">
+              <Plus className="w-4 h-4" /> Add task
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 py-1">
+          <button onClick={() => onNavigateWeek(-1)} type="button" aria-label="Previous week" className="btn-icon shrink-0">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold" style={{ color: "var(--text-2)" }}>{weekLabel(weekDates)}</span>
-            {!isCurrentWeek && (
-              <button onClick={onJumpToToday}
-                className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-all">
-                Today
-              </button>
-            )}
-          </div>
-          <button onClick={() => onNavigateWeek(1)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
-            style={{ color: "var(--text-2)" }}>
+          <span className="text-sm font-medium tabular-nums" style={{ color: "var(--text-2)" }}>{weekLabel(weekDates)}</span>
+          <button onClick={() => onNavigateWeek(1)} type="button" aria-label="Next week" className="btn-icon shrink-0">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Day cells */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 mt-1">
           {weekDates.map((date, i) => {
             const isToday    = date === today;
             const isSelected = date === selectedDate;
@@ -445,30 +458,27 @@ function ScheduleView({
             const hasTasks   = pending + done > 0;
 
             return (
-              <button key={date} onClick={() => onSelectDate(date)}
-                className={cn(
-                  "flex flex-col items-center py-2.5 rounded-xl transition-all duration-150 relative",
-                  isSelected ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25" : "hover:bg-white/5"
-                )}>
-                <span className={cn("text-[10px] font-bold leading-none mb-1.5",
-                  isSelected ? "text-indigo-200" : isPast ? "opacity-40" : "")}
-                  style={!isSelected ? { color: "var(--text-3)" } : undefined}>
+              <button key={date} onClick={() => onSelectDate(date)} type="button" aria-pressed={isSelected}
+                className="min-h-16 flex flex-col items-center justify-center gap-1 rounded-md border transition-colors"
+                style={{
+                  background: isSelected ? "var(--accent-soft)" : "transparent",
+                  borderColor: isSelected ? "var(--accent)" : "transparent",
+                  color: isSelected ? "var(--text-1)" : isToday ? "var(--accent)" : "var(--text-2)",
+                  opacity: isPast && !isSelected ? 0.62 : 1,
+                }}>
+                <span className="text-[11px] font-medium leading-none">
                   {DAY_LABELS[i]}
                 </span>
-                <span className={cn("text-sm font-black leading-none",
-                  isToday && !isSelected ? "text-indigo-400" : isPast && !isSelected ? "opacity-40" : "")}
-                  style={!isSelected ? { color: "var(--text-1)" } : undefined}>
+                <span className="text-sm font-semibold leading-none tabular-nums">
                   {shortDay(date)}
                 </span>
                 {/* Dot indicators */}
-                <div className="flex gap-0.5 mt-1.5 h-1.5">
+                <div className="flex gap-1 h-1.5">
                   {pending > 0 && (
-                    <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0",
-                      isSelected ? "bg-white/70" : "bg-indigo-400")} />
+                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: isSelected ? "var(--accent)" : "var(--text-3)" }} />
                   )}
                   {done > 0 && (
-                    <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0",
-                      isSelected ? "bg-white/30" : "bg-emerald-400")} />
+                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: "var(--success)" }} />
                   )}
                   {!hasTasks && <span className="w-1.5 h-1.5" />}
                 </div>
@@ -476,24 +486,7 @@ function ScheduleView({
             );
           })}
         </div>
-      </div>
-
-      {/* ── Date heading ── */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-base font-black" style={{ color: "var(--text-1)" }}>{formatDateLabel(selectedDate)}</h2>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>
-            {totalForDate === 0
-              ? "No tasks"
-              : `${tasksForDate.length} pending${overdueTasks.length > 0 ? ` · ${overdueTasks.length} overdue` : ""}${completedForDate.length > 0 ? ` · ${completedForDate.length} done` : ""}`}
-          </p>
-        </div>
-        <button onClick={onAddTask}
-          className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all hover:bg-indigo-500/10 hover:text-indigo-400"
-          style={{ color: "var(--text-3)", border: "1px solid var(--border)" }}>
-          <Plus className="w-3.5 h-3.5" /> Add task
-        </button>
-      </div>
+      </section>
 
       {/* ── Overdue section (today only) ── */}
       {overdueTasks.length > 0 && (
@@ -504,7 +497,7 @@ function ScheduleView({
               Overdue · {overdueTasks.length}
             </span>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-0 border-y" style={{ borderColor: "var(--border-subtle)" }}>
             {overdueTasks.map(t => (
               <TaskCard key={t.id} task={t} isOverdue
                 onToggle={onToggle} onDelete={onDelete} onEdit={onEdit}
@@ -519,23 +512,19 @@ function ScheduleView({
 
       {/* ── Pending tasks ── */}
       {tasksForDate.length === 0 && overdueTasks.length === 0 ? (
-        <div className="text-center py-14 card border-dashed border-2" style={{ borderColor: "var(--border)" }}>
-          <CalendarCheck className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-          <p className="font-bold text-sm" style={{ color: "var(--text-2)" }}>
-            {selectedDate < todayString() ? "Nothing was scheduled here" : "Clear schedule"}
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>
-            {selectedDate < todayString() ? "Completed tasks are shown below" : "Add a task to get started"}
-          </p>
-          {selectedDate >= todayString() && (
-            <button onClick={onAddTask}
-              className="mt-3 text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
-              + Add task
-            </button>
-          )}
+        <div className="text-center py-8 border-y" style={{ borderColor: "var(--border-subtle)" }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2" style={{ color: "var(--text-3)" }}>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+            <path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Your day is clear.</p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-2)" }}>Add a task to keep your routine moving.</p>
+          <button onClick={onAddTask} type="button" className="btn-primary mt-2 text-sm min-h-11 px-4">
+            Add task
+          </button>
         </div>
       ) : (
-        <div className="space-y-2 stagger">
+        <div className="space-y-0 border-y stagger" style={{ borderColor: "var(--border-subtle)" }}>
           {tasksForDate.map(t => (
             <TaskCard key={t.id} task={t}
               onToggle={onToggle} onDelete={onDelete} onEdit={onEdit}
@@ -554,7 +543,7 @@ function ScheduleView({
             </p>
             <div className="h-px flex-1" style={{ background: "var(--border)" }} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-0 border-y" style={{ borderColor: "var(--border-subtle)" }}>
             {completedForDate.map(t => (
               <TaskCard key={t.id} task={t}
                 onToggle={onToggle} onDelete={onDelete} onEdit={onEdit}
@@ -578,25 +567,25 @@ function HistoryView({
 }) {
   if (groups.length === 0) {
     return (
-      <div className="text-center py-16 card border-dashed border-2" style={{ borderColor: "var(--border)" }}>
-        <History className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-        <p className="font-bold text-sm" style={{ color: "var(--text-2)" }}>No history yet</p>
+      <div className="text-center py-8 border-y" style={{ borderColor: "var(--border-subtle)" }}>
+        <History className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--text-3)" }} />
+        <p className="text-sm font-medium" style={{ color: "var(--text-2)" }}>No history yet</p>
         <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>Complete some tasks to see your history here</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {groups.map(([date, taskList]) => (
         <div key={date}>
           {/* Date group header */}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-emerald-500/10">
-              <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400" />
+            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "var(--accent-soft)" }}>
+              <CheckCircle2 className="w-4 h-4" style={{ color: "var(--success)" }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-black" style={{ color: "var(--text-1)" }}>{formatGroupDate(date)}</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--text-1)" }}>{formatGroupDate(date)}</p>
               <p className="text-xs" style={{ color: "var(--text-3)" }}>
                 {taskList.length} task{taskList.length !== 1 ? "s" : ""} completed
               </p>
@@ -604,8 +593,7 @@ function HistoryView({
           </div>
 
           {/* Timeline line + tasks */}
-          <div className="relative ml-4 pl-6 space-y-2"
-            style={{ borderLeft: "2px dashed var(--border)" }}>
+          <div className="relative ml-4 pl-4 space-y-2" style={{ borderLeft: "1px solid var(--border)" }}>
             {taskList.map(t => (
               <HistoryTaskCard key={t.id} task={t} color={projectColor}
                 onToggle={onToggle} onDelete={onDelete} />
@@ -633,12 +621,7 @@ function TaskCard({
   // Cleanup timer on unmount
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  // Border color priority: overdue > task priority > project color
-  const borderColor = isOverdue
-    ? "#EF4444"
-    : priority && PRIORITY_CONFIG[priority]
-      ? PRIORITY_CONFIG[priority].color
-      : color ?? "#6366F1";
+  const projectColor = color ?? "var(--accent)";
 
   const handleToggle = () => {
     if (completing) return; // prevent double-tap during animation
@@ -658,72 +641,76 @@ function TaskCard({
   return (
     <div
       className={cn(
-        "card flex items-start gap-3 group transition-all duration-200 animate-slide-up",
+        "group flex items-center gap-2 sm:gap-3 px-1 py-2.5 transition-colors",
         completing && "completing-glow",
-        done ? "opacity-50" : isOverdue ? "" : "hover:border-white/10",
-        isOverdue && !done ? "bg-red-500/[0.03]" : "",
+        isOverdue && !done && "bg-danger-soft", done && "opacity-70",
       )}
-      style={{ borderLeftColor: borderColor, borderLeftWidth: "3px" }}>
+      style={{ borderBottom: "1px solid var(--border-subtle)" }}>
 
       {/* Toggle button */}
       <button
         onClick={handleToggle}
         disabled={completing}
-        className="flex-shrink-0 mt-0.5 relative"
-        style={{ width: "20px", height: "20px" }}
+        type="button"
+        aria-label={`${done ? "Mark incomplete" : "Complete"}: ${task.title}`}
+        aria-pressed={done}
+        className="w-11 h-11 flex-shrink-0 rounded-md flex items-center justify-center relative transition-colors hover:bg-surface-tertiary"
+        style={{
+          color: done || completing ? "var(--success)" : isOverdue ? "var(--danger)" : "var(--text-muted)",
+          background: done || completing ? "color-mix(in srgb, var(--success) 10%, transparent)" : undefined,
+        }}
       >
         {completing ? (
           <>
-            {/* Expanding ripple ring */}
-            <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ripple" />
-            {/* Spring-bouncing filled check */}
-            <CheckCircle2
-              className="w-5 h-5 text-emerald-400 animate-check-pop relative z-10"
-            />
+            <span className="absolute inset-1 rounded-md bg-success-soft animate-ripple" />
+            <CheckCircle2 className="w-5 h-5 animate-check-pop relative z-10" />
           </>
         ) : done ? (
-          <CheckCircle2 className="w-5 h-5 animate-checkmark" style={{ color: borderColor }} />
+          <CheckCircle2 className="w-5 h-5 animate-checkmark" />
         ) : isOverdue ? (
-          <AlertCircle className="w-5 h-5 text-red-400" />
+          <AlertCircle className="w-5 h-5" />
         ) : (
-          <Circle className="w-5 h-5 text-gray-300 dark:text-[#333] hover:text-gray-400 transition-colors" />
+          <Circle className="w-5 h-5" />
         )}
       </button>
 
       {/* Body — tap to edit on mobile */}
-      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !done && onEdit(task)}>
-        <p className={cn("text-sm font-semibold leading-snug", done && "line-through opacity-40")}
-          style={{ color: isOverdue && !done ? "#F87171" : "var(--text-1)" }}>
-          {task.title}
-        </p>
+      <div className="flex-1 min-w-0 cursor-pointer py-1" onClick={() => !done && onEdit(task)}>
+        <div className="flex items-start gap-2">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style={{ background: projectColor }} aria-hidden="true" />
+          <p className={cn("text-sm font-medium leading-snug break-words", done && "line-through")}
+            style={{ color: done ? "var(--text-secondary)" : isOverdue ? "var(--danger)" : "var(--text-primary)" }}>
+            {task.title}
+          </p>
+        </div>
 
         {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 pl-3.5">
           {task.description && (
-            <p className="text-xs truncate max-w-[180px] sm:max-w-[260px]" style={{ color: "var(--text-3)" }}>
+            <p className="text-xs truncate max-w-[160px] sm:max-w-[260px]" style={{ color: "var(--text-3)" }}>
               {task.description}
             </p>
           )}
           {isOverdue && task.dueDate && !done && (
-            <span className="inline-flex items-center text-[10px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-md">
+            <span className="inline-flex items-center text-xs font-medium text-danger bg-danger-soft px-1.5 py-0.5 rounded-md">
               Due {formatShortDate(task.dueDate)}
             </span>
           )}
-          {task.dueDate && !isOverdue && task.dueDate !== today && !done && (
-            <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+          {task.dueDate && !isOverdue && !done && (
+            <span className="inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded-md"
               style={{ color: "var(--text-3)", background: "var(--surface-2)" }}>
-              {formatShortDate(task.dueDate)}
+              {task.dueDate === today ? "Today" : formatShortDate(task.dueDate)}
             </span>
           )}
           {priority && !done && (
-            <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md",
+            <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-md",
               PRIORITY_CONFIG[priority].textClass, PRIORITY_CONFIG[priority].bgClass)}>
-              <Flag className="w-2.5 h-2.5" />
+              <Flag className="w-3 h-3" />
               {PRIORITY_CONFIG[priority].label}
             </span>
           )}
           {done && task.completedAt && (
-            <span className="text-[10px]" style={{ color: "var(--text-3)" }}>
+            <span className="text-xs" style={{ color: "var(--text-3)" }}>
               {formatTime(task.completedAt)}
             </span>
           )}
@@ -731,17 +718,15 @@ function TaskCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-0.5 flex-shrink-0 mt-0.5">
+      <div className="flex items-center gap-0.5 flex-shrink-0">
         {!done && (
-          <button onClick={() => onEdit(task)}
-            className="p-1.5 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100 hover:bg-white/5"
-            style={{ color: "var(--text-3)" }}>
-            <Edit2 className="w-3.5 h-3.5" />
+          <button onClick={() => onEdit(task)} type="button" title="Edit task" aria-label={`Edit ${task.title}`}
+            className="btn-icon">
+            <Edit2 className="w-4 h-4" />
           </button>
         )}
-        <button onClick={e => { e.stopPropagation(); onDelete(task.id); }}
-          className="p-1.5 rounded-lg hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all"
-          style={{ color: "var(--text-3)" }}>
+        <button onClick={e => { e.stopPropagation(); onDelete(task.id); }} type="button" title="Delete task" aria-label={`Delete ${task.title}`}
+          className="btn-icon hover:text-danger hover:bg-danger-soft">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -758,9 +743,9 @@ function HistoryTaskCard({
 }) {
   return (
     <div className="card flex items-start gap-3 group animate-slide-up"
-      style={{ borderLeftColor: color ?? "#6366F1", borderLeftWidth: "2px" }}>
-      <button onClick={() => onToggle(task)} className="flex-shrink-0 mt-0.5 active:scale-90 transition-transform">
-        <CheckCircle2 className="w-4 h-4" style={{ color: color ?? "#6366F1" }} />
+      style={{ borderLeftColor: color ?? "var(--accent)", borderLeftWidth: "2px" }}>
+      <button onClick={() => onToggle(task)} type="button" aria-label={`Mark ${task.title} incomplete`} className="btn-icon flex-shrink-0">
+        <CheckCircle2 className="w-4 h-4" style={{ color: color ?? "var(--accent)" }} />
       </button>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold line-through opacity-40" style={{ color: "var(--text-1)" }}>
@@ -781,10 +766,9 @@ function HistoryTaskCard({
             {formatTime(task.completedAt)}
           </span>
         )}
-        <button onClick={e => { e.stopPropagation(); onDelete(task.id); }}
-          className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all"
-          style={{ color: "var(--text-3)" }}>
-          <Trash2 className="w-3.5 h-3.5" />
+        <button onClick={e => { e.stopPropagation(); onDelete(task.id); }} type="button" title="Delete task" aria-label={`Delete ${task.title}`}
+          className="btn-icon hover:text-danger hover:bg-danger-soft">
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -798,10 +782,10 @@ function PrioritySelector({
   value: TaskPriority | "none"; onChange: (v: TaskPriority | "none") => void;
 }) {
   const options: { id: TaskPriority | "none"; label: string; textClass: string; bgActive: string }[] = [
-    { id: "none",   label: "None",   textClass: "",                          bgActive: "bg-white/10"          },
-    { id: "low",    label: "Low",    textClass: "text-indigo-400",           bgActive: "bg-indigo-500/15"     },
-    { id: "medium", label: "Medium", textClass: "text-amber-400",            bgActive: "bg-amber-500/15"      },
-    { id: "high",   label: "High",   textClass: "text-red-400",              bgActive: "bg-red-500/15"        },
+    { id: "none",   label: "None",   textClass: "text-text-secondary", bgActive: "bg-surface-tertiary" },
+    { id: "low",    label: "Low",    textClass: "text-accent", bgActive: "bg-accent-soft" },
+    { id: "medium", label: "Medium", textClass: "text-warning", bgActive: "bg-warning-soft" },
+    { id: "high",   label: "High",   textClass: "text-danger", bgActive: "bg-danger-soft" },
   ];
 
   return (
@@ -809,8 +793,8 @@ function PrioritySelector({
       <label className="label">Priority</label>
       <div className="flex gap-1.5">
         {options.map(o => (
-          <button key={o.id} onClick={() => onChange(o.id)}
-            className={cn("flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all border",
+          <button key={o.id} onClick={() => onChange(o.id)} type="button" aria-pressed={value === o.id}
+            className={cn("flex-1 min-h-11 rounded-md text-sm font-medium capitalize transition-colors border",
               value === o.id ? `${o.textClass} ${o.bgActive}` : "hover:opacity-80")}
             style={value === o.id
               ? { borderColor: "transparent" }
@@ -954,10 +938,9 @@ function AddProjectModal({
           <label className="label flex items-center gap-1.5"><Palette className="w-3.5 h-3.5" /> Color</label>
           <div className="flex gap-2 flex-wrap">
             {PROJECT_COLORS.map(c => (
-              <button key={c} onClick={() => setColor(c)}
-                className={cn("w-9 h-9 rounded-full transition-all duration-150",
-                  color === c ? "ring-2 ring-offset-2 ring-indigo-400 ring-offset-transparent scale-110" : "hover:scale-105")}
-                style={{ backgroundColor: c }} />
+              <button key={c} onClick={() => setColor(c)} type="button" aria-label={`Select project color ${c}`} aria-pressed={color === c}
+                className="w-11 h-11 rounded-full border-2 transition-colors"
+                style={{ backgroundColor: c, borderColor: color === c ? "var(--text-primary)" : "transparent" }} />
             ))}
           </div>
         </div>
@@ -974,13 +957,13 @@ function AddProjectModal({
 // ── Modal Wrapper ─────────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pt-4 pb-24 sm:p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative rounded-2xl shadow-2xl w-full max-w-md p-5 animate-slide-up max-h-[80dvh] overflow-y-auto"
-        style={{ background: "var(--surface-2)", border: "1px solid var(--border)", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-3 pt-4 pb-24 sm:p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-label={title}
+        className="relative dialog-surface w-full max-w-md p-4 sm:p-5 animate-slide-up max-h-[80dvh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-black" style={{ color: "var(--text-1)" }}>{title}</h3>
-          <button onClick={onClose} className="btn-ghost p-1.5"><X className="w-4 h-4" /></button>
+          <h3 className="card-title">{title}</h3>
+          <button onClick={onClose} type="button" className="btn-icon" aria-label={`Close ${title}`}><X className="w-4 h-4" /></button>
         </div>
         {children}
       </div>

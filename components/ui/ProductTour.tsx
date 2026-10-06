@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { CheckSquare, Dumbbell, Utensils, Sparkles, ArrowRight, X, Brain, Camera, Zap, ChevronRight } from "lucide-react";
+import { CheckSquare, Dumbbell, Utensils, Sparkles, ArrowRight, X, Brain, Camera, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TOUR_KEY = "dailyos_tour_v1";
@@ -34,14 +34,17 @@ export default function ProductTour() {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={dismiss} />
+      <div className="absolute inset-0 bg-black/55" onClick={dismiss} />
 
       <div
-        className="relative w-full shadow-2xl overflow-hidden"
+        className="relative w-full overflow-hidden border"
         style={{
+          background: "var(--surface-0)",
+          borderColor: "var(--border)",
+          boxShadow: "var(--shadow-dialog)",
           maxWidth: step === 0 ? 400 : step === 4 ? 460 : 420,
-          borderRadius: 28,
-          transition: "max-width 0.3s cubic-bezier(0.34,1.4,0.64,1)",
+          borderRadius: "var(--radius-panel)",
+          transition: "max-width 0.16s ease",
         }}
       >
         {/* ── Step content ── */}
@@ -75,7 +78,7 @@ export default function ProductTour() {
                 style={{
                   width: i === step ? 20 : 6,
                   height: 6,
-                  backgroundColor: i === step ? "white" : "rgba(255,255,255,0.3)",
+                  backgroundColor: i === step ? "var(--accent)" : "var(--border)",
                 }}
               />
             ))}
@@ -87,23 +90,17 @@ export default function ProductTour() {
 }
 
 /* ── Shared footer nav ─────────────────────────────────────────────── */
-function Nav({ onBack, onNext, isLast, light }: { onBack?: () => void; onNext: () => void; isLast?: boolean; light?: boolean }) {
+function Nav({ onBack, onNext, isLast }: { onBack?: () => void; onNext: () => void; isLast?: boolean }) {
   return (
     <div className={cn("flex items-center justify-between px-6 pb-6 pt-2")}>
       <div className="w-24" /> {/* spacer for dots */}
       <div className="flex items-center gap-2 ml-auto">
         {onBack && (
-          <button onClick={onBack}
-            className={cn("px-3 py-2 rounded-xl text-xs font-bold transition-all",
-              light ? "text-white/60 hover:text-white hover:bg-white/10" : "text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-            )}>Back</button>
+          <button onClick={onBack} className="btn-ghost text-sm">Back</button>
         )}
         <button onClick={onNext}
-          className={cn(
-            "flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-sm font-black text-white transition-all active:scale-95 shadow-lg",
-            light ? "bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20" : "bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600"
-          )}>
-          {isLast ? "Let's go 🚀" : "Next"}
+          className="btn-primary inline-flex items-center gap-1.5 text-sm">
+          {isLast ? "Get started" : "Next"}
           {!isLast && <ArrowRight className="w-3.5 h-3.5" />}
         </button>
       </div>
@@ -114,50 +111,39 @@ function Nav({ onBack, onNext, isLast, light }: { onBack?: () => void; onNext: (
 /* ── STEP 0: Welcome — full gradient hero ──────────────────────────── */
 function Step0({ onNext, onDismiss }: { onNext: () => void; onDismiss: () => void }) {
   return (
-    <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-700 rounded-[28px] overflow-hidden">
-      <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all z-10">
+    <div className="overflow-hidden" style={{ background: "var(--surface-0)" }}>
+      <button onClick={onDismiss} className="absolute top-4 right-4 btn-ghost z-10" aria-label="Close introduction">
         <X className="w-4 h-4" />
       </button>
 
       {/* Hero area */}
-      <div className="pt-14 pb-8 px-8 text-center relative overflow-hidden">
-        {/* Floating blobs */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl" />
-
-        {/* Icon with ring */}
-        <div className="relative inline-flex mb-6">
-          <div className="w-20 h-20 rounded-3xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-2xl">
-            <Sparkles className="w-9 h-9 text-white" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white flex items-center justify-center">
-            <Zap className="w-2.5 h-2.5 text-white" />
-          </div>
+      <div className="pt-10 pb-5 px-6 text-center border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4" style={{ background: "var(--accent-soft)" }}>
+          <Sparkles className="w-6 h-6" style={{ color: "var(--accent)" }} />
         </div>
 
-        <h1 className="text-2xl font-black text-white mb-3 leading-tight">
-          Welcome to<br />DailyOS 👋
+        <h1 className="text-xl font-semibold mb-2 leading-tight" style={{ color: "var(--text-1)" }}>
+          Welcome to DailyOS
         </h1>
-        <p className="text-sm text-white/70 leading-relaxed max-w-[260px] mx-auto">
-          Tasks · Workouts · Nutrition — all in one place, with AI coaching built right in.
+        <p className="text-sm leading-relaxed max-w-[300px] mx-auto" style={{ color: "var(--text-2)" }}>
+          Plan tasks, record workouts, and keep track of meals in one place.
         </p>
       </div>
 
-      {/* Three pill features */}
-      <div className="flex gap-2 px-8 pb-8 justify-center flex-wrap">
+      <div className="flex gap-2 px-6 py-4 justify-center flex-wrap">
         {[
           { icon: CheckSquare, label: "Tasks" },
           { icon: Dumbbell, label: "Workout" },
           { icon: Utensils, label: "Diet" },
         ].map(({ icon: Icon, label }) => (
-          <div key={label} className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full px-3.5 py-1.5">
-            <Icon className="w-3 h-3 text-white/80" />
-            <span className="text-xs font-bold text-white/80">{label}</span>
+          <div key={label} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5" style={{ background: "var(--surface-2)" }}>
+            <Icon className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+            <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>{label}</span>
           </div>
         ))}
       </div>
 
-      <Nav onNext={onNext} light />
+      <Nav onNext={onNext} />
     </div>
   );
 }
@@ -171,15 +157,15 @@ function Step1({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
     { text: "Update docs", done: false },
   ];
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-[28px] overflow-hidden">
+    <div className="overflow-hidden" style={{ background: "var(--surface-0)" }}>
       <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-xl text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all z-10">
         <X className="w-4 h-4" />
       </button>
 
       {/* Top violet strip */}
-      <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 pt-6 pb-5">
-        <span className="text-[10px] font-black uppercase tracking-widest text-violet-200 bg-white/15 px-3 py-1 rounded-full">Tasks</span>
-        <h2 className="text-xl font-black text-white mt-3 leading-tight">Manage your day<br />like a pro ✅</h2>
+      <div className="px-6 pt-5 pb-4 border-b" style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}>
+        <span className="text-xs font-semibold" style={{ color: "var(--accent)" }}>Tasks</span>
+        <h2 className="text-lg font-semibold mt-2 leading-tight" style={{ color: "var(--text-1)" }}>Keep today&apos;s work visible</h2>
       </div>
 
       {/* Side-by-side layout */}
@@ -190,37 +176,37 @@ function Step1({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
             <div key={i}
               className="flex items-center gap-2.5 p-2.5 rounded-xl border transition-all"
               style={{
-                borderColor: t.done ? "#EDE9FE" : "#F3F4F6",
-                background: t.done ? "#F5F3FF" : "white",
+                borderColor: t.done ? "var(--accent-glow)" : "var(--border)",
+                background: t.done ? "var(--accent-soft)" : "var(--surface-0)",
               }}
               // Note: ProductTour uses inline styles for its demo cards (intentionally not dark-mode themed as they are mock UI)
               >
               <div className="w-4 h-4 rounded-full flex-shrink-0 border-2 flex items-center justify-center"
-                style={t.done ? { background: "#7C3AED", borderColor: "#7C3AED" } : { borderColor: "#D1D5DB" }}>
+                style={t.done ? { background: "var(--accent)", borderColor: "var(--accent)" } : { borderColor: "var(--border)" }}>
                 {t.done && <svg className="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 3.5-4" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>}
               </div>
               <span className={cn("text-xs font-semibold", t.done ? "line-through text-gray-300" : "text-gray-800")}>{t.text}</span>
             </div>
           ))}
           {/* Progress bar */}
-          <div className="mt-3 pt-2 border-t border-gray-100">
+          <div className="mt-3 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
             <div className="flex justify-between text-[10px] font-bold text-gray-400 mb-1.5">
-              <span>Progress</span><span className="text-violet-600">2/4 done</span>
+              <span>Progress</span><span style={{ color: "var(--accent)" }}>2/4 done</span>
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500" style={{ width: "50%" }} />
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-3)" }}>
+              <div className="h-full rounded-full" style={{ width: "50%", background: "var(--accent)" }} />
             </div>
           </div>
         </div>
 
         {/* Right: short description */}
-        <div className="w-[130px] flex-shrink-0 bg-violet-50 p-4 flex flex-col justify-center gap-3">
-          <div className="text-xs text-violet-800 leading-relaxed font-medium">
-            <p className="font-black text-violet-900 mb-1">Projects</p>
+        <div className="w-[130px] flex-shrink-0 p-4 flex flex-col justify-center gap-3" style={{ background: "var(--surface-2)" }}>
+          <div className="text-xs leading-relaxed font-medium" style={{ color: "var(--text-2)" }}>
+            <p className="font-semibold mb-1" style={{ color: "var(--text-1)" }}>Projects</p>
             Group tasks by Work, Personal, or Health.
           </div>
-          <div className="text-xs text-violet-800 leading-relaxed font-medium">
-            <p className="font-black text-violet-900 mb-1">Daily / Weekly</p>
+          <div className="text-xs leading-relaxed font-medium" style={{ color: "var(--text-2)" }}>
+            <p className="font-semibold mb-1" style={{ color: "var(--text-1)" }}>Daily / Weekly</p>
             Switch between day and week views.
           </div>
         </div>
@@ -239,7 +225,7 @@ function Step2({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
     { name: "Squat",       sets: "4×6", weight: "100kg", pct: 90 },
   ];
   return (
-    <div className="bg-gray-950 rounded-[28px] overflow-hidden">
+    <div className="overflow-hidden" style={{ background: "var(--surface-0)" }}>
       <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-xl text-white/30 hover:text-white hover:bg-white/10 transition-all z-10">
         <X className="w-4 h-4" />
       </button>
@@ -247,40 +233,40 @@ function Step2({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
       {/* Header */}
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-blue-500 flex items-center justify-center">
-            <Dumbbell className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "var(--accent-soft)" }}>
+            <Dumbbell className="w-5 h-5" style={{ color: "var(--accent)" }} />
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Workout</span>
-            <h2 className="text-lg font-black text-white leading-tight">Every rep. Logged.</h2>
+            <span className="text-xs font-semibold" style={{ color: "var(--accent)" }}>Workout</span>
+            <h2 className="text-lg font-semibold leading-tight" style={{ color: "var(--text-1)" }}>Every session, recorded.</h2>
           </div>
         </div>
 
         {/* Exercise cards — stacked with depth effect */}
         <div className="space-y-2">
           {exs.map((ex, i) => (
-            <div key={i} className="bg-gray-900 rounded-2xl p-3.5 border border-gray-800 flex items-center gap-3"
-              style={{ transform: `translateX(${i * 4}px)`, opacity: 1 - i * 0.08 }}>
+            <div key={i} className="rounded-lg p-3 border flex items-center gap-3"
+              style={{ background: "var(--surface-2)", borderColor: "var(--border)", transform: `translateX(${i * 4}px)`, opacity: 1 - i * 0.08 }}>
               <div className="flex-1">
-                <p className="text-sm font-bold text-white">{ex.name}</p>
-                <div className="mt-1.5 h-1 bg-gray-800 rounded-full overflow-hidden w-full">
-                  <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${ex.pct}%` }} />
+                <p className="text-sm font-semibold" style={{ color: "var(--text-1)" }}>{ex.name}</p>
+                <div className="mt-1.5 h-1 rounded-full overflow-hidden w-full" style={{ background: "var(--surface-3)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${ex.pct}%`, background: "var(--accent)" }} />
                 </div>
               </div>
-              <span className="text-xs bg-blue-500/20 text-blue-400 font-black px-2.5 py-1 rounded-xl border border-blue-500/20">{ex.sets}</span>
-              <span className="text-xs bg-gray-800 text-gray-400 font-bold px-2.5 py-1 rounded-xl">{ex.weight}</span>
+              <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>{ex.sets}</span>
+              <span className="text-xs font-medium px-2 py-1 rounded-md" style={{ background: "var(--surface-3)", color: "var(--text-2)" }}>{ex.weight}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* AI summary teaser */}
-      <div className="mx-6 mb-5 bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-indigo-700/40 rounded-2xl p-3 flex items-center gap-2.5">
-        <Sparkles className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-        <p className="text-xs text-indigo-300 font-semibold">Hit <span className="font-black text-white">AI Summary</span> after your session for calories burned + coach feedback.</p>
+      <div className="mx-6 mb-5 border rounded-lg p-3 flex items-center gap-2.5" style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}>
+        <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: "var(--accent)" }} />
+        <p className="text-xs font-medium" style={{ color: "var(--text-2)" }}>Review training volume, calories, and session notes after your workout.</p>
       </div>
 
-      <Nav onBack={onBack} onNext={onNext} light />
+      <Nav onBack={onBack} onNext={onNext} />
     </div>
   );
 }
@@ -288,10 +274,10 @@ function Step2({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
 /* ── STEP 3: Diet — rings front & center ──────────────────────────── */
 function Step3({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () => void; onDismiss: () => void }) {
   const macros = [
-    { label: "Calories", value: 1640, goal: 2000, color: "#F59E0B", pct: 82 },
-    { label: "Protein",  value: 118,  goal: 150,  color: "#3B82F6", pct: 79 },
-    { label: "Carbs",    value: 165,  goal: 200,  color: "#10B981", pct: 55 },
-    { label: "Fat",      value: 52,   goal: 65,   color: "#F43F5E", pct: 80 },
+    { label: "Calories", value: 1640, goal: 2000, color: "var(--status-warning)", pct: 82 },
+    { label: "Protein",  value: 118,  goal: 150,  color: "var(--macro-protein)", pct: 79 },
+    { label: "Carbs",    value: 165,  goal: 200,  color: "var(--macro-carbs)", pct: 55 },
+    { label: "Fat",      value: 52,   goal: 65,   color: "var(--macro-fat)", pct: 80 },
   ];
 
   function Ring({ color, pct, size = 64, stroke = 7 }: { color: string; pct: number; size?: number; stroke?: number }) {
@@ -299,7 +285,7 @@ function Step3({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
     const circ = 2 * Math.PI * r;
     return (
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F1F5F9" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--surface-3)" strokeWidth={stroke} />
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
           strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={circ * (1 - pct / 100)} />
       </svg>
@@ -307,29 +293,28 @@ function Step3({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-[28px] overflow-hidden">
+    <div className="overflow-hidden" style={{ background: "var(--surface-0)" }}>
       <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-xl text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all z-10">
         <X className="w-4 h-4" />
       </button>
 
       {/* Emerald top + big calorie ring */}
-      <div className="bg-gradient-to-br from-emerald-500 to-teal-600 pt-6 pb-8 px-6 text-center relative overflow-hidden">
-        <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100/80 bg-white/15 px-3 py-1 rounded-full inline-block mb-4">Diet</span>
+      <div className="pt-5 pb-6 px-6 text-center border-b" style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}>
+        <span className="text-xs font-semibold inline-block mb-3" style={{ color: "var(--accent)" }}>Diet</span>
 
         {/* Big center ring */}
         <div className="relative inline-flex items-center justify-center mb-2">
-          <Ring color="white" pct={82} size={110} stroke={9} />
+          <Ring color="var(--accent)" pct={82} size={96} stroke={7} />
           <div className="absolute text-center">
-            <p className="text-2xl font-black text-white leading-none">360</p>
-            <p className="text-[9px] text-white/60 font-bold uppercase tracking-wide">kcal left</p>
+            <p className="text-xl font-semibold leading-none" style={{ color: "var(--text-1)" }}>360</p>
+            <p className="text-[10px] font-medium" style={{ color: "var(--text-3)" }}>kcal left</p>
           </div>
         </div>
-        <p className="text-xs text-white/70 font-semibold">1,640 of 2,000 kcal consumed</p>
+        <p className="text-xs font-medium" style={{ color: "var(--text-2)" }}>1,640 of 2,000 kcal consumed</p>
       </div>
 
       {/* Macro mini rings row */}
-      <div className="flex justify-around px-5 py-5 border-b border-gray-100 dark:border-gray-700">
+      <div className="flex justify-around px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
         {macros.slice(1).map((m) => (
           <div key={m.label} className="flex flex-col items-center gap-1">
             <div className="relative">
@@ -338,15 +323,15 @@ function Step3({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
                 <span className="text-[9px] font-black" style={{ color: m.color }}>{m.pct}%</span>
               </div>
             </div>
-            <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{m.value}g</p>
-            <p className="text-[9px] text-gray-400">{m.label}</p>
+            <p className="text-[10px] font-semibold" style={{ color: "var(--text-1)" }}>{m.value}g</p>
+            <p className="text-[9px]" style={{ color: "var(--text-3)" }}>{m.label}</p>
           </div>
         ))}
       </div>
 
       <div className="px-6 py-4">
-        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-          Log meals manually or <span className="font-black text-emerald-600">snap a photo</span> — AI Model estimates every macro instantly.
+        <p className="text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
+          Log meals manually or scan a photo to estimate the macros.
         </p>
       </div>
 
@@ -358,48 +343,43 @@ function Step3({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
 /* ── STEP 4: AI / Aria — dramatic dark, fanned cards ──────────────── */
 function Step4({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () => void; onDismiss: () => void }) {
   const cards = [
-    { icon: Dumbbell, title: "Workout Coach", desc: "Personalized report after every gym session — intensity, wins, calories burned.", color: "#3B82F6", rotate: -4 },
-    { icon: Camera,   title: "Meal Scanner",  desc: "Photograph your food. AI estimates calories, protein, carbs & fat in seconds.", color: "#10B981", rotate: 0 },
-    { icon: Brain,    title: "Orbit — Your AI Coach",  desc: "Chat anytime. Ask about workouts, nutrition, productivity — using /commands.", color: "#A78BFA", rotate: 4 },
+    { icon: Dumbbell, title: "Workout summary", desc: "Review session volume, calories, and progress.", },
+    { icon: Camera,   title: "Meal estimates", desc: "Estimate calories, protein, carbs, and fat from a photo.", },
+    { icon: Brain,    title: "Orbit assistant", desc: "Ask about your tasks, workouts, or nutrition.", },
   ];
 
   return (
-    <div className="bg-gray-950 rounded-[28px] overflow-hidden">
-      <button onClick={onDismiss} className="absolute top-4 right-4 p-1.5 rounded-xl text-white/30 hover:text-white hover:bg-white/10 transition-all z-10">
+    <div className="overflow-hidden" style={{ background: "var(--surface-0)" }}>
+      <button onClick={onDismiss} className="absolute top-4 right-4 btn-ghost z-10" aria-label="Close introduction">
         <X className="w-4 h-4" />
       </button>
 
       <div className="px-6 pt-7 pb-2">
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-4 h-4 text-amber-400" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">AI Features</span>
+          <Sparkles className="w-4 h-4" style={{ color: "var(--accent)" }} />
+          <span className="text-xs font-semibold" style={{ color: "var(--accent)" }}>Insights and tools</span>
         </div>
-        <h2 className="text-2xl font-black text-white leading-tight mb-1">AI that actually<br />coaches you.</h2>
-        <p className="text-xs text-gray-500 mb-5">Built into every section. No extra steps.</p>
+        <h2 className="text-xl font-semibold leading-tight mb-1" style={{ color: "var(--text-1)" }}>Support for daily routines</h2>
+        <p className="text-sm mb-4" style={{ color: "var(--text-3)" }}>Use summaries and estimates where they help.</p>
 
-        {/* Fanned cards */}
-        <div className="relative h-[175px]">
+        <div className="space-y-2">
           {cards.map((c, i) => {
             const Icon = c.icon;
             return (
               <div key={i}
-                className="absolute inset-x-0 rounded-2xl border p-4 flex items-start gap-3"
+                className="rounded-lg border p-3 flex items-start gap-3"
                 style={{
-                  top: i * 14,
-                  background: "rgba(255,255,255,0.04)",
-                  borderColor: "rgba(255,255,255,0.08)",
-                  transform: `rotate(${c.rotate}deg)`,
-                  zIndex: i + 1,
-                  backdropFilter: "blur(8px)",
+                  background: "var(--surface-2)",
+                  borderColor: "var(--border)",
                 }}
               >
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: c.color + "25", border: `1px solid ${c.color}40` }}>
-                  <Icon className="w-4 h-4" style={{ color: c.color }} />
+                  style={{ background: "var(--accent-soft)" }}>
+                  <Icon className="w-4 h-4" style={{ color: "var(--accent)" }} />
                 </div>
                 <div>
-                  <p className="text-xs font-black text-white">{c.title}</p>
-                  <p className="text-[10px] text-gray-500 leading-relaxed mt-0.5">{c.desc}</p>
+                  <p className="text-sm font-semibold" style={{ color: "var(--text-1)" }}>{c.title}</p>
+                  <p className="text-xs leading-relaxed mt-0.5" style={{ color: "var(--text-3)" }}>{c.desc}</p>
                 </div>
               </div>
             );
@@ -407,7 +387,7 @@ function Step4({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
         </div>
       </div>
 
-      <Nav onBack={onBack} onNext={onNext} isLast light />
+      <Nav onBack={onBack} onNext={onNext} isLast />
     </div>
   );
 }

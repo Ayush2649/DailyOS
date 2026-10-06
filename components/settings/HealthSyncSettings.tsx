@@ -44,7 +44,7 @@ function PlatformGuide({ platform }: { platform: "apple" | "mi" }) {
   const steps = platform === "apple" ? appleSteps : miSteps;
   const label = platform === "apple" ? "Apple Watch / iPhone" : "Mi Watch / Android";
   const Icon = platform === "apple" ? Apple : Smartphone;
-  const color = platform === "apple" ? "#f0f0f0" : "#4ade80";
+  const color = platform === "apple" ? "var(--text-1)" : "var(--status-success)";
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
@@ -210,7 +210,7 @@ export default function HealthSyncSettings() {
         {testResult && (
           <p
             className="text-xs mt-3 font-semibold"
-            style={{ color: testResult.ok ? "#10b981" : "#f87171" }}
+            style={{ color: testResult.ok ? "var(--status-success)" : "var(--status-danger)" }}
           >
             {testResult.ok ? "✓ " : "✗ "}{testResult.msg}
           </p>

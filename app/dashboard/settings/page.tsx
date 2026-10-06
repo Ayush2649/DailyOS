@@ -7,10 +7,10 @@ export default function SettingsPage() {
     <div className="space-y-8">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight" style={{ color: "var(--text-1)" }}>
+        <h1 className="page-title">
           Settings
         </h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-3)" }}>
+        <p className="page-description mt-1">
           Manage your preferences and reminders
         </p>
       </div>
@@ -19,9 +19,9 @@ export default function SettingsPage() {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Bell className="w-4 h-4" style={{ color: "var(--text-3)" }} />
-          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
+          <h2 className="section-title">
             Notifications
-          </p>
+          </h2>
         </div>
         <NotificationSettings />
       </div>
@@ -30,9 +30,9 @@ export default function SettingsPage() {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Watch className="w-4 h-4" style={{ color: "var(--text-3)" }} />
-          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
+          <h2 className="section-title">
             Health Sync
-          </p>
+          </h2>
         </div>
         <HealthSyncSettings />
       </div>

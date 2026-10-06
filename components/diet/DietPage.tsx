@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from "next-auth/react";
 import {
   Plus, Minus, Utensils, Camera, Trash2, X, Loader2, Settings,
-  Flame, ChevronLeft, ChevronRight, Sparkles, CheckCircle2,
+  ChevronLeft, ChevronRight, Sparkles, CheckCircle2,
   Bookmark, BookmarkPlus, Search, Mic, Edit3
 } from "lucide-react";
 import VoiceMealModal from "@/components/diet/VoiceMealModal";
@@ -13,61 +13,31 @@ import {
   getMealTemplates, saveMealTemplate, updateMealTemplate, deleteMealTemplate,
 } from "@/lib/firestore";
 import { setDietContext } from "@/lib/orbitContext";
-import { useToast } from "@/components/ui/Toast";
+
 import type { MealEntry, MealMacros, MacroGoals, MealTemplate } from "@/types";
+import EmptyState from "@/components/ui/EmptyState";
 
-// ── SVG Ring ─────────────────────────────────────────────────────────────────
-function MacroRing({
-  value, goal, color, size = 72, stroke = 6,
-}: {
-  value: number; goal: number; color: string; size?: number; stroke?: number;
+
+const defaultGoals: MacroGoals = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 };
+
+function MacroProgress({ label, value, goal, unit, color }: {
+  label: string; value: number; goal?: number | null; unit: string; color: string;
 }) {
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const pct = Math.min(value / goal, 1);
-  const offset = circ * (1 - pct);
+  const percent = goal && goal > 0 ? Math.min((value / goal) * 100, 100) : 0;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="macro-ring">
-      <circle cx={size / 2} cy={size / 2} r={r} className="macro-ring-track" strokeWidth={stroke} />
-      <circle
-        cx={size / 2} cy={size / 2} r={r}
-        className="macro-ring-fill"
-        strokeWidth={stroke}
-        stroke={color}
-        strokeDasharray={circ}
-        strokeDashoffset={offset}
-      />
-    </svg>
-  );
-}
-
-// ── Calorie Big Ring ──────────────────────────────────────────────────────────
-function CalorieRing({ value, goal }: { value: number; goal: number }) {
-  const size = 140;
-  const stroke = 10;
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  const pct = Math.min(value / goal, 1);
-  const offset = circ * (1 - pct);
-  const remaining = Math.max(goal - value, 0);
-
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="macro-ring absolute">
-        <circle cx={size / 2} cy={size / 2} r={r} className="macro-ring-track" strokeWidth={stroke} />
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          className="macro-ring-fill"
-          strokeWidth={stroke}
-          stroke="#F59E0B"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-        />
-      </svg>
-      <div className="text-center relative z-10">
-        <p className="text-2xl font-black text-gray-900 dark:text-white leading-none">{Math.round(remaining)}</p>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">remaining</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{Math.round(value)} / {goal}</p>
+    <div>
+      <div className="flex items-baseline justify-between gap-2 mb-1.5">
+        <span className="text-sm font-medium" style={{ color: "var(--text-1)" }}>{label}</span>
+        <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-2)" }}>
+          {Math.round(value)}{goal ? <span className="text-xs font-normal" style={{ color: "var(--text-3)" }}> / {goal}{unit}</span> : <span className="text-xs font-normal" style={{ color: "var(--text-3)" }}> {unit}</span>}
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-inset)" }}>
+        {goal && goal > 0 ? (
+          <div className="h-full rounded-full transition-all duration-300" style={{ width: `${percent}%`, background: color }} />
+        ) : (
+          <div className="h-full rounded-full bg-surface-2" />
+        )}
       </div>
     </div>
   );
@@ -77,7 +47,6 @@ function CalorieRing({ value, goal }: { value: number; goal: number }) {
 export default function DietPage() {
   const { data: session } = useSession();
   const userId = (session?.user as any)?.id ?? session?.user?.email ?? "";
-  const { toast } = useToast();
 
   const [date, setDate] = useState(todayString());
   const [meals, setMeals] = useState<MealEntry[]>([]);
@@ -92,42 +61,73 @@ export default function DietPage() {
   const [templates, setTemplates] = useState<MealTemplate[]>([]);
   const [savingTemplate, setSavingTemplate] = useState<{ name: string; macros: MealMacros } | null>(null);
 
+  // Load the selected day's meals, goals, and saved meal templates.
   useEffect(() => {
-    if (!userId) return;
-    getMacroGoals(userId).then((g) => { if (g) setGoals(g); });
-  }, [userId]);
+    if (!userId) {
+      setMeals([]);
+      return;
+    }
 
-  useEffect(() => {
-    if (!userId) return;
-    getMealTemplates(userId).then(setTemplates);
-  }, [userId]);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (!userId) return;
-    setLoading(true);
-    getMeals(userId, date).then(setMeals).finally(() => setLoading(false));
+    const loadDietData = async () => {
+      setLoading(true);
+      try {
+        const [mealData, goalData, templateData] = await Promise.all([
+          (getMeals as any)(userId, date),
+          (getMacroGoals as any)(userId),
+          (getMealTemplates as any)(userId),
+        ]);
+
+        if (cancelled) return;
+
+        setMeals(Array.isArray(mealData) ? mealData : []);
+        setGoals(goalData ? { ...defaultGoals, ...goalData } : defaultGoals);
+        setTemplates(Array.isArray(templateData) ? templateData : []);
+      } catch (error) {
+        console.error("Failed to load diet data:", error);
+        if (!cancelled) {
+          setMeals([]);
+          setTemplates([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadDietData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [userId, date]);
 
-  const totals: MealMacros = meals.reduce(
-    (acc, m) => ({
-      calories: acc.calories + m.macros.calories,
-      proteinG: acc.proteinG + m.macros.proteinG,
-      carbsG: acc.carbsG + m.macros.carbsG,
-      fatG: acc.fatG + m.macros.fatG,
+  const totals = meals.reduce<MealMacros>(
+    (acc, meal) => ({
+      calories: acc.calories + (Number(meal.macros.calories) || 0),
+      proteinG: acc.proteinG + (Number(meal.macros.proteinG) || 0),
+      carbsG: acc.carbsG + (Number(meal.macros.carbsG) || 0),
+      fatG: acc.fatG + (Number(meal.macros.fatG) || 0),
+      ...(acc.fiberG != null || meal.macros.fiberG != null
+        ? { fiberG: (acc.fiberG || 0) + (Number(meal.macros.fiberG) || 0) }
+        : {}),
     }),
-    { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
+    { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
   );
 
-  // Keep Orbit's diet context in sync so it can answer meal-specific questions
+  const isToday = date === todayString();
+
+  // Keep Orbit's diet context in sync so it can answer meal-specific questions.
   useEffect(() => {
+    if (!userId) return;
+
     setDietContext({
-      date,
-      meals: meals.map((m) => ({
-        name: m.name,
-        calories: Math.round(m.macros.calories),
-        proteinG: Math.round(m.macros.proteinG),
-        carbsG: Math.round(m.macros.carbsG),
-        fatG: Math.round(m.macros.fatG),
+      meals: meals.map((meal) => ({
+        name: meal.name,
+        calories: Math.round(meal.macros.calories),
+        proteinG: Math.round(meal.macros.proteinG),
+        carbsG: Math.round(meal.macros.carbsG),
+        fatG: Math.round(meal.macros.fatG),
       })),
       totals: {
         calories: Math.round(totals.calories),
@@ -135,266 +135,292 @@ export default function DietPage() {
         carbsG: Math.round(totals.carbsG),
         fatG: Math.round(totals.fatG),
       },
-      goals,
+      goals: goals
+        ? {
+            calories: Math.round(goals.calories),
+            proteinG: Math.round(goals.proteinG),
+            carbsG: Math.round(goals.carbsG),
+            fatG: Math.round(goals.fatG),
+          }
+        : null,
+      date,
+    } as any);
+  }, [userId, date, meals, goals, totals.calories, totals.proteinG, totals.carbsG, totals.fatG]);
+
+  const changeDate = (days: number) => {
+    setDate((current) => {
+      const next = new Date(`${current}T12:00:00`);
+      next.setDate(next.getDate() + days);
+      return localDateString(next);
     });
-  }, [meals, goals, date, totals.calories, totals.proteinG, totals.carbsG, totals.fatG]);
+  };
 
   const handleAddMeal = async (meal: Omit<MealEntry, "id">) => {
-    const created = await addMeal(meal);
-    setMeals((prev) => [...prev, created]);
-    setShowAddMeal(false);
-    setShowScanner(false);
-    toast("Meal logged! 🍽️", "success");
-  };
-
-  const handleLogVoiceMeals = async (parsedMeals: { name: string; macros: MealMacros }[]) => {
-    const created: MealEntry[] = [];
-    for (const pm of parsedMeals) {
-      const c = await addMeal({ userId, date, name: pm.name, macros: pm.macros, createdAt: Date.now() });
-      created.push(c);
+    try {
+      const created = await (addMeal as any)(meal);
+      setMeals((prev) => [...prev, created]);
+      setShowAddMeal(false);
+      setShowScanner(false);
+    } catch (error) {
+      console.error("Failed to add meal:", error);
     }
-    setMeals((prev) => [...prev, ...created]);
+  };
+
+  const handleDeleteMeal = async (mealId: string) => {
+    try {
+      // Passing userId is harmless for implementations that only accept the id,
+      // while supporting implementations that scope deletion by user.
+      await (deleteMeal as any)(mealId, userId);
+      setMeals((prev) => prev.filter((meal) => meal.id !== mealId));
+    } catch (error) {
+      console.error("Failed to delete meal:", error);
+    }
+  };
+
+  const handleSaveGoals = async (nextGoals: MacroGoals) => {
+    try {
+      await (saveMacroGoals as any)(userId, nextGoals);
+      setGoals(nextGoals);
+      setShowGoals(false);
+    } catch (error) {
+      console.error("Failed to save macro goals:", error);
+    }
+  };
+
+  const handleSaveTemplate = async (template: Omit<MealTemplate, "id">) => {
+    try {
+      const saved = await (saveMealTemplate as any)(template);
+      setTemplates((prev) => {
+        const next = saved?.id ? saved : { ...template, id: crypto.randomUUID() };
+        return [...prev, next];
+      });
+      setSavingTemplate(null);
+    } catch (error) {
+      console.error("Failed to save meal template:", error);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    try {
+      await (deleteMealTemplate as any)(templateId, userId);
+      setTemplates((prev) => prev.filter((template) => template.id !== templateId));
+    } catch (error) {
+      console.error("Failed to delete meal template:", error);
+    }
+  };
+
+  const handleLogFromTemplate = async (
+    meal: Omit<MealEntry, "id">,
+    templateId: string,
+  ) => {
+    try {
+      const created = await (addMeal as any)(meal);
+      setMeals((prev) => [...prev, created]);
+
+      const template = templates.find((item) => item.id === templateId);
+      if (template) {
+        const updatedTemplate = {
+          ...template,
+          useCount: (template.useCount || 0) + 1,
+          lastUsedAt: Date.now(),
+        };
+        try {
+          await (updateMealTemplate as any)(templateId, updatedTemplate);
+          setTemplates((prev) => prev.map((item) => item.id === templateId ? updatedTemplate : item));
+        } catch (templateError) {
+          console.warn("Meal was logged, but the template usage count could not be updated:", templateError);
+        }
+      }
+
+      setShowSaved(false);
+    } catch (error) {
+      console.error("Failed to log saved meal:", error);
+    }
+  };
+
+  // VoiceMealModal can return either one meal, an array of meals, or an object
+  // containing a meals array. Normalize all supported shapes here.
+  const handleLogVoiceMeals = async (payload: any) => {
+    const candidates = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.meals)
+        ? payload.meals
+        : [payload];
+
+    const validMeals = candidates.filter(Boolean);
+
+    for (const item of validMeals) {
+      const meal = item?.meal ?? item;
+      if (!meal?.name || !meal?.macros) continue;
+
+      const normalized: Omit<MealEntry, "id"> = {
+        userId,
+        date,
+        name: meal.name,
+        macros: {
+          calories: Number(meal.macros.calories) || 0,
+          proteinG: Number(meal.macros.proteinG) || 0,
+          carbsG: Number(meal.macros.carbsG) || 0,
+          fatG: Number(meal.macros.fatG) || 0,
+          ...(meal.macros.fiberG != null ? { fiberG: Number(meal.macros.fiberG) || 0 } : {}),
+        },
+        createdAt: meal.createdAt || Date.now(),
+      };
+
+      await handleAddMeal(normalized);
+    }
+
     setShowVoiceMeal(false);
-    if (created.length) toast(`Logged ${created.length} meal${created.length !== 1 ? "s" : ""} 🎤`, "success");
   };
-
-  const handleSaveTemplate = async (t: Omit<MealTemplate, "id">) => {
-    const created = await saveMealTemplate(t);
-    setTemplates((prev) => [created, ...prev]);
-    setSavingTemplate(null);
-    toast("Saved to your meals 🔖", "success");
-  };
-
-  const handleDeleteTemplate = async (id: string) => {
-    await deleteMealTemplate(id);
-    setTemplates((prev) => prev.filter((t) => t.id !== id));
-    toast("Saved meal removed", "info");
-  };
-
-  const handleLogFromTemplate = async (meal: Omit<MealEntry, "id">, templateId: string) => {
-    const created = await addMeal(meal);
-    setMeals((prev) => [...prev, created]);
-    // bump usage so frequently/recently used meals float to the top
-    const existing = templates.find((t) => t.id === templateId);
-    const patch = { lastUsedAt: Date.now(), useCount: (existing?.useCount ?? 0) + 1 };
-    updateMealTemplate(templateId, patch);
-    setTemplates((prev) =>
-      prev
-        .map((t) => (t.id === templateId ? { ...t, ...patch } : t))
-        .sort((a, b) => (b.lastUsedAt ?? b.createdAt) - (a.lastUsedAt ?? a.createdAt))
-    );
-    setShowSaved(false);
-    toast("Meal logged! 🍽️", "success");
-  };
-
-  const handleDeleteMeal = async (id: string) => {
-    await deleteMeal(id);
-    setMeals((prev) => prev.filter((m) => m.id !== id));
-    toast("Meal removed", "info");
-  };
-
-  const handleSaveGoals = async (g: MacroGoals) => {
-    await saveMacroGoals(userId, g);
-    setGoals(g);
-    setShowGoals(false);
-    toast("Goals updated!", "success");
-  };
-
-  const changeDate = (delta: number) => {
-    const d = new Date(date);
-    d.setDate(d.getDate() + delta);
-    setDate(localDateString(d));
-  };
-
-  const isToday = date === todayString();
 
   return (
-    <div className="animate-fade-in">
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Diet</h1>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5 font-medium">Fuel your performance</p>
+    <div className="animate-fade-in space-y-4 sm:space-y-5">
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="page-title">Diet</h1>
+          <p className="page-description mt-1">Daily nutrition</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowVoiceMeal(true)} className="btn-secondary text-sm flex items-center gap-1.5" title="Log meal by voice">
-            <Mic className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Voice</span>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowVoiceMeal(true)}
+            type="button"
+            className="btn-icon"
+            title="Log meal by voice"
+            aria-label="Log meal by voice"
+          >
+            <Mic className="w-4 h-4" />
           </button>
-          <button onClick={() => setShowSaved(true)} className="btn-secondary text-sm flex items-center gap-1.5">
-            <Bookmark className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Saved</span>
+          <button
+            onClick={() => setShowSaved(true)}
+            type="button"
+            className="btn-icon"
+            title="Saved meals"
+            aria-label="Saved meals"
+          >
+            <Bookmark className="w-4 h-4" />
           </button>
-          <button onClick={() => setShowGoals(true)} className="btn-secondary text-sm flex items-center gap-1.5">
-            <Settings className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Goals</span>
+          <button
+            onClick={() => setShowGoals(true)}
+            type="button"
+            className="btn-icon"
+            title="Nutrition goals"
+            aria-label="Nutrition goals"
+          >
+            <Settings className="w-4 h-4" />
           </button>
-          <button onClick={() => setShowAddMeal(true)} className="btn-primary text-sm flex items-center gap-1.5">
+          <button
+            onClick={() => setShowAddMeal(true)}
+            type="button"
+            className="btn-primary min-h-11 text-sm flex items-center gap-1.5 px-3"
+          >
             <Plus className="w-4 h-4" />
-            <span>Log meal</span>
+            Log meal
           </button>
         </div>
       </div>
 
       {/* ── Date navigator ── */}
-      <div className="flex items-center justify-between card mb-5">
-        <button onClick={() => changeDate(-1)} className="btn-ghost p-2">
+      <div className="flex items-center justify-between border-y py-1" style={{ borderColor: "var(--border-subtle)" }}>
+        <button
+          onClick={() => changeDate(-1)}
+          type="button"
+          className="btn-icon"
+          aria-label="Previous day"
+        >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <div className="text-center">
-          <p className="font-bold text-gray-900 dark:text-white text-sm">{formatDate(date)}</p>
-          {isToday && (
-            <span className="text-xs font-bold text-emerald-500">Today</span>
-          )}
+          <p className="text-sm font-medium truncate" style={{ color: "var(--text-1)" }}>{formatDate(date)}</p>
+          <p className="metadata">{isToday ? "Today" : "Daily log"}</p>
         </div>
-        <button onClick={() => changeDate(1)} disabled={isToday} className="btn-ghost p-2 disabled:opacity-30">
+        <button
+          onClick={() => changeDate(1)}
+          disabled={isToday}
+          type="button"
+          className="btn-icon disabled:opacity-30"
+          aria-label="Next day"
+        >
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* ── Macro Dashboard ── */}
-      <div className="card mb-5">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-gray-900 dark:text-white text-sm">Daily Nutrition</h3>
-          <span className="text-xs font-semibold text-gray-400 bg-gray-50 dark:bg-gray-700 px-2.5 py-1 rounded-full">
-            {meals.length} meal{meals.length !== 1 ? "s" : ""} logged
+      {/* ── Daily nutrition ── */}
+      <div className="card">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="card-title">Daily intake</h2>
+          <span className="metadata">
+            {meals.length} meal{meals.length !== 1 ? "s" : ""}
           </span>
         </div>
 
-        {/* Calorie ring + macros — stacked on mobile, side-by-side on sm+ */}
-        {goals ? (
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5">
-            <CalorieRing value={totals.calories} goal={goals.calories} />
-
-            <div className="w-full grid grid-cols-3 gap-3 sm:flex-1">
-              {/* Protein */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="relative">
-                  <MacroRing value={totals.proteinG} goal={goals.proteinG} color="#3B82F6" size={68} stroke={6} />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-black text-blue-500">{Math.round((totals.proteinG / goals.proteinG) * 100)}%</span>
+        <div className="card p-4 rounded-lg" style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] gap-5 sm:gap-6">
+            <div className="min-w-0">
+              <p className="metadata">Calories</p>
+              <div className="flex items-baseline gap-1.5 mt-1">
+                <span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: "var(--text-1)" }}>
+                  {Math.round(totals.calories).toLocaleString()}
+                </span>
+                <span className="text-sm" style={{ color: "var(--text-3)" }}>kcal</span>
+              </div>
+              {goals ? (
+                <>
+                  <p className="secondary-text mt-1">
+                    {totals.calories > goals.calories
+                      ? `${Math.round(totals.calories - goals.calories)} kcal above goal`
+                      : `${Math.max(0, Math.round(goals.calories - totals.calories))} kcal remaining`}
+                    <span style={{ color: "var(--text-3)" }}> · goal {goals.calories.toLocaleString()}</span>
+                  </p>
+                  <div className="h-1.5 rounded-full overflow-hidden mt-3" style={{ background: "var(--surface-inset)" }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min((totals.calories / Math.max(goals.calories, 1)) * 100, 100)}%`,
+                        background: totals.calories > goals.calories ? "var(--warning)" : "var(--accent)",
+                      }}
+                    />
                   </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.proteinG)}g</p>
-                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Protein</p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.proteinG}g</p>
-                </div>
-              </div>
+                </>
+              ) : (
+                <p className="secondary-text mt-1">
+                  Intuitive Habit Tracking Active
+                </p>
+              )}
+            </div>
 
-              {/* Carbs */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="relative">
-                  <MacroRing value={totals.carbsG} goal={goals.carbsG} color="#10B981" size={68} stroke={6} />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-black text-emerald-500">{Math.round((totals.carbsG / goals.carbsG) * 100)}%</span>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.carbsG)}g</p>
-                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Carbs</p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.carbsG}g</p>
-                </div>
-              </div>
-
-              {/* Fat */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="relative">
-                  <MacroRing value={totals.fatG} goal={goals.fatG} color="#F43F5E" size={68} stroke={6} />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-black text-rose-500">{Math.round((totals.fatG / goals.fatG) * 100)}%</span>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.fatG)}g</p>
-                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Fat</p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.fatG}g</p>
-                </div>
-              </div>
+            <div className="space-y-3">
+              <MacroProgress label="Protein" value={totals.proteinG} goal={goals?.proteinG} unit="g" color="var(--macro-protein)" />
+              <MacroProgress label="Carbs" value={totals.carbsG} goal={goals?.carbsG} unit="g" color="var(--macro-carbs)" />
+              <MacroProgress label="Fat" value={totals.fatG} goal={goals?.fatG} unit="g" color="var(--macro-fat)" />
             </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400">
-              <span className="font-semibold">Intuitive Habit Tracking Active</span> — Daily numerical targets are not set. You can establish targets anytime in Settings.
-            </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-24 h-24 rounded-full border border-amber-500/20 bg-amber-500/5 flex flex-col items-center justify-center shrink-0">
-                <span className="text-lg font-black text-amber-500 tabular-nums">{Math.round(totals.calories)}</span>
-                <span className="text-[10px] text-gray-400">kcal</span>
-              </div>
-              <div className="w-full grid grid-cols-3 gap-3 sm:flex-1">
-                <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
-                  <p className="text-sm font-black text-blue-500">{Math.round(totals.proteinG)}g</p>
-                  <p className="text-[11px] font-semibold text-gray-500">Protein</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
-                  <p className="text-sm font-black text-emerald-500">{Math.round(totals.carbsG)}g</p>
-                  <p className="text-[11px] font-semibold text-gray-500">Carbs</p>
-                </div>
-                <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
-                  <p className="text-sm font-black text-rose-500">{Math.round(totals.fatG)}g</p>
-                  <p className="text-[11px] font-semibold text-gray-500">Fat</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Calorie label row */}
-        {goals ? (
-          <div className="mt-4 flex items-center gap-3">
-            <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${Math.min((totals.calories / goals.calories) * 100, 100)}%`, backgroundColor: "#F59E0B" }}
-              />
-            </div>
-            <span className="text-xs font-bold text-amber-500">
-              {Math.round(totals.calories)} / {goals.calories} kcal
-            </span>
-          </div>
-        ) : (
-          <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
-            <span>{meals.length} logged item{meals.length !== 1 ? "s" : ""} today</span>
-            <span className="font-semibold text-amber-500">{Math.round(totals.calories)} kcal total</span>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* ── Scan CTA ── */}
+      {/* ── AI photo logging ── */}
       <button
         onClick={() => setShowScanner(true)}
-        className="group w-full mb-5 rounded-2xl p-3.5 flex items-center gap-3 transition-all duration-200 active:scale-[0.99]"
-        style={{
-          background: "linear-gradient(135deg, rgba(16,185,129,0.14), rgba(13,148,136,0.04))",
-          border: "1px solid rgba(16,185,129,0.28)",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 16px 40px -16px rgba(16,185,129,0.4)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+        type="button"
+        className="w-full rounded-lg p-3 flex items-center gap-3 text-left border transition-colors hover:bg-surface-tertiary"
+        style={{ background: "var(--surface-base)", borderColor: "var(--border-subtle)" }}
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3"
-          style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-          <Sparkles className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "var(--accent-soft)" }}>
+          <Camera className="w-5 h-5" style={{ color: "var(--accent)" }} />
         </div>
-        <div className="text-left flex-1 min-w-0">
-          <p className="text-sm font-bold flex items-center gap-1.5" style={{ color: "var(--text-1)" }}>
-            Scan meal with AI
-            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: "rgba(16,185,129,0.16)", color: "#10b981" }}>AI</span>
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>Snap a photo — instant macros in seconds</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium" style={{ color: "var(--text-1)" }}>Estimate from a photo</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>Review the result before logging</p>
         </div>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(16,185,129,0.12)" }}>
-          <Camera className="w-4 h-4" style={{ color: "#10b981" }} />
-        </div>
+        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
       </button>
 
       {/* ── Meals list ── */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold" style={{ color: "var(--text-2)" }}>
-            Meals <span className="font-semibold" style={{ color: "var(--text-3)" }}>({meals.length})</span>
-          </h3>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="card-title">Meals</h2>
+          <span className="metadata">{meals.length} logged</span>
         </div>
 
         {loading ? (
@@ -402,27 +428,31 @@ export default function DietPage() {
             {[1, 2, 3].map((i) => <div key={i} className="h-20 skeleton" />)}
           </div>
         ) : meals.length === 0 ? (
-          <div className="text-center py-12 card border-dashed border-2 border-gray-200">
-            <Utensils className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-            <p className="text-gray-400 text-sm font-medium">No meals logged yet</p>
-            <p className="text-gray-300 text-xs mt-1">Log a meal or scan a photo</p>
-            <button onClick={() => setShowAddMeal(true)} className="mt-3 text-sm font-semibold text-emerald-500 hover:text-emerald-700 transition-colors">
-              + Add meal
-            </button>
-          </div>
+          <EmptyState
+            title="No meals logged today"
+            description="Add a meal to start tracking your nutrition."
+            actionLabel="Log meal"
+            onAction={() => setShowAddMeal(true)}
+          />
         ) : (
           <div className="space-y-2 stagger">
-            {meals.map((m) => (
+            {meals.map((meal) => (
               <MealCard
-                key={m.id}
-                meal={m}
-                onDelete={() => handleDeleteMeal(m.id)}
-                onSave={() => setSavingTemplate({ name: m.name, macros: m.macros })}
+                key={meal.id}
+                meal={meal}
+                onDelete={() => void handleDeleteMeal(meal.id)}
+                onSave={() => setSavingTemplate({ name: meal.name, macros: meal.macros })}
               />
             ))}
           </div>
         )}
       </div>
+
+      <div className="card mt-4 p-4 rounded-lg" style={{ background: "var(--surface-subtle)", border: "1px solid var(--border-subtle)" }}>
+        <h2 className="card-title" style={{ color: "var(--text-1)" }}>Nutrition Insights</h2>
+        <p className="text-sm" style={{ color: "var(--text-2)" }}>Your nutrition is on track today. Keep up the good work and stay hydrated!</p>
+      </div>
+
 
       {/* ── Modals ── */}
       {showAddMeal && (
@@ -434,6 +464,7 @@ export default function DietPage() {
           onClose={() => setShowAddMeal(false)}
         />
       )}
+
       {showScanner && (
         <MealScannerModal
           userId={userId}
@@ -450,9 +481,15 @@ export default function DietPage() {
           }}
         />
       )}
+
       {showGoals && (
-        <GoalsModal goals={goals} onSave={handleSaveGoals} onClose={() => setShowGoals(false)} />
+        <GoalsModal
+          goals={goals}
+          onSave={handleSaveGoals}
+          onClose={() => setShowGoals(false)}
+        />
       )}
+
       {showSaved && (
         <SavedMealsModal
           templates={templates}
@@ -463,6 +500,7 @@ export default function DietPage() {
           onClose={() => setShowSaved(false)}
         />
       )}
+
       {savingTemplate && (
         <SaveTemplateModal
           userId={userId}
@@ -471,8 +509,12 @@ export default function DietPage() {
           onClose={() => setSavingTemplate(null)}
         />
       )}
+
       {showVoiceMeal && (
-        <VoiceMealModal onAdd={handleLogVoiceMeals} onClose={() => setShowVoiceMeal(false)} />
+        <VoiceMealModal
+          onAdd={handleLogVoiceMeals}
+          onClose={() => setShowVoiceMeal(false)}
+        />
       )}
     </div>
   );
@@ -481,43 +523,41 @@ export default function DietPage() {
 // ── MealCard ──────────────────────────────────────────────────────────────────
 function MealCard({ meal, onDelete, onSave }: { meal: MealEntry; onDelete: () => void; onSave: () => void }) {
   const macros = [
-    { label: "P", value: Math.round(meal.macros.proteinG), color: "#60a5fa" },
-    { label: "C", value: Math.round(meal.macros.carbsG),   color: "#34d399" },
-    { label: "F", value: Math.round(meal.macros.fatG),     color: "#fb7185" },
+    { label: "P", value: Math.round(meal.macros.proteinG), color: "var(--macro-protein)" },
+    { label: "C", value: Math.round(meal.macros.carbsG),   color: "var(--macro-carbs)" },
+    { label: "F", value: Math.round(meal.macros.fatG),     color: "var(--macro-fat)" },
     ...(meal.macros.fiberG != null && meal.macros.fiberG > 0
-      ? [{ label: "Fib", value: Math.round(meal.macros.fiberG), color: "#a78bfa" }]
+      ? [{ label: "Fib", value: Math.round(meal.macros.fiberG), color: "var(--accent)" }]
       : []),
   ];
 
   return (
     <div
-      className="group relative rounded-2xl p-3 flex items-center gap-3 transition-all duration-200 animate-slide-up"
-      style={{ background: "var(--surface-0)", border: "1px solid var(--border)" }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = "rgba(16,185,129,0.32)"; e.currentTarget.style.boxShadow = "0 14px 38px -16px rgba(16,185,129,0.4)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = ""; }}
+      className="group relative rounded-lg p-3 flex items-start gap-2 sm:gap-3 transition-colors duration-150 animate-slide-up"
+      style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent-glow)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
     >
-      {/* emerald gradient tile */}
-      <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform duration-300 group-hover:scale-105"
-        style={{ background: "linear-gradient(135deg,#10B981,#0D9488)" }}>
-        <Utensils className="w-5 h-5 text-white" />
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-md flex items-center justify-center flex-shrink-0"
+        style={{ background: "var(--accent-soft)" }}>
+        <Utensils className="w-4 h-4" style={{ color: "var(--accent)" }} />
       </div>
 
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate pr-1" style={{ color: "var(--text-1)" }}>{meal.name}</p>
-        <div className="flex items-center gap-2 mt-1.5">
-          {/* calories — the hero stat */}
-          <span className="font-display text-sm font-extrabold leading-none" style={{ color: "var(--text-1)" }}>
+        <div className="mt-1">
+          <span className="text-base font-semibold leading-none tabular-nums" style={{ color: "var(--text-1)" }}>
             {Math.round(meal.macros.calories)}
-            <span className="text-[10px] font-bold ml-0.5" style={{ color: "var(--text-3)" }}>kcal</span>
+            <span className="text-xs font-medium ml-0.5" style={{ color: "var(--text-3)" }}>kcal</span>
           </span>
-          <span className="w-px h-3 rounded-full" style={{ background: "var(--border)" }} />
-          {/* macros — sleek dotted values */}
-          {macros.map(({ label, value, color }) => (
-            <span key={label} className="inline-flex items-center gap-1 text-[11px] font-bold whitespace-nowrap" style={{ color: "var(--text-2)" }}>
-              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-              {value}<span style={{ color: "var(--text-3)" }}>{label}</span>
-            </span>
-          ))}
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1.5">
+            {macros.map(({ label, value, color }) => (
+              <span key={label} className="inline-flex items-center gap-1 text-xs font-medium whitespace-nowrap" style={{ color: "var(--text-2)" }}>
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                {value}<span style={{ color: "var(--text-3)" }}>{label}</span>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -525,14 +565,18 @@ function MealCard({ meal, onDelete, onSave }: { meal: MealEntry; onDelete: () =>
         <button
           onClick={onSave}
           title="Save as a reusable meal"
-          className="p-2 rounded-lg hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all"
+          type="button"
+          aria-label={`Save ${meal.name} as a reusable meal`}
+          className="btn-icon"
           style={{ color: "var(--text-3)" }}
         >
           <BookmarkPlus className="w-4 h-4" />
         </button>
         <button
           onClick={onDelete}
-          className="p-2 rounded-lg hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all"
+          type="button"
+          aria-label={`Delete ${meal.name}`}
+          className="btn-icon hover:text-danger hover:bg-danger-soft"
           style={{ color: "var(--text-3)" }}
         >
           <Trash2 className="w-4 h-4" />
@@ -545,13 +589,13 @@ function MealCard({ meal, onDelete, onSave }: { meal: MealEntry; onDelete: () =>
 // ── Modal wrapper ─────────────────────────────────────────────────────────────
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pt-4 pb-24 sm:p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative rounded-2xl shadow-2xl w-full max-w-md p-5 animate-slide-up max-h-[80dvh] overflow-y-auto"
-        style={{ background: "var(--surface-2)", border: "1px solid var(--border)", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-3 pt-4 pb-24 sm:p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-label={title}
+        className="relative dialog-surface w-full max-w-md p-4 sm:p-5 animate-slide-up max-h-[80dvh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold" style={{ color: "var(--text-1)" }}>{title}</h3>
-          <button onClick={onClose} className="btn-ghost p-1.5"><X className="w-4 h-4" /></button>
+          <h3 className="card-title">{title}</h3>
+          <button onClick={onClose} type="button" className="btn-icon" aria-label={`Close ${title}`}><X className="w-4 h-4" /></button>
         </div>
         {children}
       </div>
@@ -635,8 +679,8 @@ function AddMealModal({ userId, date, onSave, onSaveTemplate, onClose }: {
             onChange={(e) => { setName(e.target.value); setEstimated(false); }}
             onKeyDown={(e) => e.key === "Enter" && handleSave()}
           />
-          <p className="text-[11px] mt-1 font-medium" style={{ color: "var(--text-3)" }}>
-            Tap the Calories field to auto-fill macros ✨
+          <p className="field-helper">
+            Enter a dish name, then tap Calories to estimate macros.
           </p>
         </div>
 
@@ -689,8 +733,8 @@ function AddMealModal({ userId, date, onSave, onSaveTemplate, onClose }: {
         </div>
 
         {estimated && (
-          <p className="text-[11px] font-semibold text-emerald-500 flex items-center gap-1">
-            <Sparkles className="w-3 h-3" /> AI estimated — edit if needed
+          <p className="field-helper flex items-center gap-1" style={{ color: "var(--success)" }}>
+            <CheckCircle2 className="w-3.5 h-3.5" /> Estimated values — review before logging
           </p>
         )}
 
@@ -866,10 +910,10 @@ function MealScannerModal({
     Boolean(result?.needsClarification);
 
   const confidenceColor = result?.confidence === "high"
-    ? "bg-emerald-100 text-emerald-700"
+    ? "badge-success"
     : result?.confidence === "medium"
-    ? "bg-amber-100 text-amber-700"
-    : "bg-red-100 text-red-700";
+    ? "badge-warning"
+    : "badge-danger";
 
   // Derive options chips to display
   const optionsToDisplay: string[] = result?.needsClarification?.options
@@ -877,7 +921,7 @@ function MealScannerModal({
     : (result?.candidates || []).map((c: any) => c.name);
 
   return (
-    <Modal title="Scan meal with AI" onClose={onClose}>
+    <Modal title="Estimate from photo" onClose={onClose}>
       {!preview ? (
         <div className="space-y-3">
           <div>
@@ -892,16 +936,18 @@ function MealScannerModal({
               className="input text-sm"
             />
           </div>
-          <div
+          <button
+            type="button"
             onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/30 transition-all group"
+            className="w-full border border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors hover:bg-surface-tertiary"
+            style={{ borderColor: "var(--border)" }}
           >
-            <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
-              <Camera className="w-7 h-7 text-white" />
+            <div className="w-10 h-10 rounded-md flex items-center justify-center mx-auto mb-3" style={{ background: "var(--accent-soft)" }}>
+              <Camera className="w-5 h-5" style={{ color: "var(--accent)" }} />
             </div>
-            <p className="text-sm font-bold text-gray-700">Tap to upload a photo</p>
-            <p className="text-xs text-gray-400 mt-1">JPG, PNG, HEIC · Photos are processed by Google Gemini</p>
-          </div>
+            <p className="text-sm font-medium" style={{ color: "var(--text-1)" }}>Choose a meal photo</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>JPG, PNG, or HEIC</p>
+          </button>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </div>
@@ -920,8 +966,8 @@ function MealScannerModal({
           </div>
 
           {isPhotoUnavailable ? (
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-center space-y-3">
-              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+            <div className="rounded-lg p-4 text-center space-y-3 border" style={{ background: "var(--warning-soft)", borderColor: "color-mix(in srgb, var(--warning) 24%, transparent)" }}>
+              <p className="text-sm font-medium" style={{ color: "var(--warning)" }}>
                 Photo scan is busy. Type or speak your meal instead.
               </p>
               <div className="flex gap-2 justify-center pt-1">
@@ -931,9 +977,9 @@ function MealScannerModal({
                     onClose();
                     onSwitchToManual?.();
                   }}
-                  className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-2 font-medium"
+                  className="btn-secondary min-h-11 text-sm flex items-center gap-1.5 px-3"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-emerald-600" /> Type meal
+                  <Edit3 className="w-4 h-4" style={{ color: "var(--accent)" }} /> Type meal
                 </button>
                 <button
                   type="button"
@@ -941,14 +987,14 @@ function MealScannerModal({
                     onClose();
                     onSwitchToVoice?.();
                   }}
-                  className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-2 font-medium"
+                  className="btn-secondary min-h-11 text-sm flex items-center gap-1.5 px-3"
                 >
-                  <Mic className="w-3.5 h-3.5 text-emerald-600" /> Speak meal
+                  <Mic className="w-4 h-4" style={{ color: "var(--accent)" }} /> Speak meal
                 </button>
               </div>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600 font-medium">
+            <div className="rounded-md p-3 text-sm font-medium bg-danger-soft text-danger">
               {error}
             </div>
           ) : null}
@@ -958,16 +1004,16 @@ function MealScannerModal({
               {/* Confidence / Ambiguity Badge & Notes */}
               <div className="flex items-center gap-2 flex-wrap">
                 {isAmbiguous ? (
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                  <span className="text-xs font-medium px-2 py-1 rounded-md badge-warning">
                     Check this
                   </span>
                 ) : result?.confidence ? (
-                  <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full", confidenceColor)}>
+                  <span className={cn("text-xs font-medium px-2 py-1 rounded-md", confidenceColor)}>
                     {result.confidence} confidence
                   </span>
                 ) : null}
                 {result.notes && (
-                  <span className="text-xs text-gray-400 truncate flex-1">{result.notes}</span>
+                  <span className="text-xs truncate flex-1" style={{ color: "var(--text-3)" }}>{result.notes}</span>
                 )}
               </div>
 
@@ -975,11 +1021,11 @@ function MealScannerModal({
               {optionsToDisplay.length > 0 && (
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                    <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>
                       {result?.needsClarification ? "Choose flatbread type:" : "Suggested options:"}
                     </span>
                     {reestimating && (
-                      <span className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
+                      <span className="text-xs flex items-center gap-1 font-medium" style={{ color: "var(--success)" }}>
                         <Loader2 className="w-3 h-3 animate-spin" /> Updating...
                       </span>
                     )}
@@ -991,12 +1037,10 @@ function MealScannerModal({
                         type="button"
                         disabled={reestimating}
                         onClick={() => handleSelectOption(opt)}
-                        className={cn(
-                          "text-xs px-2.5 py-1 rounded-lg border font-medium transition-all",
-                          selectedOption.toLowerCase() === opt.toLowerCase()
-                            ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                            : "bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
-                        )}
+                        className="min-h-11 px-3 rounded-md border text-sm font-medium transition-colors"
+                        style={selectedOption.toLowerCase() === opt.toLowerCase()
+                          ? { background: "var(--accent)", color: "var(--on-accent)", borderColor: "var(--accent)" }
+                          : { background: "var(--surface-base)", color: "var(--text-2)", borderColor: "var(--border)" }}
                       >
                         {opt}
                       </button>
@@ -1349,7 +1393,7 @@ function SavedMealsModal({ templates, userId, date, onLog, onDelete, onClose }: 
                 role="button"
                 onClick={() => setSelected(t)}
                 className="card flex items-center gap-3 cursor-pointer hover:shadow-md transition-all"
-                style={{ borderLeftColor: "#10B981", borderLeftWidth: "3px" }}
+                style={{ borderLeftColor: "var(--accent)", borderLeftWidth: "3px" }}
               >
                 <div className="w-9 h-9 bg-emerald-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Utensils className="w-4 h-4 text-emerald-500" />

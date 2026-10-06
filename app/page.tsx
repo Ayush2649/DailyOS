@@ -15,8 +15,8 @@ import WorkflowCards from "@/components/landing/WorkflowCards";
 function DarkCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
-      background: "#141414", border: "1px solid rgba(255,255,255,0.07)",
-      borderRadius: "14px", padding: "14px", minWidth: 0, overflow: "hidden", ...style,
+      background: "var(--surface-0)", border: "1px solid var(--border)",
+      borderRadius: "10px", padding: "12px", minWidth: 0, overflow: "hidden", ...style,
     }}>
       {children}
     </div>
@@ -50,7 +50,7 @@ function DarkAppPreview() {
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"10px" }}>
       <div style={{ display:"flex", alignItems:"center", gap:"7px" }}>
         <div style={{ width:"24px", height:"24px", background: bg, borderRadius:"7px" }} />
-        <span style={{ fontWeight:700, color:"#e8e8e8", fontSize:"11px" }}>{label}</span>
+        <span style={{ fontWeight:600, color:"var(--text-1)", fontSize:"11px" }}>{label}</span>
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
         {extra}
@@ -60,31 +60,31 @@ function DarkAppPreview() {
   );
 
   return (
-    <div style={{ background:"#0a0a0a", borderRadius:"20px", padding:"16px",
-      fontFamily:"system-ui,-apple-system,sans-serif", fontSize:"12px" }}>
+    <div style={{ background:"var(--surface-1)", borderRadius:"12px", padding:"12px",
+      fontFamily:"var(--font-sans)", fontSize:"12px", color:"var(--text-1)" }}>
 
       {/* Browser chrome */}
       <div style={{ display:"flex", alignItems:"center", gap:"5px", marginBottom:"14px" }}>
         {["#ff5f57","#febc2e","#28c840"].map(c => (
           <div key={c} style={{ width:"9px", height:"9px", borderRadius:"50%", background:c }} />
         ))}
-        <div style={{ flex:1, marginLeft:"6px", background:"#1a1a1a", borderRadius:"5px",
+        <div style={{ flex:1, marginLeft:"6px", background:"var(--surface-2)", borderRadius:"5px",
           height:"20px", display:"flex", alignItems:"center", paddingLeft:"10px",
-          border:"1px solid rgba(255,255,255,0.05)" }}>
-          <span style={{ color:"#444", fontSize:"10px" }}>dailyos.app/dashboard</span>
+          border:"1px solid var(--border)" }}>
+          <span style={{ color:"var(--text-3)", fontSize:"10px" }}>dailyos.app/dashboard</span>
         </div>
       </div>
 
       {/* Greeting + streak chips */}
       <div style={{ marginBottom:"14px" }}>
-        <div style={{ fontSize:"17px", fontWeight:900, color:"#fff", letterSpacing:"-0.4px" }}>
+        <div style={{ fontSize:"16px", fontWeight:700, color:"var(--text-1)" }}>
           Good morning, Ayush
         </div>
-        <div style={{ fontSize:"10px", color:"#555", marginTop:"2px" }}>Monday, 26 May 2026</div>
+        <div style={{ fontSize:"10px", color:"var(--text-3)", marginTop:"2px" }}>Monday, 26 May 2026</div>
         <div style={{ display:"flex", gap:"6px", marginTop:"8px", flexWrap:"wrap" }}>
           {[
-            { label:"7-day workout streak", bg:"rgba(59,130,246,0.12)", color:"#60a5fa", border:"rgba(59,130,246,0.2)" },
-            { label:"5-day task streak",    bg:"rgba(139,92,246,0.12)", color:"#a78bfa", border:"rgba(139,92,246,0.2)" },
+            { label:"7-day workout streak", bg:"var(--accent-soft)", color:"var(--accent)", border:"var(--accent-glow)" },
+            { label:"5-day task streak",    bg:"var(--accent-soft)", color:"var(--accent)", border:"var(--accent-glow)" },
           ].map(chip => (
             <span key={chip.label} style={{ fontSize:"10px", fontWeight:700, padding:"3px 9px",
               borderRadius:"20px", background:chip.bg, color:chip.color,
@@ -100,40 +100,40 @@ function DarkAppPreview() {
 
         {/* Nutrition card */}
         <DarkCard>
-          {cardHeader("rgba(16,185,129,0.15)", "Today's Nutrition", "Open", "#10b981")}
+          {cardHeader("var(--accent-soft)", "Today's Nutrition", "Open", "var(--accent)")}
           <div style={{ display:"flex", alignItems:"center", gap:"14px" }}>
             {/* Ring */}
             <div style={{ position:"relative", flexShrink:0, width:"72px", height:"72px" }}>
               <svg viewBox="0 0 72 72" style={{ width:"72px", height:"72px", transform:"rotate(-90deg)" }}>
-                <circle cx="36" cy="36" r={R} fill="none" strokeWidth="5.5" stroke="#2a2a2a" />
-                <circle cx="36" cy="36" r={R} fill="none" strokeWidth="5.5" stroke="#10b981"
+                <circle cx="36" cy="36" r={R} fill="none" strokeWidth="5.5" stroke="var(--surface-3)" />
+                <circle cx="36" cy="36" r={R} fill="none" strokeWidth="5.5" stroke="var(--accent)"
                   strokeLinecap="round"
                   strokeDasharray={`${ringPct * CIRC} ${CIRC}`} />
               </svg>
               <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column",
                 alignItems:"center", justifyContent:"center", lineHeight:1 }}>
-                <span style={{ fontSize:"13px", fontWeight:900, color:"#fff" }}>{consumed}</span>
-                <span style={{ fontSize:"8px", color:"#555", marginTop:"2px" }}>/ {calorieGoal}</span>
+                <span style={{ fontSize:"13px", fontWeight:700, color:"var(--text-1)" }}>{consumed}</span>
+                <span style={{ fontSize:"8px", color:"var(--text-3)", marginTop:"2px" }}>/ {calorieGoal}</span>
               </div>
             </div>
             {/* Macro bars */}
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:"9px", fontWeight:700, color:"#10b981",
-                background:"rgba(16,185,129,0.1)", padding:"3px 7px", borderRadius:"20px",
+              <div style={{ fontSize:"9px", fontWeight:600, color:"var(--accent)",
+                background:"var(--accent-soft)", padding:"3px 7px", borderRadius:"6px",
                 display:"inline-block", marginBottom:"7px" }}>
                 360 kcal remaining
               </div>
               {[
-                { label:"Protein", val:142, goal:180, pct:79,  color:"#6366f1" },
-                { label:"Carbs",   val:210, goal:250, pct:84,  color:"#f59e0b" },
-                { label:"Fat",     val:58,  goal:65,  pct:89,  color:"#ec4899" },
+                { label:"Protein", val:142, goal:180, pct:79,  color:"var(--macro-protein)" },
+                { label:"Carbs",   val:210, goal:250, pct:84,  color:"var(--macro-carbs)" },
+                { label:"Fat",     val:58,  goal:65,  pct:89,  color:"var(--macro-fat)" },
               ].map(m => (
                 <div key={m.label} style={{ marginBottom:"5px" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"2px" }}>
-                    <span style={{ fontSize:"9px", fontWeight:600, color:"#888" }}>{m.label}</span>
-                    <span style={{ fontSize:"9px", color:"#555" }}>{m.val}/{m.goal}g</span>
+                    <span style={{ fontSize:"9px", fontWeight:500, color:"var(--text-2)" }}>{m.label}</span>
+                    <span style={{ fontSize:"9px", color:"var(--text-3)" }}>{m.val}/{m.goal}g</span>
                   </div>
-                  <div style={{ height:"4px", background:"#2a2a2a", borderRadius:"4px" }}>
+                  <div style={{ height:"4px", background:"var(--surface-3)", borderRadius:"4px" }}>
                     <div style={{ height:"100%", width:`${m.pct}%`, background:m.color, borderRadius:"4px" }} />
                   </div>
                 </div>
@@ -144,23 +144,23 @@ function DarkAppPreview() {
 
         {/* Weight card */}
         <DarkCard>
-          {cardHeader("rgba(99,102,241,0.15)", "Body Weight", "Log", "#818cf8")}
-          <div style={{ fontSize:"28px", fontWeight:900, color:"#fff", letterSpacing:"-1px", lineHeight:1 }}>
-            78.5<span style={{ fontSize:"12px", color:"#555", fontWeight:600 }}> kg</span>
+          {cardHeader("var(--accent-soft)", "Body Weight", "Log", "var(--accent)")}
+          <div style={{ fontSize:"26px", fontWeight:700, color:"var(--text-1)", lineHeight:1 }}>
+            78.5<span style={{ fontSize:"12px", color:"var(--text-3)", fontWeight:500 }}> kg</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:"5px", marginTop:"4px" }}>
-            <span style={{ fontSize:"10px", fontWeight:700, color:"#10b981" }}>↓ −0.3 kg</span>
-            <span style={{ fontSize:"10px", color:"#555" }}>Yesterday</span>
+            <span style={{ fontSize:"10px", fontWeight:600, color:"var(--status-success)" }}>↓ −0.3 kg</span>
+            <span style={{ fontSize:"10px", color:"var(--text-3)" }}>Yesterday</span>
           </div>
           <svg viewBox={`0 0 ${SW} ${SH}`} style={{ width:"100%", height:`${SH}px`, marginTop:"8px" }}>
             <defs>
               <linearGradient id="previewSparkGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor="#818cf8" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#818cf8" stopOpacity="0"    />
+                <stop offset="0%"   stopColor="var(--accent)" stopOpacity="0.18" />
+                <stop offset="100%" stopColor="var(--accent)" stopOpacity="0"    />
               </linearGradient>
             </defs>
             <polygon points={sparkArea} fill="url(#previewSparkGrad)" />
-            <polyline points={sparkPts} fill="none" stroke="#818cf8"
+            <polyline points={sparkPts} fill="none" stroke="var(--accent)"
               strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
           </svg>
         </DarkCard>
@@ -171,27 +171,27 @@ function DarkAppPreview() {
 
         {/* Tasks card */}
         <DarkCard>
-          {cardHeader("rgba(139,92,246,0.15)", "Today's Tasks", "Open", "#a78bfa")}
+          {cardHeader("var(--accent-soft)", "Today's Tasks", "Open", "var(--accent)")}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"5px" }}>
             <div>
-              <span style={{ fontSize:"22px", fontWeight:900, color:"#fff" }}>3</span>
-              <span style={{ fontSize:"10px", color:"#555", marginLeft:"4px" }}>/ 6 done</span>
+              <span style={{ fontSize:"22px", fontWeight:700, color:"var(--text-1)" }}>3</span>
+              <span style={{ fontSize:"10px", color:"var(--text-3)", marginLeft:"4px" }}>/ 6 done</span>
             </div>
-            <span style={{ fontSize:"10px", fontWeight:700, color:"#8b5cf6" }}>50%</span>
+            <span style={{ fontSize:"10px", fontWeight:600, color:"var(--accent)" }}>50%</span>
           </div>
-          <div style={{ height:"4px", background:"#2a2a2a", borderRadius:"4px", marginBottom:"8px" }}>
-            <div style={{ height:"100%", width:"50%", background:"#8b5cf6", borderRadius:"4px" }} />
+          <div style={{ height:"4px", background:"var(--surface-3)", borderRadius:"4px", marginBottom:"8px" }}>
+            <div style={{ height:"100%", width:"50%", background:"var(--accent)", borderRadius:"4px" }} />
           </div>
           {[
-            { title:"Review PRD document", p:"high",   pc:"#ef4444", pb:"rgba(239,68,68,0.1)"   },
-            { title:"Ship v2 feature",     p:"high",   pc:"#ef4444", pb:"rgba(239,68,68,0.1)"   },
-            { title:"Update docs",         p:"medium", pc:"#f59e0b", pb:"rgba(245,158,11,0.1)"  },
+            { title:"Review PRD document", p:"high",   pc:"var(--status-danger)", pb:"color-mix(in srgb, var(--status-danger) 12%, transparent)" },
+            { title:"Ship v2 feature",     p:"high",   pc:"var(--status-danger)", pb:"color-mix(in srgb, var(--status-danger) 12%, transparent)" },
+            { title:"Update docs",         p:"medium", pc:"var(--status-warning)", pb:"color-mix(in srgb, var(--status-warning) 12%, transparent)" },
           ].map((task, i) => (
             <div key={i} style={{ display:"flex", alignItems:"center", gap:"7px",
-              padding:"4px 7px", background:"#1e1e1e", borderRadius:"7px", marginBottom:"3px" }}>
+              padding:"4px 7px", background:"var(--surface-2)", borderRadius:"6px", marginBottom:"3px" }}>
               <div style={{ width:"9px", height:"9px", borderRadius:"50%",
-                border:"1.5px solid #444", flexShrink:0 }} />
-              <span style={{ flex:1, fontSize:"9px", color:"#999",
+                border:"1.5px solid var(--border)", flexShrink:0 }} />
+              <span style={{ flex:1, fontSize:"9px", color:"var(--text-2)",
                 overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {task.title}
               </span>
@@ -204,31 +204,31 @@ function DarkAppPreview() {
 
         {/* Workout card */}
         <DarkCard>
-          {cardHeader("rgba(59,130,246,0.15)", "Workout", "View", "#60a5fa",
+          {cardHeader("var(--accent-soft)", "Workout", "View", "var(--accent)",
             <span style={{ fontSize:"9px", fontWeight:700, padding:"2px 6px",
-              borderRadius:"20px", background:"rgba(59,130,246,0.1)", color:"#60a5fa" }}>
+              borderRadius:"6px", background:"var(--accent-soft)", color:"var(--accent)" }}>
               7d
             </span>
           )}
           <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"7px" }}>
             <span style={{ fontSize:"9px", fontWeight:700, padding:"2px 7px",
-              borderRadius:"20px", background:"rgba(59,130,246,0.1)", color:"#60a5fa" }}>
+              borderRadius:"6px", background:"var(--accent-soft)", color:"var(--accent)" }}>
               Trained today
             </span>
-            <span style={{ fontSize:"9px", color:"#555" }}>55 min</span>
+            <span style={{ fontSize:"9px", color:"var(--text-3)" }}>55 min</span>
           </div>
           {["Bench Press · 4 sets","Pull-ups · 3 sets","Squat · 4 sets"].map((ex, i) => (
             <div key={i} style={{ display:"flex", alignItems:"center", gap:"7px",
-              padding:"4px 7px", background:"#1e1e1e", borderRadius:"7px", marginBottom:"3px" }}>
+              padding:"4px 7px", background:"var(--surface-2)", borderRadius:"6px", marginBottom:"3px" }}>
               <div style={{ width:"5px", height:"5px", borderRadius:"50%",
-                background:"#3b82f6", flexShrink:0 }} />
-              <span style={{ fontSize:"9px", color:"#999" }}>{ex}</span>
+                background:"var(--accent)", flexShrink:0 }} />
+              <span style={{ fontSize:"9px", color:"var(--text-2)" }}>{ex}</span>
             </div>
           ))}
           {/* Frequency bars */}
           <div style={{ marginTop:"8px", paddingTop:"8px",
-            borderTop:"1px solid rgba(255,255,255,0.05)" }}>
-            <span style={{ fontSize:"8px", fontWeight:600, color:"#444",
+            borderTop:"1px solid var(--border-subtle)" }}>
+            <span style={{ fontSize:"8px", fontWeight:500, color:"var(--text-3)",
               textTransform:"uppercase", letterSpacing:"0.05em" }}>Last 7 days</span>
             <svg viewBox="0 0 119 38" style={{ width:"100%", height:"38px", marginTop:"3px" }}>
               {wkDays.map((dur, i) => {
@@ -237,9 +237,9 @@ function DarkAppPreview() {
                 return (
                   <g key={i}>
                     <rect x={x} y={24-bH} width={12} height={bH} rx="2.5"
-                      fill={dur > 0 ? "#3b82f6" : "#232323"} />
+                      fill={dur > 0 ? "var(--accent)" : "var(--surface-3)"} />
                     <text x={x+6} y={36} textAnchor="middle"
-                      style={{ fontSize:"7px", fill:"#444" }}>{wkLabels[i]}</text>
+                      style={{ fontSize:"7px", fill:"var(--text-3)" }}>{wkLabels[i]}</text>
                   </g>
                 );
               })}
@@ -268,12 +268,12 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
 }
 
 const features = [
-  { icon: CheckCircle2, gradient: "from-violet-500 to-purple-600", title: "Smart Task Management", desc: "Daily & weekly to-dos organized by project. One tap to complete. Zero friction." },
-  { icon: Dumbbell, gradient: "from-blue-500 to-indigo-600", title: "Workout Logger", desc: "Log every set, rep, and weight. kg, lbs, or bodyweight. Built for real athletes." },
-  { icon: Camera, gradient: "from-pink-500 to-rose-600", title: "AI Meal Scanner", desc: "Snap a photo of your food. Our best AI model estimates all macros instantly." },
-  { icon: Brain, gradient: "from-amber-500 to-orange-600", title: "AI Workout Analysis", desc: "Get a personalized coach report after every session — intensity, wins, improvements." },
-  { icon: BarChart3, gradient: "from-emerald-500 to-teal-600", title: "Nutrition Tracking", desc: "Set macro goals. Log meals. Watch your daily calories, protein, carbs and fat." },
-  { icon: TrendingUp, gradient: "from-cyan-500 to-blue-600", title: "Progress Over Time", desc: "Body weight trends, workout history, and nutrition patterns all in one place." },
+  { icon: CheckCircle2, title: "Smart Task Management", desc: "Daily & weekly to-dos organized by project. One tap to complete. Zero friction." },
+  { icon: Dumbbell, title: "Workout Logger", desc: "Log every set, rep, and weight. kg, lbs, or bodyweight. Built for real athletes." },
+  { icon: Camera, title: "AI Meal Scanner", desc: "Snap a photo of your food. Our best AI model estimates all macros instantly." },
+  { icon: Brain, title: "AI Workout Analysis", desc: "Get a personalized coach report after every session — intensity, wins, improvements." },
+  { icon: BarChart3, title: "Nutrition Tracking", desc: "Set macro goals. Log meals. Watch your daily calories, protein, carbs and fat." },
+  { icon: TrendingUp, title: "Progress Over Time", desc: "Body weight trends, workout history, and nutrition patterns all in one place." },
 ];
 
 const stats = [
@@ -307,14 +307,20 @@ export default function LandingPage() {
     : "/BrandLogo_Header.png";
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--surface-1)", color: "var(--text-1)" }}>
 
       {/* ── Nav ── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/90 dark:bg-black/80 backdrop-blur-xl shadow-sm border-b border-gray-100 dark:border-white/[0.06]" : "bg-transparent"}`}>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "backdrop-blur-xl shadow-sm border-b" : ""}`}
+        style={{
+          background: scrolled ? "color-mix(in srgb, var(--surface-0) 92%, transparent)" : "transparent",
+          borderColor: scrolled ? "var(--border)" : "transparent",
+        }}
+      >
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Image src={logoSrc} alt="DailyOS" width={32} height={32} className="rounded-xl" />
-            <span className="font-display font-extrabold text-gray-900 dark:text-white text-xl tracking-tight">DailyOS</span>
+            <span className="font-display font-extrabold text-[var(--text-1)] dark:text-white text-xl tracking-tight">DailyOS</span>
           </div>
           <div className="flex items-center gap-3">
             {session ? (
@@ -323,7 +329,7 @@ export default function LandingPage() {
               </Link>
             ) : (
               <>
-                <button onClick={() => signIn("google", { callbackUrl: "/dashboard" })} className="text-gray-600 hover:text-gray-900 font-medium text-sm transition-colors hidden sm:block">
+                <button onClick={() => signIn("google", { callbackUrl: "/dashboard" })} className="text-[var(--text-3)] hover:text-[var(--text-1)] font-medium text-sm transition-colors hidden sm:block">
                   Sign in
                 </button>
                 <button onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
@@ -337,78 +343,63 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative pt-32 pb-20 px-5 overflow-hidden">
-        {/* Warm background glow */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-[#FF5E4D]/20 via-[#FF9D42]/10 to-transparent opacity-80 dark:opacity-[0.16] blur-3xl" />
-          <div className="absolute top-60 -left-40 w-[440px] h-[440px] rounded-full bg-gradient-to-br from-[#FF9D42]/16 to-transparent opacity-70 dark:opacity-[0.12] blur-3xl" />
-          <div className="absolute bottom-0 right-1/3 w-[320px] h-[320px] rounded-full bg-gradient-to-br from-[#FF7863]/14 to-transparent opacity-70 dark:opacity-[0.10] blur-3xl" />
-        </div>
-
+      <section className="relative pt-24 pb-12 px-5 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-full mb-8 animate-rise uppercase tracking-wider"
-            style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent-glow)" }}>
-            <Zap className="w-3.5 h-3.5" /> Your personal daily operating system
+          <div className="text-xs font-semibold mb-3 animate-rise" style={{ color: "var(--text-3)" }}>
+            TASKS · TRAINING · NUTRITION
           </div>
 
-          <h1 className="font-display text-[2.9rem] leading-[0.98] sm:text-6xl md:text-7xl font-extrabold text-gray-900 dark:text-white tracking-[-0.03em] mb-6 animate-rise" style={{animationDelay:"40ms"}}>
-            Tasks. Gym. Diet.
-            <br />
-            <span className="gradient-text">All in one place.</span>
+          <h1 className="font-display text-[34px] leading-tight sm:text-[42px] font-semibold text-[var(--text-1)] mb-4 animate-rise" style={{ animationDelay: "40ms" }}>
+            DailyOS
           </h1>
 
-          <p className="text-lg sm:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed animate-rise" style={{animationDelay:"100ms"}}>
-            DailyOS brings your to-dos, workout tracking, and nutrition logging into one
-            beautifully simple app — with AI that actually helps you improve.
+          <p className="text-base text-[var(--text-2)] max-w-xl mx-auto mb-7 leading-relaxed animate-rise" style={{ animationDelay: "100ms" }}>
+            Plan your day, record your training, and track nutrition in one workspace.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center animate-rise" style={{animationDelay:"160ms"}}>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center animate-rise" style={{ animationDelay: "160ms" }}>
             <button
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="group pressable inline-flex items-center justify-center gap-2.5 text-white font-bold px-8 py-4 rounded-2xl text-base"
-              style={{ background: "var(--accent-gradient)", boxShadow: "0 10px 34px -8px var(--accent-glow)" }}
+              className="btn-primary group inline-flex items-center justify-center gap-2 text-sm"
             >
-              <svg className="w-5 h-5 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               Continue with Google
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
-            <a href="#features" className="pressable inline-flex items-center justify-center gap-2 text-gray-700 dark:text-gray-200 font-bold px-8 py-4 rounded-2xl text-base border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-              See how it works <ChevronRight className="w-4 h-4" />
+            <a href="#features" className="btn-secondary inline-flex items-center justify-center gap-2 text-sm">
+              See features <ChevronRight className="w-4 h-4" />
             </a>
           </div>
-          <p className="mt-4 text-sm text-gray-400 animate-rise" style={{animationDelay:"220ms"}}>Free forever · No credit card · Works Best on iPhone</p>
+          <p className="mt-3 text-xs text-[var(--text-3)] animate-rise" style={{ animationDelay: "220ms" }}>Free to use · No credit card</p>
         </div>
 
         {/* ── App Preview ── */}
-        <div className="max-w-4xl mx-auto mt-20 animate-slide-up" style={{animationDelay:"200ms"}}>
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-black/60"
-            style={{ border:"1px solid rgba(255,255,255,0.07)" }}>
+        <div className="max-w-4xl mx-auto mt-10 animate-slide-up" style={{ animationDelay: "200ms" }}>
+          <div className="relative rounded-xl overflow-hidden"
+            style={{ border: "1px solid var(--border)" }}>
             <DarkAppPreview />
           </div>
         </div>
       </section>
 
       {/* ── Stats ── */}
-      <section className="py-16 px-5 bg-[#16110f] dark:bg-black border-y border-black/5 dark:border-white/[0.06]">
+      <section className="py-10 px-5 border-y" style={{ background: "var(--surface-0)", borderColor: "var(--border)" }}>
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-3 gap-3 sm:gap-5">
             {stats.map((s) => (
               <div
                 key={s.label}
-                className="group rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-6 sm:px-4 sm:py-8 text-center transition-all duration-200 hover:-translate-y-1 hover:bg-white/[0.05]"
-                style={{ transitionTimingFunction: "var(--ease-out)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent-glow)"; e.currentTarget.style.boxShadow = "0 16px 40px -16px var(--accent-glow)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.boxShadow = ""; }}
+                className="border-r last:border-r-0 px-3 py-4 text-center"
+                style={{ borderColor: "var(--border)" }}
               >
-                <p className="font-display text-3xl sm:text-5xl font-extrabold text-white leading-none mb-1.5">
+                <p className="font-display text-2xl sm:text-3xl font-semibold leading-none mb-1.5" style={{ color: "var(--text-1)" }}>
                   <Counter to={s.value} suffix={s.suffix} />
                 </p>
-                <p className="text-[11px] sm:text-sm text-gray-400 font-medium">{s.label}</p>
+                <p className="text-[11px] sm:text-sm font-medium" style={{ color: "var(--text-2)" }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -416,25 +407,25 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ── */}
-      <section id="features" className="py-24 px-5 bg-white dark:bg-black">
+      <section id="features" className="py-16 px-5" style={{ background: "var(--surface-0)" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--accent)" }}>Features</p>
-            <h2 className="font-display text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-[-0.02em]">
-              Built for how you actually live
+            <h2 className="font-display text-3xl sm:text-[34px] font-semibold text-[var(--text-1)] mb-3">
+              Everything for today
             </h2>
-            <p className="text-lg text-gray-400 max-w-xl mx-auto">
-              No bloat. No upsells. Just the tools you need to show up every day.
+            <p className="text-base text-[var(--text-2)] max-w-xl mx-auto">
+              A focused place for the tasks, training, and meals you want to keep track of.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
             {features.map((f, i) => (
               <div key={f.title} className="card-hover animate-slide-up group" style={{animationDelay:`${i*60}ms`}}>
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-                  <f.icon className="w-5.5 h-5.5 text-white" />
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-transform duration-200 group-hover:scale-105" style={{ background: "var(--accent-soft)" }}>
+                  <f.icon className="w-5 h-5" style={{ color: "var(--accent)" }} />
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-2 text-base">{f.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
+                <h3 className="font-bold text-[var(--text-1)] dark:text-white mb-2 text-base">{f.title}</h3>
+                <p className="text-sm text-[var(--text-2)] dark:text-[var(--text-2)] leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -442,40 +433,40 @@ export default function LandingPage() {
       </section>
 
       {/* ── How it works ── */}
-      <section className="py-24 px-5 bg-[#f7f6f4] dark:bg-[#0a0a0a]">
+      <section className="py-24 px-5" style={{ background: "var(--surface-1)" }}>
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--accent)" }}>Workflow</p>
-            <h2 className="font-display text-4xl font-extrabold text-gray-900 dark:text-white tracking-[-0.02em]">One app. Three modules. Your whole day.</h2>
+            <h2 className="font-display text-3xl sm:text-[34px] font-semibold text-[var(--text-1)]">A simple daily workflow</h2>
           </div>
           <WorkflowCards
             items={[
-              { step: "01", icon: CheckCircle2, iconClass: "text-violet-600 bg-violet-100 dark:bg-violet-900/40", title: "Plan your day", desc: "Add tasks under projects. Switch between daily and weekly views. Tap to complete." },
-              { step: "02", icon: Dumbbell, iconClass: "text-blue-600 bg-blue-100 dark:bg-blue-900/40", title: "Log your workout", desc: "Add exercises, sets, reps, weights. Save it. Hit AI Summary for a coach report." },
-              { step: "03", icon: Utensils, iconClass: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/40", title: "Track your nutrition", desc: "Snap a meal photo or log manually. Watch your macros fill up throughout the day." },
+              { step: "01", icon: CheckCircle2, iconClass: "text-accent bg-accent-soft", title: "Plan your day", desc: "Add tasks under projects. Switch between daily and weekly views. Tap to complete." },
+              { step: "02", icon: Dumbbell, iconClass: "text-[var(--status-info)] bg-surface-tertiary", title: "Log your workout", desc: "Add exercises, sets, reps, weights. Save it. Hit AI Summary for a coach report." },
+              { step: "03", icon: Utensils, iconClass: "text-[var(--status-success)] bg-surface-tertiary", title: "Track your nutrition", desc: "Snap a meal photo or log manually. Watch your macros fill up throughout the day." },
             ]}
           />
         </div>
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="py-24 px-5 bg-white dark:bg-black">
+      <section className="py-16 px-5" style={{ background: "var(--surface-0)" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <div className="flex items-center justify-center gap-1 mb-4">
               {[1,2,3,4,5].map(i => <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />)}
             </div>
-            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-[-0.02em]">People who actually use it</h2>
+            <h2 className="font-display text-3xl sm:text-[34px] font-semibold text-[var(--text-1)]">From DailyOS users</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {testimonials.map((t) => (
               <div key={t.name} className="card-hover">
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-5">&quot;{t.text}&quot;</p>
+                <p className="text-sm text-[var(--text-3)] dark:text-[var(--text-2)] leading-relaxed mb-5">&quot;{t.text}&quot;</p>
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full ${t.color} flex items-center justify-center text-white font-bold text-sm`}>{t.avatar}</div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{t.name}</p>
-                    <p className="text-xs text-gray-400">{t.role}</p>
+                    <p className="text-sm font-bold text-[var(--text-1)] dark:text-white">{t.name}</p>
+                    <p className="text-xs text-[var(--text-2)]">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -485,21 +476,17 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-24 px-5 bg-[#16110f] dark:bg-black relative overflow-hidden border-t border-black/5 dark:border-white/[0.06]">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: "rgba(255,94,77,0.22)" }} />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: "rgba(255,157,66,0.18)" }} />
-        </div>
+      <section className="py-16 px-5 relative overflow-hidden border-t" style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}>
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-display text-4xl sm:text-5xl font-extrabold text-white mb-5 tracking-[-0.02em]">
-            Start your daily OS
+          <h2 className="font-display text-3xl sm:text-[34px] font-semibold mb-4" style={{ color: "var(--text-1)" }}>
+            Make today easier to manage
           </h2>
-          <p className="text-lg text-gray-400 mb-10 leading-relaxed">
-            Join people who use DailyOS to stay organized, get stronger, and eat smarter — every single day.
+          <p className="text-base mb-7 leading-relaxed" style={{ color: "var(--text-2)" }}>
+            Keep tasks, training, and nutrition in one place.
           </p>
           <button
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-            className="group inline-flex items-center gap-3 bg-white text-gray-900 font-bold px-10 py-4 rounded-2xl text-base hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+            className="btn-primary group inline-flex items-center gap-2 text-sm"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -510,15 +497,15 @@ export default function LandingPage() {
             Get started — it's free
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </button>
-          <p className="mt-4 text-sm text-gray-500">Add to iPhone home screen · Works offline</p>
+          <p className="mt-4 text-sm" style={{ color: "var(--text-3)" }}>Add to iPhone home screen · Works offline</p>
         </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer className="bg-black text-[#555] py-8 px-5 text-center text-sm" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <footer className="py-8 px-5 text-center text-sm" style={{ background: "var(--surface-1)", color: "var(--text-3)", borderTop: "1px solid var(--border-subtle)" }}>
         <div className="flex items-center justify-center gap-2 mb-2">
           <Image src={logoSrc} alt="DailyOS" width={24} height={24} className="rounded-md" />
-          <span className="text-white font-bold">DailyOS</span>
+          <span className="font-bold" style={{ color: "var(--text-1)" }}>DailyOS</span>
         </div>
         <p>© {new Date().getFullYear()} DailyOS · Built for people who do the work.</p>
       </footer>

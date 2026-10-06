@@ -5,66 +5,17 @@ import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import { CheckSquare, Dumbbell, Utensils, LogOut, User, Sun, Moon, ChevronDown, LayoutDashboard, Settings } from "lucide-react";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import NotificationBell from "@/components/ui/NotificationBell";
 
 const navItems = [
-  {
-    href: "/dashboard",         icon: LayoutDashboard, label: "Home", exact: true,
-    activeBg: "bg-orange-50 dark:bg-transparent",
-    activeText: "text-orange-700 dark:text-white",
-    activeBorder: "dark:border-l-orange-500",
-    activeGlow: "dark:shadow-[0_0_12px_rgba(249,115,22,0.2)]",
-    iconActive: "text-orange-600 dark:text-orange-400",
-    dot: "bg-orange-500",
-    mobileActiveBg: "bg-orange-50 dark:bg-orange-500/10",
-    mobileActiveText: "text-orange-700 dark:text-orange-300",
-  },
-  {
-    href: "/dashboard/tasks",   icon: CheckSquare, label: "Tasks",
-    activeBg: "bg-violet-50 dark:bg-transparent",
-    activeText: "text-violet-700 dark:text-white",
-    activeBorder: "dark:border-l-violet-500",
-    activeGlow: "dark:shadow-[0_0_12px_rgba(139,92,246,0.2)]",
-    iconActive: "text-violet-600 dark:text-violet-400",
-    dot: "bg-violet-500",
-    mobileActiveBg: "bg-violet-50 dark:bg-violet-500/10",
-    mobileActiveText: "text-violet-700 dark:text-violet-300",
-  },
-  {
-    href: "/dashboard/workout", icon: Dumbbell,    label: "Workout",
-    activeBg: "bg-blue-50 dark:bg-transparent",
-    activeText: "text-blue-700 dark:text-white",
-    activeBorder: "dark:border-l-blue-500",
-    activeGlow: "dark:shadow-[0_0_12px_rgba(59,130,246,0.2)]",
-    iconActive: "text-blue-600 dark:text-blue-400",
-    dot: "bg-blue-500",
-    mobileActiveBg: "bg-blue-50 dark:bg-blue-500/10",
-    mobileActiveText: "text-blue-700 dark:text-blue-300",
-  },
-  {
-    href: "/dashboard/diet",    icon: Utensils,    label: "Diet",
-    activeBg: "bg-emerald-50 dark:bg-transparent",
-    activeText: "text-emerald-700 dark:text-white",
-    activeBorder: "dark:border-l-emerald-500",
-    activeGlow: "dark:shadow-[0_0_12px_rgba(16,185,129,0.2)]",
-    iconActive: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-    mobileActiveBg: "bg-emerald-50 dark:bg-emerald-500/10",
-    mobileActiveText: "text-emerald-700 dark:text-emerald-300",
-  },
-  {
-    href: "/dashboard/settings", icon: Settings, label: "Settings",
-    activeBg: "bg-gray-50 dark:bg-transparent",
-    activeText: "text-gray-700 dark:text-white",
-    activeBorder: "dark:border-l-gray-500",
-    activeGlow: "dark:shadow-[0_0_12px_rgba(156,163,175,0.15)]",
-    iconActive: "text-gray-600 dark:text-gray-300",
-    dot: "bg-gray-500",
-    mobileActiveBg: "bg-gray-50 dark:bg-gray-500/10",
-    mobileActiveText: "text-gray-700 dark:text-gray-300",
-  },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Today", exact: true },
+  { href: "/dashboard/tasks", icon: CheckSquare, label: "Tasks" },
+  { href: "/dashboard/workout", icon: Dumbbell, label: "Train" },
+  { href: "/dashboard/diet", icon: Utensils, label: "Nutrition" },
+  { href: "/dashboard/settings", icon: Settings, label: "More" },
 ];
 
 function ThemeToggle({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
@@ -78,7 +29,9 @@ function ThemeToggle({ iconSize = "w-4 h-4" }: { iconSize?: string }) {
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="p-1.5 rounded-lg transition-all"
+      type="button"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="w-8 h-8 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-white/5"
       style={{ color: "var(--text-3)" }}
       onMouseEnter={e => (e.currentTarget.style.color = "var(--text-1)")}
       onMouseLeave={e => (e.currentTarget.style.color = "var(--text-3)")}
@@ -103,6 +56,7 @@ export default function Navigation() {
   const logoSrc = mounted && resolvedTheme === "dark"
     ? "/BrandLogo_Header_DarkMode.png"
     : "/BrandLogo_Header.png";
+  const activeNavItem = navItems.find(({ href, exact }) => exact ? pathname === href : pathname?.startsWith(href));
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -119,68 +73,59 @@ export default function Navigation() {
   return (
     <>
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden md:flex flex-col w-60 min-h-screen sticky top-0 shrink-0"
-        style={{ background: "var(--surface-0)", borderRight: "1px solid var(--border)" }}>
+      <aside className="app-shell-sidebar hidden lg:flex">
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-          <Image src={logoSrc} alt="DailyOS" width={32} height={32} className="rounded-xl" />
-          <span className="font-black text-lg tracking-tight" style={{ color: "var(--text-1)" }}>DailyOS</span>
-          <div className="ml-auto flex items-center gap-1">
-            <NotificationBell />
-            <ThemeToggle />
-          </div>
+        <div className="app-shell-brand">
+          <Image src={logoSrc} alt="satat" width={30} height={30} className="rounded-lg" />
+          <span className="app-shell-brand-name">satat</span>
+        </div>
+        <div className="app-shell-tools" aria-label="App controls">
+          <NotificationBell />
+          <ThemeToggle />
+          <ThemeSwitcher />
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 p-3 space-y-0.5">
-          <p className="text-[10px] font-bold uppercase tracking-widest px-2 mb-3 mt-1" style={{ color: "var(--text-3)" }}>Menu</p>
-          {navItems.map(({ href, icon: Icon, label, activeBg, activeText, activeBorder, activeGlow, iconActive, dot, exact }) => {
+        <nav className="app-shell-nav" aria-label="Primary navigation">
+          <div className="app-shell-nav-list">
+          {navItems.map(({ href, icon: Icon, label, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link key={href} href={href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group relative border-l-2",
-                  active
-                    ? `${activeBg} ${activeText} ${activeBorder} ${activeGlow} border-l-2`
-                    : "border-l-transparent hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-800 dark:hover:text-white"
-                )}
-                style={active ? undefined : { color: "var(--text-2)" }}
+                aria-current={active ? "page" : undefined}
+                className={cn("app-shell-nav-link", active && "is-active")}
               >
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-                  active ? "bg-white/80 dark:bg-white/[0.06] shadow-sm" : "bg-transparent group-hover:bg-gray-100 dark:group-hover:bg-white/[0.04]"
-                )}>
-                  <Icon className={cn("w-4 h-4 transition-all", active ? iconActive : "text-gray-400 dark:text-[#555] group-hover:text-gray-600 dark:group-hover:text-gray-300")} />
-                </div>
-                {label}
-                {active && <div className={cn("ml-auto w-1.5 h-1.5 rounded-full", dot)} />}
+                <Icon className="app-shell-nav-icon" aria-hidden="true" />
+                <span>{label}</span>
               </Link>
             );
           })}
+          </div>
         </nav>
 
         {/* User section */}
         {session?.user && (
-          <div className="p-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-            <div className="flex items-center gap-2.5 p-2.5 rounded-xl" style={{ background: "var(--surface-2)", border: "1px solid var(--border-subtle)" }}>
+          <div className="app-shell-account-area">
+            <div className="app-shell-account">
               {session.user.image ? (
-                <Image src={session.user.image} alt="avatar" width={32} height={32} className="rounded-full ring-2 ring-white/10" />
+                <Image src={session.user.image} alt="" width={32} height={32} className="rounded-full" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                  <User className="w-4 h-4 text-indigo-400" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+                  <User className="w-4 h-4" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold truncate" style={{ color: "var(--text-1)" }}>{session.user.name?.split(" ")[0]}</p>
-                <p className="text-[10px] truncate" style={{ color: "var(--text-3)" }}>{session.user.email}</p>
+                <p className="app-shell-account-name">{session.user.name?.split(" ")[0]}</p>
+                <p className="app-shell-account-email">{session.user.email}</p>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 title="Sign out"
-                className="p-1.5 rounded-lg transition-all hover:bg-red-500/10 hover:text-red-400"
-                style={{ color: "var(--text-3)" }}
+                aria-label="Sign out"
+                className="btn-icon"
+                style={{ color: "var(--danger)" }}
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -188,47 +133,42 @@ export default function Navigation() {
       </aside>
 
       {/* ── Mobile top header ── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 flex items-center px-4 safe-top bg-white/90 dark:bg-black/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/[0.06]">
-        {/* empty: using Tailwind dark: classes now */}
-        <div className="flex items-center gap-2">
-          <Image src={logoSrc} alt="DailyOS" width={28} height={28} className="rounded-lg" />
-          <span className="font-black" style={{ color: "var(--text-1)" }}>DailyOS</span>
+      <header className="app-mobile-header lg:hidden">
+        <div className="app-mobile-context">
+          <Image src={logoSrc} alt="satat" width={26} height={26} className="rounded-md" />
+          <span className="app-mobile-page-title">{activeNavItem?.label ?? "satat"}</span>
         </div>
-        {/* Active section label */}
-        <div className="ml-3">
-          {navItems.map(({ href, label, mobileActiveBg, mobileActiveText, exact }) => {
-            const active = exact ? pathname === href : pathname.startsWith(href);
-            if (!active) return null;
-            return <span key={href} className={cn("text-xs font-bold px-2 py-1 rounded-lg", mobileActiveBg, mobileActiveText)}>{label}</span>;
-          })}
-        </div>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="app-mobile-actions">
           <NotificationBell />
           <ThemeToggle iconSize="w-3.5 h-3.5" />
+          <ThemeSwitcher />
           {session?.user && (
             <div ref={profileRef} className="relative">
               <button
                 onClick={() => setShowProfileMenu(v => !v)}
-                className="flex items-center gap-1.5 p-1 rounded-xl active:scale-95 transition-all"
-                style={{ background: "transparent" }}
+                type="button"
+                title="Account menu"
+                aria-label="Open account menu"
+                aria-expanded={showProfileMenu}
+                className="app-mobile-profile-button"
               >
                 {session.user.image ? (
-                  <Image src={session.user.image} alt="avatar" width={28} height={28} className="rounded-full ring-2 ring-white/10" />
+                  <Image src={session.user.image} alt="" width={26} height={26} className="rounded-full" />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                    <User className="w-3.5 h-3.5 text-indigo-400" />
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+                    <User className="w-3.5 h-3.5" />
                   </div>
                 )}
-                <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", showProfileMenu && "rotate-180")} style={{ color: "var(--text-3)" }} />
+                <ChevronDown className={cn("w-3 h-3 transition-transform duration-150", showProfileMenu && "rotate-180")} style={{ color: "var(--text-3)" }} />
               </button>
 
               {/* Profile dropdown */}
               {showProfileMenu && (
-                <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl overflow-hidden z-50 animate-scale-in"
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg overflow-hidden z-50 animate-scale-in"
                   style={{
-                    background: "var(--surface-2)",
+                    background: "var(--surface-base)",
                     border: "1px solid var(--border)",
-                    boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04)",
+                    boxShadow: "var(--shadow-dialog)",
                   }}>
                   {/* User info */}
                   <div className="px-4 py-3.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
@@ -238,7 +178,8 @@ export default function Navigation() {
                   {/* Sign out */}
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-red-400 hover:bg-red-500/10 active:scale-[0.98] transition-all"
+                    className="w-full flex min-h-11 items-center gap-3 px-4 text-sm font-medium transition-colors hover:bg-danger-soft"
+                    style={{ color: "var(--danger)" }}
                   >
                     <LogOut className="w-4 h-4" />
                     Sign out
@@ -248,29 +189,24 @@ export default function Navigation() {
             </div>
           )}
         </div>
-      </div>
+      </header>
 
       {/* ── Mobile bottom nav ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 safe-bottom bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-t border-gray-100 dark:border-white/[0.06]">
-        <div className="flex items-stretch h-16">
-          {navItems.map(({ href, icon: Icon, label, mobileActiveBg, mobileActiveText, dot, exact }) => {
+      <nav className="app-mobile-bottom-nav lg:hidden" aria-label="Primary navigation">
+        <div className="app-mobile-nav-list">
+          {navItems.map(({ href, icon: Icon, label, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link key={href} href={href}
-                className={cn("flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-150 relative active:scale-95")}>
-                <div className={cn("w-11 h-8 rounded-xl flex items-center justify-center transition-all duration-150", active ? mobileActiveBg : "")}>
-                  <Icon className={cn("w-[22px] h-[22px] transition-all", active ? mobileActiveText : "text-gray-400 dark:text-[#444]")} />
-                </div>
-                <span className={cn("text-[10px] font-bold leading-none", active ? mobileActiveText : "text-gray-400 dark:text-[#444]")}>{label}</span>
-                {active && <div className={cn("absolute top-1.5 w-5 h-1 rounded-full", dot)} />}
+                aria-current={active ? "page" : undefined}
+                className={cn("app-mobile-nav-link", active && "is-active")}>
+                <Icon className="app-mobile-nav-icon" aria-hidden="true" />
+                <span className="app-mobile-nav-label">{label}</span>
               </Link>
             );
           })}
         </div>
       </nav>
-
-      {/* Mobile top-bar spacer — pushes content below the fixed header */}
-      <div className="md:hidden h-14 flex-shrink-0" />
     </>
   );
 }
