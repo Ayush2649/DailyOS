@@ -10,12 +10,12 @@ import {
 } from "lucide-react";
 import {
   getAllTasks, getMeals, getMacroGoals,
-  getWorkoutSessions, getBodyWeightEntries, getAllMeals,
+  getWorkoutSessions, getBodyWeightEntries, getAllMeals, getUserProfile,
 } from "@/lib/firestore";
 import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
 import { todayString } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { Task, MealEntry, MacroGoals, WorkoutSession, BodyWeightEntry } from "@/types";
+import type { Task, MealEntry, MacroGoals, WorkoutSession, BodyWeightEntry, UserProfileDocument } from "@/types";
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 function getGreeting(name: string) {
@@ -176,9 +176,9 @@ function CalorieCard({
     { cal: 0, p: 0, c: 0, f: 0 }
   );
 
-  const g = goals ?? { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 };
-  const remaining = Math.max(0, g.calories - totals.cal);
-  const over = totals.cal > g.calories;
+  const hasGoals = Boolean(goals && goals.calories > 0);
+  const remaining = hasGoals ? Math.max(0, goals!.calories - totals.cal) : 0;
+  const over = hasGoals ? totals.cal > goals!.calories : false;
 
   return (
     <Card className="md:col-span-2">
@@ -206,12 +206,23 @@ function CalorieCard({
       {/* Body */}
       <div className="flex flex-row items-center gap-4">
         {/* Ring — smaller on mobile, larger on sm+ */}
-        <div className="block sm:hidden shrink-0">
-          <CalorieRing consumed={Math.round(totals.cal)} goal={g.calories} size={90} />
-        </div>
-        <div className="hidden sm:block shrink-0">
-          <CalorieRing consumed={Math.round(totals.cal)} goal={g.calories} size={120} />
-        </div>
+        {hasGoals ? (
+          <>
+            <div className="block sm:hidden shrink-0">
+              <CalorieRing consumed={Math.round(totals.cal)} goal={goals!.calories} size={90} />
+            </div>
+            <div className="hidden sm:block shrink-0">
+              <CalorieRing consumed={Math.round(totals.cal)} goal={goals!.calories} size={120} />
+            </div>
+          </>
+        ) : (
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex flex-col items-center justify-center shrink-0 border border-emerald-500/20 bg-emerald-500/5">
+            <span className="text-sm sm:text-base font-bold font-mono text-emerald-500">
+              {Math.round(totals.cal)}
+            </span>
+            <span className="text-[10px] text-gray-400">kcal</span>
+          </div>
+        )}
 
         <div className="flex-1 space-y-2.5 min-w-0">
           {/* Status pill */}
@@ -219,14 +230,18 @@ function CalorieCard({
             <span
               className={cn(
                 "text-xs font-bold px-2.5 py-1 rounded-full",
-                over
-                  ? "bg-orange-500/10 text-orange-500"
+                hasGoals
+                  ? over
+                    ? "bg-orange-500/10 text-orange-500"
+                    : "bg-emerald-500/10 text-emerald-500"
                   : "bg-emerald-500/10 text-emerald-500"
               )}
             >
-              {over
-                ? `${Math.round(totals.cal - g.calories)} kcal over goal`
-                : `${Math.round(remaining)} kcal remaining`}
+              {hasGoals
+                ? over
+                  ? `${Math.round(totals.cal - goals!.calories)} kcal over goal`
+                  : `${Math.round(remaining)} kcal remaining`
+                : "Intuitive Habit Tracking Active"}
             </span>
             {meals.length === 0 && (
               <span className="text-xs" style={{ color: "var(--text-3)" }}>
@@ -237,9 +252,9 @@ function CalorieCard({
 
           {/* Macro bars */}
           {[
-            { label: "Protein", val: totals.p, goal: g.proteinG,  unit: "g", color: "#6366f1" },
-            { label: "Carbs",   val: totals.c, goal: g.carbsG,    unit: "g", color: "#f59e0b" },
-            { label: "Fat",     val: totals.f, goal: g.fatG,      unit: "g", color: "#ec4899" },
+            { label: "Protein", val: totals.p, goal: goals?.proteinG, unit: "g", color: "#6366f1" },
+            { label: "Carbs",   val: totals.c, goal: goals?.carbsG,   unit: "g", color: "#f59e0b" },
+            { label: "Fat",     val: totals.f, goal: goals?.fatG,     unit: "g", color: "#ec4899" },
           ].map(({ label, val, goal: macroGoal, unit, color }) => (
             <div key={label} className="space-y-1">
               <div className="flex items-center justify-between">
@@ -247,10 +262,14 @@ function CalorieCard({
                   {label}
                 </span>
                 <span className="text-xs font-mono tabular-nums" style={{ color: "var(--text-3)" }}>
-                  {Math.round(val)}<span>/{macroGoal}{unit}</span>
+                  {Math.round(val)}{macroGoal ? <span>/{macroGoal}{unit}</span> : <span>{unit}</span>}
                 </span>
               </div>
-              <Bar pct={(val / macroGoal) * 100} color={color} />
+              {macroGoal ? (
+                <Bar pct={(val / macroGoal) * 100} color={color} />
+              ) : (
+                <div className="h-1.5 rounded-full overflow-hidden w-full bg-surface-2" />
+              )}
             </div>
           ))}
         </div>
@@ -656,9 +675,11 @@ function WorkoutFrequencyBars({ sessions }: { sessions: WorkoutSession[] }) {
 function WorkoutCard({
   sessions,
   loading,
+  assignedRoutine,
 }: {
   sessions: WorkoutSession[];
   loading: boolean;
+  assignedRoutine?: { planName: string; templateIds: string[]; daysPerWeek: number } | null;
 }) {
   if (loading) {
     return (
@@ -805,6 +826,24 @@ function WorkoutCard({
           </Link>
           <WorkoutFrequencyBars sessions={sessions} />
         </div>
+      ) : assignedRoutine ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 py-5 text-center">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-1">
+            <Dumbbell className="w-5 h-5" />
+          </div>
+          <p className="text-sm font-black" style={{ color: "var(--text-1)" }}>
+            {assignedRoutine.planName}
+          </p>
+          <p className="text-xs font-medium" style={{ color: "var(--text-3)" }}>
+            {assignedRoutine.daysPerWeek} sessions / week assigned
+          </p>
+          <Link
+            href="/dashboard/workout"
+            className="inline-flex items-center justify-center gap-1.5 mt-2 py-2 px-4 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-xs"
+          >
+            Start your session →
+          </Link>
+        </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center gap-2 py-6">
           <Dumbbell
@@ -838,6 +877,7 @@ export default function HomeView() {
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [weights,  setWeights]  = useState<BodyWeightEntry[]>([]);
   const [allMeals, setAllMeals] = useState<MealEntry[]>([]);
+  const [profile,  setProfile]  = useState<UserProfileDocument | null>(null);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
@@ -850,13 +890,15 @@ export default function HomeView() {
       getWorkoutSessions(userId),
       getBodyWeightEntries(userId),
       getAllMeals(userId),
-    ]).then(([m, g, t, s, w, am]) => {
+      getUserProfile(userId),
+    ]).then(([m, g, t, s, w, am, p]) => {
       setMeals(m);
       setGoals(g);
       setTasks(t);
       setSessions(s);
       setWeights(w);
       setAllMeals(am);
+      setProfile(p);
     }).finally(() => setLoading(false));
   }, [userId]);
 
@@ -928,7 +970,11 @@ export default function HomeView() {
       {/* ── Row 2: Tasks (1/2) + Workout (1/2) ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TasksCard   tasks={tasks}       loading={loading} />
-        <WorkoutCard sessions={sessions} loading={loading} />
+        <WorkoutCard
+          sessions={sessions}
+          loading={loading}
+          assignedRoutine={profile?.workoutPlanAssignment ?? null}
+        />
       </div>
 
       {/* ── Activity Heatmap ── */}

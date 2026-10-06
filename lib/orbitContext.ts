@@ -9,7 +9,7 @@ export interface DietContextData {
   date: string;
   meals: Array<{ name: string; calories: number; proteinG: number; carbsG: number; fatG: number; fiberG?: number }>;
   totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
-  goals:  { calories: number; proteinG: number; carbsG: number; fatG: number };
+  goals:  { calories: number; proteinG: number; carbsG: number; fatG: number } | null;
 }
 
 // ── Workout ───────────────────────────────────────────────────────────────────
