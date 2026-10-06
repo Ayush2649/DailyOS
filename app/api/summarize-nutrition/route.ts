@@ -18,18 +18,20 @@ export async function POST(req: NextRequest) {
       ).join("\n")
     : "No meals logged yet today.";
 
-  const calPct  = Math.round((totals.calories  / goals.calories)  * 100);
-  const protPct = Math.round((totals.proteinG  / goals.proteinG)  * 100);
-  const carbPct = Math.round((totals.carbsG    / goals.carbsG)    * 100);
-  const fatPct  = Math.round((totals.fatG      / goals.fatG)      * 100);
+  let prompt = "";
 
-  const calRemaining  = Math.max(goals.calories  - totals.calories,  0);
-  const protRemaining = Math.max(goals.proteinG  - totals.proteinG,  0);
-  const carbRemaining = Math.max(goals.carbsG    - totals.carbsG,    0);
-  const fatRemaining  = Math.max(goals.fatG      - totals.fatG,      0);
+  if (goals && typeof goals.calories === "number" && goals.calories > 0) {
+    const calPct  = Math.round((totals.calories  / goals.calories)  * 100);
+    const protPct = Math.round((totals.proteinG  / goals.proteinG)  * 100);
+    const carbPct = Math.round((totals.carbsG    / goals.carbsG)    * 100);
+    const fatPct  = Math.round((totals.fatG      / goals.fatG)      * 100);
 
-  // Prompt unchanged from original
-  const prompt = `You are a personal nutrition coach specializing in Indian cuisine. Analyze today's meals and give practical, specific advice to help meet daily macro goals.
+    const calRemaining  = Math.max(goals.calories  - totals.calories,  0);
+    const protRemaining = Math.max(goals.proteinG  - totals.proteinG,  0);
+    const carbRemaining = Math.max(goals.carbsG    - totals.carbsG,    0);
+    const fatRemaining  = Math.max(goals.fatG      - totals.fatG,      0);
+
+    prompt = `You are a personal nutrition coach specializing in Indian cuisine. Analyze today's meals and give practical, specific advice to help meet daily macro goals.
 
 DAILY GOALS:
 - Calories: ${goals.calories} kcal
@@ -54,6 +56,30 @@ Provide a structured response:
 5. **Tomorrow's Focus** – One specific habit or meal change for tomorrow.
 
 Be concise, motivating, and specific. Under 220 words. No generic advice.`;
+  } else {
+    prompt = `You are a supportive, mindful nutrition coach specializing in Indian cuisine.
+The user is tracking meals intuitively without numerical calorie/macro targets.
+Analyze their meal variety, protein quality, fiber, and timing.
+Do NOT compare against fixed numerical calorie targets or invent a fictitious calorie denominator.
+
+MEALS LOGGED TODAY:
+${mealList}
+
+TOTALS LOGGED TODAY:
+- Calories: ${Math.round(totals.calories)} kcal
+- Protein: ${Math.round(totals.proteinG)}g
+- Carbs: ${Math.round(totals.carbsG)}g
+- Fat: ${Math.round(totals.fatG)}g
+
+Provide a structured response:
+1. **Mindful Balance** – One sentence celebrating their consistency and evaluating meal variety.
+2. **Nutritional Quality** – Practical assessment of protein, fiber, and whole foods in today's choices.
+3. **What to Eat Next** – 2 wholesome Indian food suggestions to nourish their energy.
+4. **Gentle Tip** – One simple suggestion for mindful eating or hydration.
+5. **Tomorrow's Rhythm** – One habit focus for tomorrow.
+
+Be warm, concise, and grounded. Under 220 words.`;
+  }
 
   try {
     const result = await callText({

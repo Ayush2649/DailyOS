@@ -16,8 +16,6 @@ import { setDietContext } from "@/lib/orbitContext";
 import { useToast } from "@/components/ui/Toast";
 import type { MealEntry, MealMacros, MacroGoals, MealTemplate } from "@/types";
 
-const defaultGoals: MacroGoals = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 };
-
 // ── SVG Ring ─────────────────────────────────────────────────────────────────
 function MacroRing({
   value, goal, color, size = 72, stroke = 6,
@@ -83,7 +81,7 @@ export default function DietPage() {
 
   const [date, setDate] = useState(todayString());
   const [meals, setMeals] = useState<MealEntry[]>([]);
-  const [goals, setGoals] = useState<MacroGoals>(defaultGoals);
+  const [goals, setGoals] = useState<MacroGoals | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [showAddMeal, setShowAddMeal] = useState(false);
@@ -264,69 +262,104 @@ export default function DietPage() {
         </div>
 
         {/* Calorie ring + macros — stacked on mobile, side-by-side on sm+ */}
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5">
-          <CalorieRing value={totals.calories} goal={goals.calories} />
+        {goals ? (
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5">
+            <CalorieRing value={totals.calories} goal={goals.calories} />
 
-          <div className="w-full grid grid-cols-3 gap-3 sm:flex-1">
-            {/* Protein */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="relative">
-                <MacroRing value={totals.proteinG} goal={goals.proteinG} color="#3B82F6" size={68} stroke={6} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-black text-blue-500">{Math.round((totals.proteinG / goals.proteinG) * 100)}%</span>
+            <div className="w-full grid grid-cols-3 gap-3 sm:flex-1">
+              {/* Protein */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="relative">
+                  <MacroRing value={totals.proteinG} goal={goals.proteinG} color="#3B82F6" size={68} stroke={6} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-black text-blue-500">{Math.round((totals.proteinG / goals.proteinG) * 100)}%</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.proteinG)}g</p>
+                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Protein</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.proteinG}g</p>
                 </div>
               </div>
-              <div className="text-center">
-                <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.proteinG)}g</p>
-                <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Protein</p>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.proteinG}g</p>
-              </div>
-            </div>
 
-            {/* Carbs */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="relative">
-                <MacroRing value={totals.carbsG} goal={goals.carbsG} color="#10B981" size={68} stroke={6} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-black text-emerald-500">{Math.round((totals.carbsG / goals.carbsG) * 100)}%</span>
+              {/* Carbs */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="relative">
+                  <MacroRing value={totals.carbsG} goal={goals.carbsG} color="#10B981" size={68} stroke={6} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-black text-emerald-500">{Math.round((totals.carbsG / goals.carbsG) * 100)}%</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.carbsG)}g</p>
+                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Carbs</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.carbsG}g</p>
                 </div>
               </div>
-              <div className="text-center">
-                <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.carbsG)}g</p>
-                <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Carbs</p>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.carbsG}g</p>
-              </div>
-            </div>
 
-            {/* Fat */}
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="relative">
-                <MacroRing value={totals.fatG} goal={goals.fatG} color="#F43F5E" size={68} stroke={6} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-black text-rose-500">{Math.round((totals.fatG / goals.fatG) * 100)}%</span>
+              {/* Fat */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="relative">
+                  <MacroRing value={totals.fatG} goal={goals.fatG} color="#F43F5E" size={68} stroke={6} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-black text-rose-500">{Math.round((totals.fatG / goals.fatG) * 100)}%</span>
+                  </div>
                 </div>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.fatG)}g</p>
-                <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Fat</p>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.fatG}g</p>
+                <div className="text-center">
+                  <p className="text-sm font-black text-gray-900 dark:text-white">{Math.round(totals.fatG)}g</p>
+                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Fat</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">/ {goals.fatG}g</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400">
+              <span className="font-semibold">Intuitive Habit Tracking Active</span> — Daily numerical targets are not set. You can establish targets anytime in Settings.
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="w-24 h-24 rounded-full border border-amber-500/20 bg-amber-500/5 flex flex-col items-center justify-center shrink-0">
+                <span className="text-lg font-black text-amber-500 tabular-nums">{Math.round(totals.calories)}</span>
+                <span className="text-[10px] text-gray-400">kcal</span>
+              </div>
+              <div className="w-full grid grid-cols-3 gap-3 sm:flex-1">
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
+                  <p className="text-sm font-black text-blue-500">{Math.round(totals.proteinG)}g</p>
+                  <p className="text-[11px] font-semibold text-gray-500">Protein</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
+                  <p className="text-sm font-black text-emerald-500">{Math.round(totals.carbsG)}g</p>
+                  <p className="text-[11px] font-semibold text-gray-500">Carbs</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 text-center">
+                  <p className="text-sm font-black text-rose-500">{Math.round(totals.fatG)}g</p>
+                  <p className="text-[11px] font-semibold text-gray-500">Fat</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Calorie label row */}
-        <div className="mt-4 flex items-center gap-3">
-          <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${Math.min((totals.calories / goals.calories) * 100, 100)}%`, backgroundColor: "#F59E0B" }}
-            />
+        {goals ? (
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${Math.min((totals.calories / goals.calories) * 100, 100)}%`, backgroundColor: "#F59E0B" }}
+              />
+            </div>
+            <span className="text-xs font-bold text-amber-500">
+              {Math.round(totals.calories)} / {goals.calories} kcal
+            </span>
           </div>
-          <span className="text-xs font-bold text-amber-500">
-            {Math.round(totals.calories)} / {goals.calories} kcal
-          </span>
-        </div>
+        ) : (
+          <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+            <span>{meals.length} logged item{meals.length !== 1 ? "s" : ""} today</span>
+            <span className="font-semibold text-amber-500">{Math.round(totals.calories)} kcal total</span>
+          </div>
+        )}
       </div>
 
       {/* ── Scan CTA ── */}
@@ -1084,21 +1117,26 @@ function MealScannerModal({
 
 // ── GoalsModal ────────────────────────────────────────────────────────────────
 function GoalsModal({ goals, onSave, onClose }: {
-  goals: MacroGoals; onSave: (g: MacroGoals) => void; onClose: () => void;
+  goals: MacroGoals | null; onSave: (g: MacroGoals) => void; onClose: () => void;
 }) {
   const [form, setForm] = useState({
-    calories: String(goals.calories),
-    proteinG: String(goals.proteinG),
-    carbsG: String(goals.carbsG),
-    fatG: String(goals.fatG),
+    calories: goals ? String(goals.calories) : "",
+    proteinG: goals ? String(goals.proteinG) : "",
+    carbsG: goals ? String(goals.carbsG) : "",
+    fatG: goals ? String(goals.fatG) : "",
   });
 
   const handleSave = () => {
+    const cal = Number(form.calories);
+    const p = Number(form.proteinG);
+    const c = Number(form.carbsG);
+    const f = Number(form.fatG);
+    if (!cal || !p || !c || !f || cal <= 0 || p <= 0 || c <= 0 || f <= 0) return;
     onSave({
-      calories: Number(form.calories) || 2000,
-      proteinG: Number(form.proteinG) || 150,
-      carbsG: Number(form.carbsG) || 200,
-      fatG: Number(form.fatG) || 65,
+      calories: Math.round(cal),
+      proteinG: Math.round(p),
+      carbsG: Math.round(c),
+      fatG: Math.round(f),
     });
   };
 

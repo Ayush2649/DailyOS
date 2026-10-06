@@ -143,6 +143,8 @@ export interface WorkoutTemplate {
   description?: string;
   exercises: TemplateExercise[];
   isPreset?: boolean;   // true for built-in splits
+  isOnboarding?: boolean; // true for starter templates generated via onboarding
+  source?: "system" | "onboarding" | "custom";
   createdAt: number;
 }
 
@@ -176,4 +178,64 @@ export interface AppUser {
   name: string;
   email: string;
   image?: string;
+  onboarded?: boolean;
+}
+
+// ── User Profile / Onboarding Baseline ─────────────────────────────────────────
+export interface UserProfileDocument {
+  userId: string;
+  questionnaireVersion: number;
+  formulaVersion: string;
+  nutritionPolicyVersion: string;
+  consentVersion: string;
+  consentGivenAt: number;
+  completedAt: number | null;
+  lastStepCompleted: string;
+
+  baseline: {
+    focusGoal: "fat_loss" | "muscle_gain" | "vitality_health" | "habit_routine";
+    heightCm: number | null;
+    weightKg: number | null;
+    age: number | null;
+    biologicalSex: "female" | "male" | "prefer_not_to_say" | null;
+    targetWeightKg: number | null;
+    paceTier: "relaxed" | "steady" | "fast" | null;
+    activityLevel: "sedentary" | "lightly_active" | "moderately_active" | "very_active" | null;
+    dietaryPattern: "vegetarian" | "eggetarian" | "non_vegetarian" | "vegan" | "anything" | null;
+    foodAvoidances: string[];
+    includeWorkouts: boolean;
+    workoutDaysPerWeek?: number | null;
+    availableTrainingTimeMinutes?: "<20" | "20-30" | "30-45" | "45-60" | "60+" | null;
+    preferredTrainingWindow?: "morning" | "afternoon" | "evening" | "flexible" | null;
+    trainingExperience?: "beginner" | "intermediate" | "advanced" | null;
+    equipmentAccess?: "commercial_gym" | "home_dumbbells" | "bodyweight_only" | null;
+  };
+
+  safety: {
+    healthSensitivityMode: boolean;
+    advisoryAcknowledgedAt: number | null;
+  };
+
+  computedTargets: {
+    nutritionStatus: "calculated" | "deferred_omitted_data" | "withheld_health_sensitive" | "infeasible_constraints";
+    bmrEstimate: number | null;
+    bmrRange?: [number, number];
+    tdeeEstimate: number | null;
+    tdeeRange?: [number, number];
+    targetCalories: number | null;
+    proteinGrams: number | null;
+    fatGrams: number | null;
+    carbGrams: number | null;
+    deficitCapped: boolean;
+    calorieFloorApplied: boolean;
+  } | null;
+
+  workoutPlanAssignment: {
+    planName: string;
+    templateIds: string[];
+    daysPerWeek: number;
+  } | null;
+
+  createdAt: number;
+  updatedAt: number;
 }
