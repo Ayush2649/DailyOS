@@ -28,7 +28,7 @@ async function downscaleBase64(
 
     const resized = await sharp(buf)
       .resize(MAX_PX, MAX_PX, { fit: "inside", withoutEnlargement: true })
-      .flatten({ background: "#ffffff" })
+      .flatten({ background: "var(--surface-0)" })
       .jpeg({ quality: 75 })
       .toBuffer();
 

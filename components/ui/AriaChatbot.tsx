@@ -9,9 +9,9 @@ type Mode = "workout" | "diet" | "tasks" | null;
 type Message = { role: "user" | "assistant"; content: string };
 
 const MODE_CONFIG = {
-  workout: { label: "Workout", icon: Dumbbell,   color: "bg-blue-100 text-blue-700 border-blue-200",       dot: "bg-blue-500",    gradient: "from-blue-500 to-indigo-600" },
-  diet:    { label: "Diet",    icon: Utensils,    color: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500", gradient: "from-emerald-500 to-teal-600" },
-  tasks:   { label: "Tasks",   icon: CheckSquare, color: "bg-violet-100 text-violet-700 border-violet-200",   dot: "bg-violet-500",  gradient: "from-violet-500 to-purple-600" },
+  workout: { label: "Workout", icon: Dumbbell,   color: "bg-accent-soft text-accent border-[var(--accent-glow)]",       dot: "bg-accent", gradient: "bg-accent" },
+  diet:    { label: "Diet",    icon: Utensils,    color: "bg-accent-soft text-accent border-[var(--accent-glow)]",       dot: "bg-accent", gradient: "bg-accent" },
+  tasks:   { label: "Tasks",   icon: CheckSquare, color: "bg-accent-soft text-accent border-[var(--accent-glow)]",       dot: "bg-accent", gradient: "bg-accent" },
 };
 
 const SUGGESTIONS = [
@@ -25,9 +25,9 @@ function OrbitIcon({ size = 20, className }: { size?: number; className?: string
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M20 3H4C2.9 3 2 3.9 2 5V15C2 16.1 2.9 17 4 17H8.5L12 21L15.5 17H20C21.1 17 22 16.1 22 15V5C22 3.9 21.1 3 20 3Z"
-        fill="rgba(255,255,255,0.2)" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points="4.5,10 7,10 9,7 11,13 13,8.5 15,10 19.5,10"
-        fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -131,12 +131,12 @@ export default function AriaChatbot() {
     <>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/20">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
           <OrbitIcon size={16} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-black text-sm leading-none" style={{ color: "var(--text-1)" }}>Orbit</p>
-          <p className="text-[10px] font-semibold mt-0.5" style={{ color: "var(--text-3)" }}>Your AI life coach</p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>Daily assistant</p>
         </div>
         {activeMode && (
           <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 flex-shrink-0", activeMode.color)}>
@@ -162,7 +162,7 @@ export default function AriaChatbot() {
       <div className="overflow-y-auto px-4 py-3 space-y-3 scrollbar-none flex-1">
         {messages.length === 0 && (
           <div className="flex flex-col items-center text-center py-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/25">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
               <OrbitIcon size={22} />
             </div>
             <p className="font-black text-sm" style={{ color: "var(--text-1)" }}>Ask me anything</p>
@@ -178,8 +178,8 @@ export default function AriaChatbot() {
                   <button key={s.slash} onClick={() => handleSlashSuggestion(s)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all text-left"
                     style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                    <div className={cn("w-6 h-6 rounded-lg bg-gradient-to-br flex items-center justify-center flex-shrink-0", Cfg.gradient)}>
-                      <Icon className="w-3 h-3 text-white" />
+                    <div className={cn("w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0", Cfg.gradient)} style={{ color: "var(--on-accent)" }}>
+                      <Icon className="w-3 h-3" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className={cn("text-[10px] font-black uppercase tracking-wide mr-1.5", Cfg.color.split(" ")[1])}>{s.slash}</span>
@@ -198,14 +198,14 @@ export default function AriaChatbot() {
         {messages.map((m, i) => (
           <div key={i} className={cn("flex gap-2", m.role === "user" ? "justify-end" : "justify-start")}>
             {m.role === "assistant" && (
-              <div className="w-5 h-5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-md flex items-center justify-center flex-shrink-0 mt-1">
+              <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-1" style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
                 <OrbitIcon size={10} />
               </div>
             )}
             <div className={cn(
               "max-w-[82%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed",
               m.role === "user"
-                ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-sm"
+                ? "bg-accent text-[var(--on-accent)] rounded-br-sm"
                 : "rounded-bl-sm"
             )}
             style={m.role === "assistant" ? {
@@ -220,13 +220,13 @@ export default function AriaChatbot() {
 
         {loading && (
           <div className="flex gap-2">
-            <div className="w-5 h-5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-md flex items-center justify-center flex-shrink-0 mt-1">
+            <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-1" style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
               <OrbitIcon size={10} />
             </div>
             <div className="rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1.5 items-center"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
               {[0, 1, 2].map(i => (
-                <span key={i} className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"
+                <span key={i} className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"
                   style={{ animationDelay: `${i * 140}ms` }} />
               ))}
             </div>
@@ -238,7 +238,7 @@ export default function AriaChatbot() {
       {/* Slash dropdown */}
       {showSlash && (
         <div className="px-3 pb-1 flex-shrink-0">
-          <div className="rounded-2xl overflow-hidden" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
+          <div className="rounded-lg overflow-hidden" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", boxShadow: "var(--shadow-dialog)" }}>
             {(["workout", "diet", "tasks"] as const).map((m) => {
               const Cfg = MODE_CONFIG[m];
               const Icon = Cfg.icon;
@@ -247,8 +247,8 @@ export default function AriaChatbot() {
                   onClick={() => { setMode(m); setInput(`/${m} `); inputRef.current?.focus(); setShowSlash(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 transition-colors text-left hover:bg-white/5"
                   style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                  <div className={cn("w-6 h-6 rounded-lg bg-gradient-to-br flex items-center justify-center", Cfg.gradient)}>
-                    <Icon className="w-3 h-3 text-white" />
+                  <div className={cn("w-6 h-6 rounded-md flex items-center justify-center", Cfg.gradient)} style={{ color: "var(--on-accent)" }}>
+                    <Icon className="w-3 h-3" />
                   </div>
                   <span className="text-sm font-black" style={{ color: "var(--text-1)" }}>/{m}</span>
                   <span className="text-xs" style={{ color: "var(--text-3)" }}>{Cfg.label} mode</span>
@@ -274,8 +274,8 @@ export default function AriaChatbot() {
             style={{ color: "var(--text-1)", fieldSizing: "content", maxHeight: "80px" } as any}
           />
           <button onClick={() => send()} disabled={!input.trim() || loading}
-            className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 disabled:opacity-30 active:scale-90 transition-all shadow-md shadow-indigo-500/30">
-            <Send className="w-3.5 h-3.5 text-white" />
+            className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center flex-shrink-0 disabled:opacity-30 transition-colors">
+            <Send className="w-3.5 h-3.5" style={{ color: "var(--on-accent)" }} />
           </button>
         </div>
       </div>
@@ -309,11 +309,9 @@ export default function AriaChatbot() {
             borderTop: "1px solid var(--border)",
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            boxShadow: "0 -8px 40px rgba(0,0,0,0.3)",
+            boxShadow: "var(--shadow-dialog)",
             transform: open ? "translateY(0)" : "translateY(110%)",
-            transition: open
-              ? "transform 0.35s cubic-bezier(0.34,1.4,0.64,1)"
-              : "transform 0.22s cubic-bezier(0.4,0,1,1)",
+            transition: "transform 0.2s ease",
             pointerEvents: open ? "auto" : "none",
           }}
         >
@@ -332,15 +330,13 @@ export default function AriaChatbot() {
           aria-hidden={open}
           className={cn(
             "fixed bottom-20 right-4 z-[151]",
-            "w-12 h-12 rounded-2xl flex items-center justify-center",
-            "bg-gradient-to-br from-indigo-500 to-purple-600",
-            "shadow-lg shadow-indigo-400/30",
-            "hover:shadow-xl hover:shadow-indigo-400/40 active:scale-95",
+            "w-11 h-11 rounded-lg flex items-center justify-center bg-accent",
           )}
           style={{
             transition: "transform 0.2s cubic-bezier(0.34,1.4,0.64,1), opacity 0.2s ease, box-shadow 0.2s ease",
             opacity: open ? 0 : 1,
-            transform: open ? "scale(0.8)" : "scale(1)",
+            transform: open ? "scale(0.96)" : "scale(1)",
+            color: "var(--on-accent)",
             pointerEvents: open ? "none" : "auto",
           }}
         >
@@ -360,19 +356,17 @@ export default function AriaChatbot() {
       {/* Floating chat panel */}
       <div
         style={{
-          transition: open
-            ? "opacity 0.28s ease, transform 0.32s cubic-bezier(0.34,1.4,0.64,1)"
-            : "opacity 0.18s ease, transform 0.18s cubic-bezier(0.4,0,1,1)",
+          transition: "opacity 0.16s ease, transform 0.16s ease",
           opacity: open ? 1 : 0,
-          transform: open ? "scale(1) translateY(0)" : "scale(0.88) translateY(12px)",
+          transform: open ? "scale(1) translateY(0)" : "scale(0.98) translateY(4px)",
           pointerEvents: open ? "auto" : "none",
           transformOrigin: "bottom right",
           maxHeight: "72vh",
           background: "var(--surface-0)",
           border: "1px solid var(--border)",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.04)",
+          boxShadow: "var(--shadow-dialog)",
         }}
-        className="w-[380px] rounded-3xl flex flex-col overflow-hidden"
+        className="w-[380px] rounded-xl flex flex-col overflow-hidden"
       >
         {chatContent}
       </div>
@@ -382,13 +376,12 @@ export default function AriaChatbot() {
         onClick={() => setOpen(o => !o)}
         title="Ask Orbit"
         className={cn(
-          "w-[52px] h-[52px] rounded-2xl flex items-center justify-center pointer-events-auto",
-          "bg-gradient-to-br from-indigo-500 to-purple-600",
-          "hover:scale-105 active:scale-95 glow-indigo",
+          "w-11 h-11 rounded-lg flex items-center justify-center pointer-events-auto bg-accent",
         )}
         style={{
-          transition: "transform 0.2s cubic-bezier(0.34,1.4,0.64,1), box-shadow 0.2s ease",
-          boxShadow: "0 0 20px rgba(99,102,241,0.35), 0 4px 16px rgba(0,0,0,0.3)",
+          transition: "opacity 0.16s ease",
+          boxShadow: "none",
+          color: "var(--on-accent)",
         }}
       >
         {triggerIcon}

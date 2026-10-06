@@ -1,0 +1,136 @@
+/* Theme definitions using CSS variables */
+/* Apply a theme class to the <html> element, e.g., "theme-vital-sage" */
+.theme-vital-sage {
+  --color-background: #0D1110;
+  --color-surface: #171D1A;
+  --color-primary: #7FB685;
+  --color-accent: #B8E986;
+  --color-text: #F1F5F2;
+  --color-muted: #8D9992;
+}
+.theme-arctic-blue {
+  --color-background: #0B1117;
+  --color-surface: #141C21;
+  --color-primary: #7DA9B6;
+  --color-accent: #B6CDD1;
+  --color-text: #F4F9FC;
+  --color-muted: #8EA3B2;
+}
+.theme-neuro-violet {
+  --color-background: #100F14;
+  --color-surface: #1A191F;
+  --color-primary: #9187A7;
+  --color-accent: #B8ACC4;
+  --color-text: #F3F1F5;
+  --color-muted: #99939F;
+}
+.theme-vital-coral {
+  --color-background: #11100F;
+  --color-surface: #1C1816;
+  --color-primary: #D17765;
+  --color-accent: #E3A593;
+  --color-text: #FFF8F5;
+  --color-muted: #A99A94;
+}
+.theme-aqua-wellness {
+  --color-background: #081313;
+  --color-surface: #102020;
+  --color-primary: #55A99A;
+  --color-accent: #9FCEC3;
+  --color-text: #F0FFFC;
+  --color-muted: #8CAAA5;
+}
+.theme-midnight-amber {
+  --color-background: #0D0E10;
+  --color-surface: #17191C;
+  --color-primary: #C48A43;
+  --color-accent: #E3BD7F;
+  --color-text: #FAFAF8;
+  --color-muted: #96999E;
+}
+.theme-forest-minimal {
+  --color-background: #0A0F0D;
+  --color-surface: #131A16;
+  --color-primary: #5B906A;
+  --color-accent: #A2C1A3;
+  --color-text: #F3F7F3;
+  --color-muted: #89968D;
+}
+.theme-obsidian-lime {
+  --color-background: #090A0A;
+  --color-surface: #141615;
+  --color-primary: #A4BA68;
+  --color-accent: #CCD89A;
+  --color-text: #F5F7F2;
+  --color-muted: #8D9388;
+}
+.theme-soft-health {
+  --color-background: #F6F8F5;
+  --color-surface: #FFFFFF;
+  --color-primary: #3D8B5F;
+  --color-accent: #86C98A;
+  --color-text: #172019;
+  --color-muted: #68736C;
+}
+.theme-carbon-electric {
+  --color-background: #080B0A;
+  --color-surface: #111613;
+  --color-primary: #70A983;
+  --color-accent: #AED0AE;
+  --color-text: #F2FFF6;
+  --color-muted: #899990;
+}
+/* Semantic tokens shared by every custom theme. */
+html[class*="theme-"] {
+  color-scheme: dark;
+  --background: var(--color-background);
+  --surface-page: var(--color-background);
+  --surface-base: var(--color-surface);
+  --surface-raised: color-mix(in srgb, var(--color-surface) 82%, var(--color-background));
+  --surface-inset: color-mix(in srgb, var(--color-surface) 56%, var(--color-background));
+  --surface-0: var(--surface-base);
+  --surface-1: var(--surface-page);
+  --surface-2: var(--surface-raised);
+  --surface-3: var(--surface-inset);
+  --border-default: color-mix(in srgb, var(--color-muted) 22%, transparent);
+  --border-subtle: color-mix(in srgb, var(--color-muted) 12%, transparent);
+  --border: var(--border-default);
+  --text-primary: var(--color-text);
+  --text-secondary: color-mix(in srgb, var(--color-text) 78%, var(--color-background));
+  --text-muted: var(--color-muted);
+  --text-1: var(--text-primary);
+  --text-2: var(--text-secondary);
+  --text-3: var(--text-muted);
+  --primary: var(--color-primary);
+  --accent: var(--color-primary);
+  --accent-hover: color-mix(in srgb, var(--color-primary) 84%, var(--color-text) 16%);
+  --accent-2: var(--color-accent);
+  --accent-soft: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --accent-glow: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  --accent-gradient: var(--color-primary);
+  --on-accent: var(--color-background);
+  --success: var(--color-primary);
+  --warning: color-mix(in srgb, var(--color-accent) 72%, #f59e0b 28%);
+  --danger: color-mix(in srgb, var(--color-primary) 42%, #ef4444 58%);
+  --info: var(--color-primary);
+  --status-success: var(--success);
+  --status-warning: var(--warning);
+  --status-danger: var(--danger);
+  --status-info: var(--info);
+  --macro-protein: var(--status-info);
+  --macro-carbs: var(--status-success);
+  --macro-fat: var(--status-danger);
+  --muted: var(--color-muted);
+  --glow-color: var(--accent-soft);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.12);
+  --shadow-raised: 0 2px 8px rgb(0 0 0 / 0.18);
+  --shadow-dialog: 0 12px 32px rgb(0 0 0 / 0.24);
+}
+
+html.theme-soft-health {
+  color-scheme: light;
+  --on-accent: #FFFFFF;
+  --shadow-card: 0 1px 2px rgb(24 35 29 / 0.06), 0 3px 10px rgb(24 35 29 / 0.04);
+  --shadow-raised: 0 4px 14px rgb(24 35 29 / 0.08);
+  --shadow-dialog: 0 12px 32px rgb(24 35 29 / 0.16);
+}

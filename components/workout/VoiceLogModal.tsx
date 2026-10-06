@@ -96,10 +96,10 @@ export default function VoiceLogModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pt-4 pb-24 sm:p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/55" onClick={onClose} />
       <div
-        className="relative rounded-2xl shadow-2xl w-full max-w-md p-5 animate-slide-up max-h-[80dvh] overflow-y-auto"
-        style={{ background: "var(--surface-2)", border: "1px solid var(--border)", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}
+        className="relative rounded-xl w-full max-w-md p-5 animate-slide-up max-h-[80dvh] overflow-y-auto"
+        style={{ background: "var(--surface-0)", border: "1px solid var(--border)", boxShadow: "var(--shadow-dialog)" }}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold flex items-center gap-2" style={{ color: "var(--text-1)" }}>
@@ -113,9 +113,10 @@ export default function VoiceLogModal({
           <div className="text-center py-4">
             <button
               onClick={startRecording}
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mx-auto shadow-lg active:scale-95 transition-transform"
+              className="w-16 h-16 rounded-lg bg-accent flex items-center justify-center mx-auto transition-colors"
+              style={{ color: "var(--on-accent)" }}
             >
-              <Mic className="w-8 h-8 text-white" />
+              <Mic className="w-7 h-7" />
             </button>
             <p className="text-sm font-bold mt-4" style={{ color: "var(--text-1)" }}>Tap to start speaking</p>
             <p className="text-xs mt-1.5 leading-relaxed px-4" style={{ color: "var(--text-3)" }}>
@@ -132,10 +133,11 @@ export default function VoiceLogModal({
           <div className="text-center py-4">
             <button
               onClick={stopRecording}
-              className="relative w-20 h-20 rounded-full bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center mx-auto shadow-lg active:scale-95 transition-transform"
+              className="relative w-16 h-16 rounded-lg flex items-center justify-center mx-auto transition-colors"
+              style={{ background: "var(--status-danger)", color: "var(--on-accent)" }}
             >
               <span className="absolute inset-0 rounded-full bg-rose-500/40 animate-ping" />
-              <Square className="w-7 h-7 text-white relative z-10" fill="white" />
+              <Square className="w-6 h-6 relative z-10" fill="currentColor" />
             </button>
             <p className="text-2xl font-black mt-4 tabular-nums" style={{ color: "var(--text-1)" }}>{mmss}</p>
             <p className="text-xs mt-1 font-semibold text-rose-500">Listening… tap to finish</p>
@@ -186,7 +188,7 @@ export default function VoiceLogModal({
                 </div>
                 <div className="space-y-2">
                   {parsed.map((ex, i) => (
-                    <div key={`e${i}`} className="card flex items-center gap-3" style={{ borderLeftColor: "#3B82F6", borderLeftWidth: "3px" }}>
+                    <div key={`e${i}`} className="card flex items-center gap-3" style={{ borderLeftColor: "var(--accent)", borderLeftWidth: "3px" }}>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm truncate" style={{ color: "var(--text-1)" }}>{ex.name}</p>
                         <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>{setSummary(ex.sets)}</p>
@@ -199,7 +201,7 @@ export default function VoiceLogModal({
                     </div>
                   ))}
                   {parsedCardio.map((c, i) => (
-                    <div key={`c${i}`} className="card flex items-center gap-3" style={{ borderLeftColor: "#F97316", borderLeftWidth: "3px" }}>
+                    <div key={`c${i}`} className="card flex items-center gap-3" style={{ borderLeftColor: "var(--status-warning)", borderLeftWidth: "3px" }}>
                       <Activity className="w-4 h-4 text-orange-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm truncate" style={{ color: "var(--text-1)" }}>{CARDIO_LABEL[c.activity] ?? c.activity}</p>

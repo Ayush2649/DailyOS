@@ -19,14 +19,15 @@ export default function SignInPage() {
           <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Welcome to DailyOS</h1>
-          <p className="text-gray-500 mt-2 text-sm">Sign in to manage your day, track workouts, and log meals.</p>
+          <h1 className="text-2xl font-extrabold" style={{ color: "var(--text-1)" }}>Welcome to DailyOS</h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-2)" }}>Sign in to manage your day, track workouts, and log meals.</p>
         </div>
 
         <div className="card shadow-modal p-6">
           <button
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 px-4 font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all duration-150"
+            className="w-full flex items-center justify-center gap-3 border rounded-lg py-3 px-4 font-medium hover:bg-surface-tertiary active:scale-[0.98] transition-all duration-150"
+            style={{ color: "var(--text-1)", background: "var(--surface-0)", borderColor: "var(--border)" }}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -37,7 +38,7 @@ export default function SignInPage() {
             Continue with Google
           </button>
 
-          <p className="text-center text-xs text-gray-400 mt-5">
+          <p className="text-center text-xs mt-5" style={{ color: "var(--text-3)" }}>
             By continuing, you agree to our Terms of Service and Privacy Policy.
           </p>
         </div>

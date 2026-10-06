@@ -15,12 +15,12 @@ function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Intensity backgrounds — indigo scale
+// Intensity backgrounds follow the selected theme accent.
 const LEVEL_BG = [
   "var(--surface-2)",           // 0 — no activity
-  "rgba(99,102,241,0.18)",      // 1 — one activity
-  "rgba(99,102,241,0.46)",      // 2 — two activities
-  "rgba(99,102,241,0.76)",      // 3 — all three
+  "color-mix(in srgb, var(--accent) 18%, transparent)", // 1 — one activity
+  "color-mix(in srgb, var(--accent) 46%, transparent)", // 2 — two activities
+  "color-mix(in srgb, var(--accent) 76%, transparent)", // 3 — all three
 ] as const;
 
 interface TooltipState {
@@ -119,11 +119,10 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
   if (loading) {
     return (
       <div
-        className="rounded-2xl animate-pulse"
+        className="rounded-lg animate-pulse"
         style={{
-          background: "var(--surface-1)",
-          border: "1px solid var(--border)",
-          height: 160,
+          background: "var(--surface-raised)",
+          height: 132,
         }}
       />
     );
@@ -131,22 +130,22 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
 
   return (
     <div
-      className="rounded-2xl p-5 animate-fade-in"
-      style={{ background: "var(--surface-1)", border: "1px solid var(--border)" }}
+      className="rounded-lg p-4 animate-fade-in"
+      style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}
     >
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
-          <h3 className="text-sm font-black" style={{ color: "var(--text-1)" }}>Activity</h3>
-          <p className="text-xs mt-0.5 font-medium" style={{ color: "var(--text-3)" }}>
-            Last {WEEKS} weeks
+          <h3 className="card-title">Activity history</h3>
+          <p className="metadata mt-0.5">
+            Last year
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {([
-            { color: "#60A5FA", label: "Workout" },
-            { color: "#A78BFA", label: "Tasks"   },
-            { color: "#34D399", label: "Meals"   },
+            { color: "var(--status-info)", label: "Workout" },
+            { color: "var(--accent)", label: "Tasks"   },
+            { color: "var(--status-success)", label: "Meals"   },
           ] as const).map(({ color, label }) => (
             <div key={label} className="flex items-center gap-1.5">
               <span
@@ -155,7 +154,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                   background: color, display: "inline-block", flexShrink: 0,
                 }}
               />
-              <span className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>
+              <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>
                 {label}
               </span>
             </div>
@@ -272,7 +271,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                             ? "var(--surface-2)"
                             : LEVEL_BG[level as 0 | 1 | 2 | 3],
                           opacity: isFuture ? 0.18 : 1,
-                          outline: isToday ? "1.5px solid rgba(99,102,241,0.6)" : undefined,
+                          outline: isToday ? "1.5px solid var(--accent)" : undefined,
                           outlineOffset: isToday ? "1px" : undefined,
                           position: "relative",
                           flexShrink: 0,
@@ -297,7 +296,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                                 style={{
                                   width: 2.5, height: 2.5,
                                   borderRadius: "50%",
-                                  background: "#60A5FA",
+                                  background: "var(--status-info)",
                                   display: "block", flexShrink: 0,
                                 }}
                               />
@@ -307,7 +306,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                                 style={{
                                   width: 2.5, height: 2.5,
                                   borderRadius: "50%",
-                                  background: "#A78BFA",
+                                  background: "var(--accent)",
                                   display: "block", flexShrink: 0,
                                 }}
                               />
@@ -317,7 +316,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                                 style={{
                                   width: 2.5, height: 2.5,
                                   borderRadius: "50%",
-                                  background: "#34D399",
+                                  background: "var(--status-success)",
                                   display: "block", flexShrink: 0,
                                 }}
                               />
@@ -339,18 +338,18 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
         className="flex items-center gap-4 mt-4 pt-3 flex-wrap"
         style={{ borderTop: "1px solid var(--border-subtle)" }}
       >
-        <span className="text-xs font-bold text-blue-400">
+        <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>
           {workoutsInRange} workout{workoutsInRange !== 1 ? "s" : ""}
         </span>
-        <span className="text-xs font-bold text-violet-400">
+        <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>
           {taskDaysInRange} active day{taskDaysInRange !== 1 ? "s" : ""}
         </span>
-        <span className="text-xs font-bold text-emerald-400">
+        <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>
           {mealDaysInRange} day{mealDaysInRange !== 1 ? "s" : ""} tracked
         </span>
         {perfectDays > 0 && (
-          <span className="text-xs font-bold ml-auto" style={{ color: "var(--text-2)" }}>
-            🔥 {perfectDays} perfect day{perfectDays !== 1 ? "s" : ""}
+          <span className="text-xs font-medium ml-auto" style={{ color: "var(--text-3)" }}>
+            {perfectDays} full-activity day{perfectDays !== 1 ? "s" : ""}
           </span>
         )}
       </div>
@@ -373,7 +372,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
             pointerEvents: "none",
             zIndex: 9999,
             whiteSpace: "nowrap",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+            boxShadow: "var(--shadow-raised)",
           }}
         >
           {tooltip.content}

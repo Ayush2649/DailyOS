@@ -303,14 +303,14 @@ export default function WorkoutPage() {
   return (
     <div className="animate-fade-in">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight" style={{ color: "var(--text-1)" }}>Workout</h1>
-          <p className="text-sm mt-0.5 font-medium" style={{ color: "var(--text-3)" }}>Log and track your training</p>
+          <h1 className="page-title" style={{ color: "var(--text-primary)" }}>Workout</h1>
+          <p className="page-description mt-1" style={{ color: "var(--text-secondary)" }}>Log and track your training</p>
         </div>
-        <button onClick={() => setShowBodyWeightModal(true)}
+        <button onClick={() => setShowBodyWeightModal(true)} type="button" title="Log body weight"
           className="btn-secondary text-sm flex items-center gap-1.5 flex-shrink-0">
-          <Scale className="w-3.5 h-3.5 text-blue-500" />
+          <Scale className="w-4 h-4 text-accent" />
           {bodyWeight
             ? <span className="font-bold text-blue-600">{bodyWeight} kg</span>
             : <span className="hidden sm:inline">Log weight</span>}
@@ -318,14 +318,14 @@ export default function WorkoutPage() {
       </div>
 
       {/* ── View toggle ── */}
-      <div className="flex gap-1 p-1 rounded-xl mb-6 w-fit" style={{ background: "var(--surface-2)", border: "1px solid var(--border-subtle)" }}>
+      <div className="flex gap-1 p-1 rounded-lg mb-4 w-full sm:w-fit overflow-x-auto" style={{ background: "var(--surface-raised)", border: "1px solid var(--border-subtle)" }} role="tablist" aria-label="Workout views">
         {([
           { key: "log",       label: "Log Workout" },
           { key: "templates", label: "Templates"   },
           { key: "history",   label: "History"     },
         ] as const).map(({ key, label }) => (
-          <button key={key} onClick={() => setView(key)}
-            className="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-150 flex items-center gap-1.5"
+          <button key={key} onClick={() => setView(key)} type="button" role="tab" aria-selected={view === key}
+            className="flex-1 sm:flex-none min-h-11 px-3 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
             style={view === key ? { background: "var(--surface-0)", color: "var(--text-1)", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" } : { color: "var(--text-3)" }}>
             {key === "templates" && <LayoutTemplate className="w-3.5 h-3.5" />}
             {label}
@@ -338,21 +338,21 @@ export default function WorkoutPage() {
           /* ── TODAY'S WORKOUT SUMMARY ── */
           <div className="space-y-4 animate-fade-in">
             {/* Done banner */}
-            <div className="rounded-2xl p-4 flex items-center gap-3"
-              style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%)", border: "1px solid rgba(16,185,129,0.2)" }}>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <Dumbbell className="w-5 h-5 text-emerald-400" />
+            <div className="rounded-lg p-3 flex items-center gap-3 border"
+              style={{ background: "color-mix(in srgb, var(--success) 8%, transparent)", borderColor: "color-mix(in srgb, var(--success) 18%, transparent)" }}>
+              <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "color-mix(in srgb, var(--success) 12%, transparent)" }}>
+                <Check className="w-4 h-4" style={{ color: "var(--success)" }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-sm text-emerald-400">Today's Workout Complete ✓</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-1)" }}>Workout logged today</p>
                 <p className="text-xs mt-0.5 font-medium" style={{ color: "var(--text-3)" }}>
                   {todaySession.durationMinutes > 0 ? `${todaySession.durationMinutes} min · ` : ""}
                   {todaySession.exercises.length > 0 ? `${todaySession.exercises.length} exercises · ${todaySession.exercises.reduce((a, e) => a + e.sets.length, 0)} sets` : "Cardio only"}
                 </p>
               </div>
               <button onClick={() => setView("history")}
-                className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
-                style={{ background: "rgba(16,185,129,0.15)", color: "var(--text-2)" }}>
+                className="text-xs font-medium px-3 min-h-10 rounded-md transition-colors"
+                style={{ background: "var(--accent-soft)", color: "var(--text-2)" }}>
                 Full history
               </button>
             </div>
@@ -370,15 +370,14 @@ export default function WorkoutPage() {
                 { label: "Kcal",      val: cals > 0 ? cals : "—",      icon: Flame,     color: "text-emerald-400 bg-emerald-500/10" },
               ];
               return (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 rounded-lg px-3 py-3"
+                  style={{ background: "var(--surface-raised)" }}>
                   {stats.map((s) => (
-                    <div key={s.label} className="card text-center py-3 px-2 flex flex-row sm:flex-col items-center sm:items-center gap-3 sm:gap-0">
-                      <div className={cn("w-8 h-8 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center flex-shrink-0 sm:mx-auto sm:mb-1", s.color)}>
-                        <s.icon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                      </div>
-                      <div className="flex flex-col items-start sm:items-center">
-                        <p className="text-base font-black leading-none" style={{ color: "var(--text-1)" }}>{s.val}</p>
-                        <p className="text-[9px] font-bold uppercase tracking-wide mt-0.5" style={{ color: "var(--text-3)" }}>{s.label}</p>
+                    <div key={s.label} className="flex items-center gap-2 min-w-0">
+                      <s.icon className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-tight truncate" style={{ color: "var(--text-1)" }}>{s.val}</p>
+                        <p className="metadata truncate">{s.label}</p>
                       </div>
                     </div>
                   ))}
@@ -434,10 +433,10 @@ export default function WorkoutPage() {
 
             {/* AI coach report */}
             {todaySession.summary && (
-              <div className="card border-none bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-blue-950/40">
+              <div className="card">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "var(--accent-soft)" }}>
+                    <Sparkles className="w-3.5 h-3.5 text-accent" />
                   </div>
                   <span className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Coach Report</span>
                 </div>
@@ -465,7 +464,7 @@ export default function WorkoutPage() {
               {!showAddCardioToday ? (
                 <button onClick={() => setShowAddCardioToday(true)}
                   className="w-full card border-2 border-dashed flex items-center justify-center gap-2 text-sm font-semibold py-4 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all"
-                  style={{ borderColor: "rgba(16,185,129,0.2)", color: "var(--text-3)" }}>
+                  style={{ borderColor: "var(--accent-glow)", color: "var(--text-3)" }}>
                   <Plus className="w-4 h-4" /> Log cardio for today
                 </button>
               ) : (
@@ -503,19 +502,20 @@ export default function WorkoutPage() {
 
           {/* Stats bar */}
           {hasAnything && (
-            <div className="grid grid-cols-4 gap-2 animate-slide-down">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 rounded-lg px-3 py-3 animate-slide-down"
+              style={{ background: "var(--surface-raised)" }}>
               {[
-                { label: "Exercises", val: exercises.length, icon: Dumbbell, color: "text-blue-500 bg-blue-500/10" },
-                { label: "Sets",      val: totalSets,        icon: Activity,   color: "text-violet-500 bg-violet-500/10" },
-                { label: "Reps",      val: totalReps,        icon: Flame,      color: "text-orange-500 bg-orange-500/10" },
-                { label: "Cardio Cal",val: totalCardioCals,  icon: Timer,      color: "text-emerald-500 bg-emerald-500/10" },
+                { label: "Exercises", val: exercises.length, icon: Dumbbell },
+                { label: "Sets",      val: totalSets,        icon: Activity },
+                { label: "Reps",      val: totalReps,        icon: Flame },
+                { label: "Cardio kcal",val: totalCardioCals, icon: Timer },
               ].map((s) => (
-                <div key={s.label} className="card text-center py-3 px-1">
-                  <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center mx-auto mb-1", s.color)}>
-                    <s.icon className="w-3.5 h-3.5" />
+                <div key={s.label} className="flex items-center gap-2 min-w-0">
+                  <s.icon className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-tight tabular-nums" style={{ color: "var(--text-1)" }}>{s.val}</p>
+                    <p className="metadata truncate">{s.label}</p>
                   </div>
-                  <p className="text-lg font-black" style={{ color: "var(--text-1)" }}>{s.val}</p>
-                  <p className="text-[9px] font-bold uppercase tracking-wide" style={{ color: "var(--text-3)" }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -531,17 +531,18 @@ export default function WorkoutPage() {
             </div>
 
             {exercises.length === 0 && !showAddExercise && (
-              <div className="card border-2 border-dashed border-blue-100 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 dark:from-blue-950/20 dark:to-indigo-950/10 text-center py-6 animate-fade-in">
-                <p className="font-bold text-sm" style={{ color: "var(--text-2)" }}>No strength exercises yet</p>
-                <p className="text-xs mt-0.5 mb-3" style={{ color: "var(--text-3)" }}>Bench, squats, deadlifts — add them here</p>
-                <div className="flex items-center justify-center gap-2">
-                  <button onClick={() => setShowAddExercise(true)}
-                    className="inline-flex items-center gap-2 btn-primary text-sm px-4 py-2">
-                    <Plus className="w-3.5 h-3.5" /> Add exercise
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-y py-4 animate-fade-in" style={{ borderColor: "var(--border-subtle)" }}>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-1)" }}>No strength exercises yet</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>Add an exercise or log by voice.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowAddExercise(true)} className="btn-primary min-h-11 flex-1 sm:flex-none text-sm">
+                    <Plus className="w-4 h-4" /> Add exercise
                   </button>
                   <button onClick={() => setShowVoice(true)}
-                    className="inline-flex items-center gap-2 btn-secondary text-sm px-4 py-2">
-                    <Mic className="w-3.5 h-3.5" /> Log by voice
+                    className="btn-secondary min-h-11 flex-1 sm:flex-none text-sm">
+                    <Mic className="w-4 h-4" /> Voice
                   </button>
                 </div>
               </div>
@@ -567,14 +568,10 @@ export default function WorkoutPage() {
               </div>
             ) : exercises.length > 0 ? (
               <div className="flex gap-2 mt-3">
-                <button onClick={() => setShowAddExercise(true)}
-                  className="flex-1 card border-dashed border-2 flex items-center justify-center gap-2 text-sm font-semibold hover:text-blue-400 hover:border-blue-500/30 hover:bg-blue-500/5 py-3 transition-all"
-                  style={{ borderColor: "var(--border)", color: "var(--text-3)" }}>
+                <button onClick={() => setShowAddExercise(true)} className="btn-secondary flex-1 text-sm">
                   <Plus className="w-4 h-4" /> Add exercise
                 </button>
-                <button onClick={() => setShowVoice(true)}
-                  className="card border-dashed border-2 flex items-center justify-center gap-2 text-sm font-semibold hover:text-blue-400 hover:border-blue-500/30 hover:bg-blue-500/5 py-3 px-4 transition-all"
-                  style={{ borderColor: "var(--border)", color: "var(--text-3)" }}>
+                <button onClick={() => setShowVoice(true)} className="btn-secondary text-sm">
                   <Mic className="w-4 h-4" /> Voice
                 </button>
               </div>
@@ -596,12 +593,13 @@ export default function WorkoutPage() {
             </div>
 
             {cardioLogs.length === 0 && !showAddCardio && (
-              <div className="card border-2 border-dashed border-emerald-100 dark:border-emerald-900/40 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 dark:from-emerald-950/20 dark:to-teal-950/10 text-center py-6 animate-fade-in">
-                <p className="font-bold text-sm" style={{ color: "var(--text-2)" }}>No cardio logged yet</p>
-                <p className="text-xs mt-0.5 mb-3" style={{ color: "var(--text-3)" }}>Walking, cycling, running — track it all</p>
-                <button onClick={() => setShowAddCardio(true)}
-                  className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-400 active:scale-[0.97] transition-all">
-                  <Plus className="w-3.5 h-3.5" /> Add cardio
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-y py-4 animate-fade-in" style={{ borderColor: "var(--border-subtle)" }}>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-1)" }}>No cardio logged yet</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>Add a cardio activity to today's session.</p>
+                </div>
+                <button onClick={() => setShowAddCardio(true)} className="btn-primary min-h-11 text-sm">
+                  <Plus className="w-4 h-4" /> Add cardio
                 </button>
               </div>
             )}
@@ -613,9 +611,7 @@ export default function WorkoutPage() {
             </div>
 
             {!showAddCardio && cardioLogs.length > 0 && (
-              <button onClick={() => setShowAddCardio(true)}
-                className="w-full card border-dashed border-2 flex items-center justify-center gap-2 text-sm font-semibold hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 py-3 mt-3 transition-all"
-                style={{ borderColor: "var(--border)", color: "var(--text-3)" }}>
+              <button onClick={() => setShowAddCardio(true)} className="btn-secondary w-full mt-3 text-sm">
                 <Plus className="w-4 h-4" /> Add cardio
               </button>
             )}
@@ -635,7 +631,7 @@ export default function WorkoutPage() {
               <div className="flex gap-3">
                 <button onClick={handleSummarize} disabled={summarizing}
                   className="flex-1 flex items-center justify-center gap-2 text-sm font-semibold px-4 py-3 rounded-xl border transition-all active:scale-[0.97] disabled:opacity-60"
-                  style={{ background: "var(--surface-2)", borderColor: "rgba(99,102,241,0.3)", color: "var(--text-1)" }}>
+                  style={{ background: "var(--surface-2)", borderColor: "var(--accent-glow)", color: "var(--text-1)" }}>
                   {summarizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-indigo-400" />}
                   {summarizing ? "Analyzing..." : "AI Summary"}
                 </button>
@@ -671,11 +667,11 @@ export default function WorkoutPage() {
 
           {/* AI Summary */}
           {showSummary && summaryResult && (
-            <div className="card border-none bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-blue-950/40 animate-slide-up">
+            <div className="card animate-slide-up">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--accent-soft)" }}>
+                    <Sparkles className="w-4 h-4 text-accent" />
                   </div>
                   <span className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Coach Report</span>
                 </div>
@@ -740,10 +736,14 @@ export default function WorkoutPage() {
       ) : (
         <div className="space-y-3">
           {pastSessions.length === 0 ? (
-            <div className="text-center py-16 card">
-              <History className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--text-3)" }} />
-              <p className="font-bold" style={{ color: "var(--text-2)" }}>No workouts logged yet</p>
-              <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>Your history will appear here</p>
+                              <div className="flex flex-col items-center py-8 border-y text-center" style={{ borderColor: "var(--border-subtle)" }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto mb-2" style={{ color: "var(--text-3)" }}>
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                  <path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>No workouts logged</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>Your sessions will appear here.</p>
+                <button onClick={() => setView("log")} className="btn-primary mt-2 text-sm min-h-11 px-4">Log workout</button>
             </div>
           ) : pastSessions.map((s) => <PastWorkoutCard key={s.id} session={s} defaultExpanded={s.date === todayString()} />)}
         </div>
@@ -820,7 +820,7 @@ function AddCardioForm({ bodyWeightKg, onAdd, onCancel }: {
   };
 
   return (
-    <div className="card mt-3 animate-slide-up space-y-4" style={{ borderColor: "rgba(16,185,129,0.2)" }}>
+    <div className="card mt-3 animate-slide-up space-y-4" style={{ borderColor: "var(--accent-glow)" }}>
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold" style={{ color: "var(--text-1)" }}>Add Cardio Activity</p>
         <button onClick={onCancel} className="btn-ghost p-1.5"><X className="w-4 h-4" /></button>
@@ -895,7 +895,7 @@ function CardioCard({ log, onRemove }: { log: CardioLog; onRemove: () => void })
   const Icon = meta.icon;
   const [iconBg, iconText] = meta.color.split(" ");
   return (
-    <div className="card flex items-center gap-3 animate-slide-up" style={{ borderLeftWidth: "3px", borderLeftColor: "#10B981" }}>
+    <div className="card flex items-center gap-3 animate-slide-up" style={{ borderLeftWidth: "3px", borderLeftColor: "var(--status-success)" }}>
       <span className={cn("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0", iconText.replace("text-", "bg-").replace("-400", "-500/10"))}>
         <Icon className={cn("w-4.5 h-4.5", iconText)} />
       </span>
@@ -931,7 +931,7 @@ function ExerciseCard({ exercise, onAddSet, onRemoveSet, onUpdateSet, onRemove }
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
-    <div className="card animate-slide-up" style={{ borderLeftWidth: "3px", borderLeftColor: "#3B82F6" }}>
+    <div className="card animate-slide-up" style={{ borderLeftWidth: "3px", borderLeftColor: "var(--accent)", background: "var(--surface-2)" }}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-blue-500/10 rounded-lg flex items-center justify-center">
@@ -1084,13 +1084,7 @@ function TemplateCard({ template: tpl, onLoad, onDelete }: {
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const accentColor = tpl.isPreset
-    ? tpl.name.includes("Push") ? "#3B82F6"
-    : tpl.name.includes("Pull") ? "#8B5CF6"
-    : tpl.name.includes("Leg")  ? "#10B981"
-    : tpl.name.includes("Upper")? "#F59E0B"
-    : "#6366F1" // Full Body
-    : "#6366F1"; // user templates
+  const accentColor = "var(--accent)";
 
   return (
     <div className="card transition-all duration-200 group"

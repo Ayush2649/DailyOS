@@ -63,7 +63,7 @@ function SpotlightTiltCard({ item, index, inView }: { item: WorkflowItem; index:
     const y = e.clientY - r.top;
     setGlow({ x, y, active: true });
     // Lean toward the cursor (max ~9°)
-    setTilt({ rx: -((y / r.height) - 0.5) * 9, ry: ((x / r.width) - 0.5) * 9 });
+    setTilt({ rx: -((y / r.height) - 0.5) * 1.5, ry: ((x / r.width) - 0.5) * 1.5 });
   };
 
   const handleLeave = () => {
@@ -78,11 +78,10 @@ function SpotlightTiltCard({ item, index, inView }: { item: WorkflowItem; index:
       onMouseLeave={handleLeave}
       className="group"
       style={{
-        perspective: "1000px",
+        perspective: "none",
         opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : "translateY(28px)",
-        transition: "opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out)",
-        transitionDelay: inView ? `${index * 110}ms` : "0ms",
+        transition: "opacity 0.15s ease",
+        transitionDelay: inView ? `${index * 40}ms` : "0ms",
       }}
     >
       {/* Inner: the tilting card */}
@@ -92,11 +91,10 @@ function SpotlightTiltCard({ item, index, inView }: { item: WorkflowItem; index:
         style={{
           background: "var(--surface-0)",
           border: "1px solid var(--border)",
-          transformStyle: "preserve-3d",
           transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-          transition: "transform 0.2s var(--ease-out), box-shadow 0.3s ease, border-color 0.3s ease",
+          transition: "transform 0.15s ease, border-color 0.15s ease",
           borderColor: glow.active ? "var(--accent-glow)" : "var(--border)",
-          boxShadow: glow.active ? "0 20px 54px -14px var(--accent-glow)" : "none",
+          boxShadow: "none",
         }}
       >
         {/* Warm coral spotlight that follows the cursor */}
@@ -104,14 +102,14 @@ function SpotlightTiltCard({ item, index, inView }: { item: WorkflowItem; index:
           className="pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300"
           style={{
             opacity: glow.active ? 1 : 0,
-            background: `radial-gradient(340px circle at ${glow.x}px ${glow.y}px, var(--accent-soft), transparent 65%)`,
+            background: "var(--accent-soft)",
           }}
         />
 
         {/* Content — lifted in 3D for depth */}
         <div className="relative" style={{ transform: "translateZ(40px)" }}>
           <div className={cn(
-            "w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-transform duration-300 group-hover:scale-110",
+            "w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-4",
             item.iconClass,
           )}>
             <Icon className="w-5 h-5" />

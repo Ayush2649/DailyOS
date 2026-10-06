@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#6366f1",
-  "theme_color": "#FF5E4D",
+  "theme_color": "#4D6B59",
   "orientation": "portrait",
   "icons": [
     { "src": "/BrandLogo_Header.png", "sizes": "512x512", "type": "image/png" },

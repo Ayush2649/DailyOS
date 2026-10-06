@@ -1,0 +1,144 @@
+/* SATAT Light Theme Tokens */
+:root {
+  /* Brand */
+  --satat-brand-900: #173D32;
+  --satat-brand-800: #1D493C;
+  --satat-brand-700: #245747;
+  --satat-brand-500: #3E7563;
+  --satat-brand-300: #7F9F91;
+
+  /* Accent */
+  --satat-accent-200: #A8B89D;
+  --satat-accent-100: #D8E1D2;
+
+  /* Background & Surface */
+  --satat-background: #F8F7F2;
+  --satat-surface: #FFFFFF;
+  --satat-surface-subtle: #F3F3EE;
+
+  /* Text */
+  --satat-text-primary: #171A17;
+  --satat-text-secondary: #686D67;
+  --satat-text-tertiary: #8B908A;
+
+  /* Borders */
+  --satat-border: #E5E4DD;
+  --satat-border-strong: #D5D5CC;
+
+  /* Semantic */
+  --satat-success: #2F6B4F;
+  --satat-success-bg: #E7F1EA;
+  --satat-warning: #A86A16;
+  --satat-warning-bg: #FFF2D9;
+  --satat-error: #B54B4B;
+  --satat-error-bg: #FBEAEA;
+  --satat-info: #416D91;
+  --satat-info-bg: #EAF2F8;
+
+  /* Mapping generic vars */
+  --background: var(--satat-background);
+  --surface-page: var(--satat-background);
+  --surface-base: var(--satat-surface);
+  --surface-raised: var(--satat-surface-subtle);
+  --surface-inset: var(--satat-surface-subtle);
+  --border-default: var(--satat-border);
+  --border-subtle: var(--satat-border-strong);
+  --border: var(--satat-border);
+  --text-primary: var(--satat-text-primary);
+  --text-secondary: var(--satat-text-secondary);
+  --text-muted: var(--satat-text-tertiary);
+  --text-1: var(--satat-text-primary);
+  --text-2: var(--satat-text-secondary);
+  --text-3: var(--satat-text-tertiary);
+  --accent: var(--satat-brand-500);
+  --accent-hover: var(--satat-brand-700);
+  --accent-2: var(--satat-accent-200);
+  --success: var(--satat-success);
+  --warning: var(--satat-warning);
+  --danger: var(--satat-error);
+  --info: var(--satat-info);
+  --status-success: var(--success);
+  --status-warning: var(--warning);
+  --status-danger: var(--danger);
+  --status-info: var(--info);
+  --glow-color: transparent;
+
+  /* Typography */
+  --font-display: var(--font-plus-jakarta), sans-serif;
+  --font-sans: var(--font-inter), sans-serif;
+  --type-page-title: 1.75rem;
+  --type-section-title: 1.25rem;
+  --type-card-title: 1rem;
+  --type-body: 0.9375rem;
+  --type-secondary: 0.875rem;
+  --type-metadata: 0.75rem;
+  --type-metric: 2rem;
+  --type-metric-large: 2.5rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Radius */
+  --radius-control: 8px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
+  --radius-pill: 9999px;
+  --radius-app-shell: 24px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(23, 26, 23, 0.06);
+  --shadow-md: 0 8px 24px rgba(23, 26, 23, 0.08);
+  --shadow-lg: 0 20px 60px rgba(23, 26, 23, 0.14);
+  --shadow-card: var(--shadow-sm);
+  --shadow-raised: var(--shadow-md);
+  --shadow-dialog: var(--shadow-lg);
+}
+
+/* SATAT Dark Theme Tokens */
+.dark {
+  --satat-dark-background: #101412;
+  --satat-dark-surface: #181D1A;
+  --satat-dark-surface-2: #202722;
+  --satat-dark-surface-3: #272F2A;
+  --satat-dark-text-primary: #F4F5EF;
+  --satat-dark-text-secondary: #A5AAA3;
+  --satat-dark-text-tertiary: #7D847E;
+  --satat-dark-border: #2D342F;
+  --satat-dark-primary: #A6C18F;
+  --satat-dark-primary-hover: #B7CEA4;
+  --satat-dark-accent: #C9DDB9;
+
+  /* Map generic vars for dark mode */
+  --background: var(--satat-dark-background);
+  --surface-page: var(--satat-dark-background);
+  --surface-base: var(--satat-dark-surface);
+  --surface-raised: var(--satat-dark-surface-2);
+  --surface-inset: var(--satat-dark-surface-3);
+  --border-default: var(--satat-dark-border);
+  --border-subtle: var(--satat-dark-border);
+  --border: var(--satat-dark-border);
+  --text-primary: var(--satat-dark-text-primary);
+  --text-secondary: var(--satat-dark-text-secondary);
+  --text-muted: var(--satat-dark-text-tertiary);
+  --text-1: var(--satat-dark-text-primary);
+  --text-2: var(--satat-dark-text-secondary);
+  --text-3: var(--satat-dark-text-tertiary);
+  --accent: var(--satat-dark-primary);
+  --accent-hover: var(--satat-dark-primary-hover);
+  --accent-2: var(--satat-dark-accent);
+  --success: var(--satat-success);
+  --warning: var(--satat-warning);
+  --danger: var(--satat-error);
+  --info: var(--satat-info);
+  --status-success: var(--success);
+  --status-warning: var(--warning);
+  --status-danger: var(--danger);
+  --status-info: var(--info);
+}
