@@ -89,7 +89,7 @@ export default function Navigation() {
         <nav className="app-shell-nav" aria-label="Primary navigation">
           <div className="app-shell-nav-list">
           {navItems.map(({ href, icon: Icon, label, exact }) => {
-            const active = exact ? pathname === href : pathname.startsWith(href);
+            const active = exact ? pathname === href : pathname?.startsWith(href) ?? false;
             return (
               <Link key={href} href={href}
                 aria-current={active ? "page" : undefined}
@@ -195,7 +195,7 @@ export default function Navigation() {
       <nav className="app-mobile-bottom-nav lg:hidden" aria-label="Primary navigation">
         <div className="app-mobile-nav-list">
           {navItems.map(({ href, icon: Icon, label, exact }) => {
-            const active = exact ? pathname === href : pathname.startsWith(href);
+            const active = exact ? pathname === href : pathname?.startsWith(href) ?? false;
             return (
               <Link key={href} href={href}
                 aria-current={active ? "page" : undefined}

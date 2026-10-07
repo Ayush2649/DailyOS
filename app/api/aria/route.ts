@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { callTextWithFallback } from "@/lib/ai/groq";
+import { buildOrbitContext } from "@/lib/orbit/contextEngine";
+import { inferContextRequirements } from "@/lib/orbit/contextRequirement";
+import { serializeOrbitContext } from "@/lib/orbit/contextSerializer";
 import { TEXT_FALLBACK, MAX_TOKENS } from "@/lib/ai/models";
 
 export const maxDuration = 30;
@@ -13,12 +16,25 @@ export async function POST(req: NextRequest) {
   const userName = session.user?.name?.split(" ")[0] ?? "there";
   const { messages, mode, dietContext, workoutContext, taskContext } = await req.json();
 
+  // Determine required context based on user messages
+  const userPrompt = messages.map((m:any)=>m.content).join(" ");
+  const requirements = inferContextRequirements(userPrompt);
+  const orbitContext = await buildOrbitContext(requirements);
+  const userTimezone = orbitContext?.preferences?.timezone || "UTC";
+
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-IN", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "Asia/Kolkata",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: userTimezone,
   });
   const timeStr = now.toLocaleTimeString("en-IN", {
-    hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: userTimezone,
   });
 
   let system = `You are Orbit — the personal AI life coach built into DailyOS.
@@ -33,6 +49,9 @@ You are deeply knowledgeable about:
 
 Personality: You are direct, specific, encouraging, and practical — like a coach who actually knows the user's data.
 Never give vague generic advice. Always reference the user's REAL data when available.
+• If the requested information exists in the retrieved context, answer using that concrete data.
+• If the information is not present, explicitly say that the record is unavailable (e.g., "I don't see a meal logged for yesterday night.").
+• Do not fabricate meals, calories, workouts, tasks, habits, goals, or preferences. Do not mention Firebase, embeddings, RAG, or internal IDs.
 Format: use **bold** for key points and - for bullet lists. Keep responses under 200 words unless the user asks for more detail.
 You are deeply familiar with Indian food, Indian lifestyle, Indian portion sizes, and Indian fitness culture.
 NEVER say you don't know today's date — you always know it.`;
@@ -128,11 +147,12 @@ Focus on task prioritization, habit building, focus strategies, breaking down go
     system += `\n\n[MODE: GENERAL]
 The user has opened Orbit without selecting a specific mode. Give helpful, grounded advice across fitness, nutrition, and productivity. Suggest they type /workout, /diet, or /tasks for more focused coaching.`;
   }
-
   try {
+    const serializedContext = serializeOrbitContext(orbitContext);
     const result = await callTextWithFallback(TEXT_FALLBACK, {
       messages: [
         { role: "system", content: system },
+        { role: "system", content: JSON.stringify(serializedContext) },
         ...messages.map((m: { role: string; content: string }) => ({
           role: m.role as "user" | "assistant",
           content: m.content,
