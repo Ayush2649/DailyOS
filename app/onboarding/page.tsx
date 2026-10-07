@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useOnboardingWizard } from "@/components/onboarding/useOnboardingWizard";
 import { StepConsent } from "@/components/onboarding/StepConsent";
 import { StepFocus } from "@/components/onboarding/StepFocus";
@@ -14,7 +16,10 @@ import { StepReveal } from "@/components/onboarding/StepReveal";
 import { CANONICAL_STEPS } from "@/lib/onboarding/constants";
 import { Loader2 } from "lucide-react";
 
-export default function OnboardingPage() {
+function OnboardingContent() {
+  const searchParams = useSearchParams();
+  const isUpdateMode = searchParams.get("mode") === "update";
+
   const {
     state,
     updateFormField,
@@ -22,7 +27,8 @@ export default function OnboardingPage() {
     handleNext,
     handleBack,
     handleSkip,
-  } = useOnboardingWizard();
+    handleConfirmUpdate,
+  } = useOnboardingWizard({ isUpdateMode });
 
   if (state.isLoading) {
     return (
@@ -30,7 +36,7 @@ export default function OnboardingPage() {
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
           <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-            Initializing Satat...
+            {isUpdateMode ? "Loading your Satat setup..." : "Initializing Satat..."}
           </p>
         </div>
       </div>
@@ -52,7 +58,9 @@ export default function OnboardingPage() {
         {!isRevealStep && (
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              <span className="text-primary-600 dark:text-primary-400 font-black">Satat</span>
+              <span className="text-primary-600 dark:text-primary-400 font-black">
+                {isUpdateMode ? "Satat · Update" : "Satat"}
+              </span>
               <span>
                 Step {currentStepIndex + 1} of {totalSteps}
               </span>
@@ -173,6 +181,10 @@ export default function OnboardingPage() {
             <StepReveal
               formValues={state.formValues}
               completedResult={state.completedResult}
+              isUpdateMode={isUpdateMode}
+              onConfirmUpdate={handleConfirmUpdate}
+              onBack={handleBack}
+              isSaving={state.isSaving}
             />
           )}
         </div>
@@ -185,3 +197,21 @@ export default function OnboardingPage() {
   );
 }
 
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+              Initializing Satat...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <OnboardingContent />
+    </Suspense>
+  );
+}

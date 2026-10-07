@@ -1,12 +1,11 @@
 {
-  "name": "DailyOS",
-  "short_name": "DailyOS",
-  "description": "Your personal operating system for tasks, workouts, and nutrition",
+  "name": "SATAT",
+  "short_name": "SATAT",
+  "description": "Continuous, sustainable personal wellness system",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#6366f1",
-  "theme_color": "#4D6B59",
+  "background_color": "#08090A",
+  "theme_color": "#08090A",
   "orientation": "portrait",
   "icons": [
     { "src": "/BrandLogo_Header.png", "sizes": "512x512", "type": "image/png" },

@@ -130,8 +130,11 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
 
   return (
     <div
-      className="rounded-lg p-4 animate-fade-in"
-      style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}
+      className="rounded-2xl p-4 sm:p-5 animate-fade-in"
+      style={{
+        background: "var(--satat-surface, #0D0F11)",
+        border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+      }}
     >
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">

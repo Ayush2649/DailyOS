@@ -18,6 +18,8 @@ import {
   composeStarterWorkout,
   generateWorkoutTemplateDocs,
 } from "@/lib/workouts/composition";
+import { isOnboardingTemplate } from "@/lib/workouts/classification";
+import type { WorkoutTemplate } from "@/types";
 import { checkRateLimit } from "@/lib/onboarding/rateLimit";
 
 export const maxDuration = 30;
@@ -113,6 +115,19 @@ export async function POST(req: NextRequest) {
 
   // 1. Atomic Profile Document Write
   const profileRef = adminDb.collection("userProfiles").doc(userId);
+  let profileCreatedAt = now;
+  try {
+    if (typeof profileRef?.get === "function") {
+      const profileSnap = await profileRef.get();
+      const existingData = profileSnap?.data?.();
+      if (profileSnap?.exists && typeof existingData?.createdAt === "number") {
+        profileCreatedAt = existingData.createdAt;
+      }
+    }
+  } catch (err: any) {
+    // Fall back to now
+  }
+
   batch.set(
     profileRef,
     {
@@ -149,15 +164,15 @@ export async function POST(req: NextRequest) {
       computedTargets: toCanonicalComputedTargets(targets),
       workoutPlanAssignment: workoutPlan,
       draft: admin.firestore.FieldValue.delete(),
-      createdAt: now,
+      createdAt: profileCreatedAt,
       updatedAt: now,
     },
     { merge: true }
   );
 
-  // 2. Macro Goals Store Write (Only if targetCalories calculated)
+  // 2. Macro Goals Store Write (Only if targetCalories calculated, otherwise clean up)
+  const macroRef = adminDb.collection("macroGoals").doc(userId);
   if (targets.targetCalories !== null && targets.nutritionStatus === "calculated") {
-    const macroRef = adminDb.collection("macroGoals").doc(userId);
     batch.set(
       macroRef,
       {
@@ -168,6 +183,8 @@ export async function POST(req: NextRequest) {
       },
       { merge: true }
     );
+  } else {
+    batch.delete(macroRef);
   }
 
   // 3. Initial Bodyweight Log (Deterministic ID for idempotence)
@@ -186,24 +203,53 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 4. Starter Workout Template Assignment (Deterministic template IDs)
+  // 4. Starter Workout Template Assignment & Obsolete Cleanup (§5, §13)
+  let existingTemplatesSnap: any = null;
+  try {
+    const colRef = adminDb.collection("workoutTemplates");
+    if (typeof colRef?.where === "function") {
+      existingTemplatesSnap = await colRef.where("userId", "==", userId).get();
+    }
+  } catch (err: any) {
+    // If query fails, continue safely
+  }
+
+  const newTemplateIds = new Set<string>();
+  let templateDocs: WorkoutTemplate[] = [];
+
   if (
     workoutPlan &&
     baseline.includeWorkouts &&
     baseline.equipmentAccess
   ) {
-    const templateDocs = generateWorkoutTemplateDocs({
+    templateDocs = generateWorkoutTemplateDocs({
       userId,
       equipmentAccess: baseline.equipmentAccess,
       trainingExperience: baseline.trainingExperience ?? "beginner",
       availableTrainingTimeMinutes: baseline.availableTrainingTimeMinutes ?? null,
       workoutDaysPerWeek: workoutPlan.daysPerWeek,
     });
-
     for (const tpl of templateDocs) {
-      const tplRef = adminDb.collection("workoutTemplates").doc(tpl.id);
-      batch.set(tplRef, tpl, { merge: true });
+      newTemplateIds.add(tpl.id);
     }
+  }
+
+  // Delete obsolete onboarding templates without touching custom templates
+  if (existingTemplatesSnap && Array.isArray(existingTemplatesSnap.docs)) {
+    for (const doc of existingTemplatesSnap.docs) {
+      const tpl = doc.data() as WorkoutTemplate;
+      if (isOnboardingTemplate(tpl, null, userId)) {
+        if (!newTemplateIds.has(tpl.id)) {
+          batch.delete(doc.ref);
+        }
+      }
+    }
+  }
+
+  // Write new starter templates
+  for (const tpl of templateDocs) {
+    const tplRef = adminDb.collection("workoutTemplates").doc(tpl.id);
+    batch.set(tplRef, tpl, { merge: true });
   }
 
   // 5. Preferred Reminder Time (if provided)

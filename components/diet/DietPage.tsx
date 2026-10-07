@@ -276,49 +276,48 @@ export default function DietPage() {
   return (
     <div className="animate-fade-in space-y-4 sm:space-y-5">
       {/* ── Page header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="min-w-0">
+      <div>
+        <div className="flex items-center justify-between gap-3">
           <h1 className="page-title">Diet</h1>
-          <p className="page-description mt-1">Daily nutrition</p>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={() => setShowVoiceMeal(true)}
+              type="button"
+              className="btn-icon"
+              title="Log meal by voice"
+              aria-label="Log meal by voice"
+            >
+              <Mic className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowSaved(true)}
+              type="button"
+              className="btn-icon"
+              title="Saved meals"
+              aria-label="Saved meals"
+            >
+              <Bookmark className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowGoals(true)}
+              type="button"
+              className="btn-icon"
+              title="Nutrition goals"
+              aria-label="Nutrition goals"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowAddMeal(true)}
+              type="button"
+              className="btn-primary min-h-11 text-sm flex items-center gap-1.5 px-3 whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4" />
+              Log meal
+            </button>
+          </div>
         </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setShowVoiceMeal(true)}
-            type="button"
-            className="btn-icon"
-            title="Log meal by voice"
-            aria-label="Log meal by voice"
-          >
-            <Mic className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setShowSaved(true)}
-            type="button"
-            className="btn-icon"
-            title="Saved meals"
-            aria-label="Saved meals"
-          >
-            <Bookmark className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setShowGoals(true)}
-            type="button"
-            className="btn-icon"
-            title="Nutrition goals"
-            aria-label="Nutrition goals"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setShowAddMeal(true)}
-            type="button"
-            className="btn-primary min-h-11 text-sm flex items-center gap-1.5 px-3"
-          >
-            <Plus className="w-4 h-4" />
-            Log meal
-          </button>
-        </div>
+        <p className="page-description mt-1">Daily nutrition</p>
       </div>
 
       {/* ── Date navigator ── */}
@@ -346,55 +345,61 @@ export default function DietPage() {
         </button>
       </div>
 
-      {/* ── Daily nutrition ── */}
-      <div className="card">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="card-title">Daily intake</h2>
-          <span className="metadata">
-            {meals.length} meal{meals.length !== 1 ? "s" : ""}
+      {/* ── Daily nutrition: Single Clean Restrained Surface ── */}
+      <div
+        className="rounded-2xl p-4 sm:p-5"
+        style={{
+          background: "var(--satat-surface, #0D0F11)",
+          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+        }}
+      >
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            Daily Intake
+          </span>
+          <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+            {meals.length} {meals.length === 1 ? "meal" : "meals"} logged
           </span>
         </div>
 
-        <div className="card p-4 rounded-lg" style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}>
-          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] gap-5 sm:gap-6">
-            <div className="min-w-0">
-              <p className="metadata">Calories</p>
-              <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: "var(--text-1)" }}>
-                  {Math.round(totals.calories).toLocaleString()}
-                </span>
-                <span className="text-sm" style={{ color: "var(--text-3)" }}>kcal</span>
-              </div>
-              {goals ? (
-                <>
-                  <p className="secondary-text mt-1">
-                    {totals.calories > goals.calories
-                      ? `${Math.round(totals.calories - goals.calories)} kcal above goal`
-                      : `${Math.max(0, Math.round(goals.calories - totals.calories))} kcal remaining`}
-                    <span style={{ color: "var(--text-3)" }}> · goal {goals.calories.toLocaleString()}</span>
-                  </p>
-                  <div className="h-1.5 rounded-full overflow-hidden mt-3" style={{ background: "var(--surface-inset)" }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Math.min((totals.calories / Math.max(goals.calories, 1)) * 100, 100)}%`,
-                        background: totals.calories > goals.calories ? "var(--warning)" : "var(--accent)",
-                      }}
-                    />
-                  </div>
-                </>
-              ) : (
-                <p className="secondary-text mt-1">
-                  Intuitive Habit Tracking Active
+        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] gap-5 sm:gap-6">
+          <div className="min-w-0">
+            <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Total Calories</span>
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: "var(--text-primary)" }}>
+                {Math.round(totals.calories).toLocaleString()}
+              </span>
+              <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>kcal</span>
+            </div>
+            {goals ? (
+              <>
+                <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+                  {totals.calories > goals.calories
+                    ? `${Math.round(totals.calories - goals.calories)} kcal above goal`
+                    : `${Math.max(0, Math.round(goals.calories - totals.calories))} kcal remaining`}
+                  <span style={{ color: "var(--text-muted)" }}> · target {goals.calories.toLocaleString()}</span>
                 </p>
-              )}
-            </div>
+                <div className="h-1.5 rounded-full overflow-hidden mt-3" style={{ background: "var(--surface-inset)" }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.min((totals.calories / Math.max(goals.calories, 1)) * 100, 100)}%`,
+                      background: totals.calories > goals.calories ? "var(--satat-warning, #E0AB57)" : "var(--satat-brand, #6E8BFF)",
+                    }}
+                  />
+                </div>
+              </>
+            ) : (
+              <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+                Intuitive Habit Tracking Active
+              </p>
+            )}
+          </div>
 
-            <div className="space-y-3">
-              <MacroProgress label="Protein" value={totals.proteinG} goal={goals?.proteinG} unit="g" color="var(--macro-protein)" />
-              <MacroProgress label="Carbs" value={totals.carbsG} goal={goals?.carbsG} unit="g" color="var(--macro-carbs)" />
-              <MacroProgress label="Fat" value={totals.fatG} goal={goals?.fatG} unit="g" color="var(--macro-fat)" />
-            </div>
+          <div className="space-y-3">
+            <MacroProgress label="Protein" value={totals.proteinG} goal={goals?.proteinG} unit="g" color="var(--satat-brand, #6E8BFF)" />
+            <MacroProgress label="Carbs" value={totals.carbsG} goal={goals?.carbsG} unit="g" color="var(--satat-peach, #F2A080)" />
+            <MacroProgress label="Fat" value={totals.fatG} goal={goals?.fatG} unit="g" color="var(--satat-warning, #E0AB57)" />
           </div>
         </div>
       </div>
@@ -403,17 +408,23 @@ export default function DietPage() {
       <button
         onClick={() => setShowScanner(true)}
         type="button"
-        className="w-full rounded-lg p-3 flex items-center gap-3 text-left border transition-colors hover:bg-surface-tertiary"
-        style={{ background: "var(--surface-base)", borderColor: "var(--border-subtle)" }}
+        className="w-full rounded-2xl p-3.5 flex items-center gap-3 text-left transition-all hover:border-white/15"
+        style={{
+          background: "var(--satat-surface, #0D0F11)",
+          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+        }}
       >
-        <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: "var(--accent-soft)" }}>
-          <Camera className="w-5 h-5" style={{ color: "var(--accent)" }} />
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+        >
+          <Camera className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium" style={{ color: "var(--text-1)" }}>Estimate from a photo</p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>Review the result before logging</p>
+          <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Estimate from a photo</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Snap a meal for instant macro breakdown</p>
         </div>
-        <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
+        <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "var(--text-secondary)" }} />
       </button>
 
       {/* ── Meals list ── */}
@@ -447,12 +458,6 @@ export default function DietPage() {
           </div>
         )}
       </div>
-
-      <div className="card mt-4 p-4 rounded-lg" style={{ background: "var(--surface-subtle)", border: "1px solid var(--border-subtle)" }}>
-        <h2 className="card-title" style={{ color: "var(--text-1)" }}>Nutrition Insights</h2>
-        <p className="text-sm" style={{ color: "var(--text-2)" }}>Your nutrition is on track today. Keep up the good work and stay hydrated!</p>
-      </div>
-
 
       {/* ── Modals ── */}
       {showAddMeal && (
@@ -533,28 +538,31 @@ function MealCard({ meal, onDelete, onSave }: { meal: MealEntry; onDelete: () =>
 
   return (
     <div
-      className="group relative rounded-lg p-3 flex items-start gap-2 sm:gap-3 transition-colors duration-150 animate-slide-up"
-      style={{ background: "var(--surface-base)", border: "1px solid var(--border-subtle)" }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent-glow)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+      className="group relative rounded-2xl p-3.5 flex items-start gap-3 transition-all duration-150 animate-slide-up"
+      style={{
+        background: "var(--satat-surface, #0D0F11)",
+        border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+      }}
     >
-      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-md flex items-center justify-center flex-shrink-0"
-        style={{ background: "var(--accent-soft)" }}>
-        <Utensils className="w-4 h-4" style={{ color: "var(--accent)" }} />
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+      >
+        <Utensils className="w-4 h-4" />
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm truncate pr-1" style={{ color: "var(--text-1)" }}>{meal.name}</p>
+        <p className="font-semibold text-sm truncate pr-1" style={{ color: "var(--text-primary)" }}>{meal.name}</p>
         <div className="mt-1">
-          <span className="text-base font-semibold leading-none tabular-nums" style={{ color: "var(--text-1)" }}>
+          <span className="text-sm font-semibold leading-none tabular-nums" style={{ color: "var(--text-primary)" }}>
             {Math.round(meal.macros.calories)}
-            <span className="text-xs font-medium ml-0.5" style={{ color: "var(--text-3)" }}>kcal</span>
+            <span className="text-xs font-normal ml-0.5" style={{ color: "var(--text-muted)" }}>kcal</span>
           </span>
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1.5">
             {macros.map(({ label, value, color }) => (
-              <span key={label} className="inline-flex items-center gap-1 text-xs font-medium whitespace-nowrap" style={{ color: "var(--text-2)" }}>
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                {value}<span style={{ color: "var(--text-3)" }}>{label}</span>
+              <span key={label} className="inline-flex items-center gap-1 text-xs font-medium whitespace-nowrap" style={{ color: "var(--text-secondary)" }}>
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
+                {value}<span style={{ color: "var(--text-muted)" }}>{label}</span>
               </span>
             ))}
           </div>

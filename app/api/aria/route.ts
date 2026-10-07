@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata",
   });
 
-  let system = `You are Orbit — the personal AI life coach built into DailyOS.
+  let system = `You are Orbit — the personal AI coach built into SATAT.
 You are talking to ${userName}.
 TODAY is ${dateStr}, ${timeStr} IST. Always use this when answering date/time questions.
 
