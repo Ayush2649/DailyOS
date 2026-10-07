@@ -11,6 +11,7 @@ import { cn, generateId, todayString, formatDate, localDateString } from "@/lib/
 import { saveWorkoutSession, getWorkoutSessions, getBodyWeightEntries, logBodyWeight, getWorkoutTemplates, saveWorkoutTemplate, deleteWorkoutTemplate, getUserProfile } from "@/lib/firestore";
 import { WORKOUT_PRESETS } from "@/lib/workoutPresets";
 import { partitionWorkoutTemplates } from "@/lib/workouts/classification";
+import { normalizeTemplateToExercises, normalizeExercisesToTemplateExercises } from "@/lib/workouts/normalization";
 import { setWorkoutContext } from "@/lib/orbitContext";
 import { useToast } from "@/components/ui/Toast";
 import { MarkdownText } from "@/components/ui/MarkdownText";
@@ -213,17 +214,7 @@ export default function WorkoutPage() {
 
   // ── Load template into log form ──
   const handleLoadTemplate = (tpl: WorkoutTemplate) => {
-    const loaded: ExerciseLog[] = tpl.exercises.map((te) => ({
-      id: generateId(),
-      name: te.name,
-      sets: Array.from({ length: te.defaultSets }, () => ({
-        id: generateId(),
-        reps: te.defaultReps,
-        weight: te.defaultUnit === "bodyweight" ? undefined : (te.defaultWeight ?? 0),
-        unit: te.defaultUnit,
-        completed: false,
-      })),
-    }));
+    const loaded = normalizeTemplateToExercises(tpl);
     setExercises(loaded);
     setView("log");
     toast(`Loaded "${tpl.name}" ✓`, "success");
@@ -237,14 +228,7 @@ export default function WorkoutPage() {
       const tpl: Omit<WorkoutTemplate, "id"> = {
         userId,
         name: templateName.trim(),
-        exercises: exercises.map((ex) => ({
-          id: generateId(),
-          name: ex.name,
-          defaultSets: ex.sets.length,
-          defaultReps: ex.sets[0]?.reps ?? 8,
-          defaultWeight: ex.sets[0]?.unit === "bodyweight" ? undefined : (ex.sets[0]?.weight ?? 0),
-          defaultUnit: ex.sets[0]?.unit ?? "kg",
-        })),
+        exercises: normalizeExercisesToTemplateExercises(exercises),
         isPreset: false,
         isOnboarding: false,
         source: "custom",
@@ -255,8 +239,12 @@ export default function WorkoutPage() {
       setTemplateName("");
       setShowSaveTemplate(false);
       toast(`Template "${saved.name}" saved!`, "success");
-    } catch { toast("Failed to save template", "error"); }
-    finally { setSavingTemplate(false); }
+    } catch (err) {
+      console.error("Failed to save template:", err);
+      toast("Failed to save template", "error");
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   // ── Delete user template ──
@@ -311,8 +299,12 @@ export default function WorkoutPage() {
       setExercises([]); setCardioLogs([]); setDuration(0);
       setSummaryResult(""); setCaloriesBurned(null); setShowSummary(false);
       toast("Workout saved! 💪", "success");
-    } catch { toast("Failed to save workout", "error"); }
-    finally { setSaving(false); }
+    } catch (err) {
+      console.error("Failed to save workout session:", err);
+      toast("Failed to save workout", "error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogBodyWeight = async () => {
@@ -333,23 +325,23 @@ export default function WorkoutPage() {
         </div>
         <button onClick={() => setShowBodyWeightModal(true)} type="button" title="Log body weight"
           className="btn-secondary text-sm flex items-center gap-1.5 flex-shrink-0">
-          <Scale className="w-4 h-4 text-accent" />
+          <Scale className="w-4 h-4" style={{ color: "var(--brand)" }} />
           {bodyWeight
-            ? <span className="font-bold text-blue-600">{bodyWeight} kg</span>
+            ? <span className="font-semibold" style={{ color: "var(--brand)" }}>{bodyWeight} kg</span>
             : <span className="hidden sm:inline">Log weight</span>}
         </button>
       </div>
 
       {/* ── View toggle ── */}
-      <div className="flex gap-1 p-1 rounded-lg mb-4 w-full sm:w-fit overflow-x-auto" style={{ background: "var(--surface-raised)", border: "1px solid var(--border-subtle)" }} role="tablist" aria-label="Workout views">
+      <div className="flex gap-1 p-1 rounded-xl mb-4 w-full sm:w-fit overflow-x-auto" style={{ background: "var(--surface-elevated)", border: "1px solid var(--border-subtle)" }} role="tablist" aria-label="Workout views">
         {([
           { key: "log",       label: "Log Workout" },
           { key: "templates", label: "Templates"   },
           { key: "history",   label: "History"     },
         ] as const).map(({ key, label }) => (
           <button key={key} onClick={() => setView(key)} type="button" role="tab" aria-selected={view === key}
-            className="flex-1 sm:flex-none min-h-11 px-3 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
-            style={view === key ? { background: "var(--surface-0)", color: "var(--text-1)", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" } : { color: "var(--text-3)" }}>
+            className="flex-1 sm:flex-none min-h-10 px-3.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap"
+            style={view === key ? { background: "var(--surface-high)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)" } : { color: "var(--text-muted)" }}>
             {key === "templates" && <LayoutTemplate className="w-3.5 h-3.5" />}
             {label}
           </button>
@@ -1033,32 +1025,46 @@ function ExerciseCard({ exercise, onAddSet, onRemoveSet, onUpdateSet, onRemove }
 }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
-    <div className="card animate-slide-up" style={{ borderLeftWidth: "3px", borderLeftColor: "var(--accent)", background: "var(--surface-2)" }}>
+    <div
+      className="rounded-2xl p-4 transition-all animate-slide-up"
+      style={{
+        background: "var(--satat-surface, #0D0F11)",
+        border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+      }}
+    >
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-blue-500/10 rounded-lg flex items-center justify-center">
-            <Dumbbell className="w-3.5 h-3.5 text-blue-400" />
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+          >
+            <Dumbbell className="w-3.5 h-3.5" />
           </div>
-          <h3 className="font-bold text-sm" style={{ color: "var(--text-1)" }}>{exercise.name}</h3>
-          <span className="badge bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20">{exercise.sets.length} sets</span>
+          <h3 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{exercise.name}</h3>
+          <span
+            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(255, 255, 255, 0.05)", color: "var(--text-muted)" }}
+          >
+            {exercise.sets.length} {exercise.sets.length === 1 ? "set" : "sets"}
+          </span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => setCollapsed(!collapsed)} className="btn-ghost p-1.5">
+          <button onClick={() => setCollapsed(!collapsed)} className="btn-ghost p-1.5" style={{ color: "var(--text-secondary)" }}>
             {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
-          <button onClick={onRemove} className="btn-ghost p-1.5 hover:text-red-400">
+          <button onClick={onRemove} className="btn-ghost p-1.5 hover:text-red-400" style={{ color: "var(--text-muted)" }}>
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
       {!collapsed && (
         <>
-          <div className="flex items-center gap-2 mb-2 px-1">
-            <span className="w-6 text-center text-[10px] font-bold uppercase tracking-wide flex-shrink-0" style={{ color: "var(--text-3)" }}>#</span>
-            <span className="flex-1 text-[10px] font-bold uppercase tracking-wide text-center" style={{ color: "var(--text-3)" }}>Reps</span>
-            <span className="flex-[1.4] text-[10px] font-bold uppercase tracking-wide text-center" style={{ color: "var(--text-3)" }}>Weight</span>
-            <span className="flex-1 text-[10px] font-bold uppercase tracking-wide text-center" style={{ color: "var(--text-3)" }}>Unit</span>
-            <span className="w-8 flex-shrink-0" />
+          <div className="flex items-center gap-2 mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            <span className="w-6 text-center shrink-0">#</span>
+            <span className="flex-1 text-center">Reps</span>
+            <span className="flex-[1.4] text-center">Weight</span>
+            <span className="flex-1 text-center">Unit</span>
+            <span className="w-8 shrink-0" />
           </div>
           <div className="space-y-2">
             {exercise.sets.map((s, i) => (
@@ -1066,8 +1072,8 @@ function ExerciseCard({ exercise, onAddSet, onRemoveSet, onUpdateSet, onRemove }
             ))}
           </div>
           <button onClick={onAddSet}
-            className="w-full mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold hover:text-blue-400 py-2.5 rounded-xl border border-dashed hover:border-blue-500/30 hover:bg-blue-500/5 transition-all"
-            style={{ color: "var(--text-3)", borderColor: "var(--border)" }}>
+            className="w-full mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl border border-dashed transition-all hover:bg-white/[0.02]"
+            style={{ color: "var(--text-secondary)", borderColor: "var(--satat-border, rgba(255,255,255,0.08))" }}>
             <Plus className="w-3.5 h-3.5" /> Add set
           </button>
         </>
@@ -1080,25 +1086,62 @@ function ExerciseCard({ exercise, onAddSet, onRemoveSet, onUpdateSet, onRemove }
 function SetRow({ set, index, onUpdate, onRemove }: { set: SetLog; index: number; onUpdate: (u: Partial<SetLog>) => void; onRemove: () => void }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-black w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ color: "var(--text-3)", background: "var(--surface-2)" }}>{index + 1}</span>
-      <input type="number" inputMode="numeric" min={0} placeholder="0" value={set.reps || ""}
+      <span
+        className="text-xs font-semibold w-6 h-6 rounded-full flex items-center justify-center shrink-0 tabular-nums"
+        style={{ color: "var(--text-muted)", background: "var(--satat-surface-elevated, #121519)" }}
+      >
+        {index + 1}
+      </span>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={0}
+        placeholder="0"
+        value={set.reps || ""}
         onChange={(e) => onUpdate({ reps: Number(e.target.value) })}
-        className="flex-1 input text-sm text-center py-2.5 px-1 font-bold min-w-0" />
-      <input type="number" inputMode="decimal" min={0} step={0.5} placeholder="—"
+        className="flex-1 min-h-[40px] rounded-xl text-sm text-center py-2 px-1 font-semibold min-w-0"
+        style={{
+          background: "var(--satat-surface-high, #181C21)",
+          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+          color: "var(--text-primary)",
+        }}
+      />
+      <input
+        type="number"
+        inputMode="decimal"
+        min={0}
+        step={0.5}
+        placeholder="—"
         value={set.unit === "bodyweight" ? "" : (set.weight || "")}
         disabled={set.unit === "bodyweight"}
         onChange={(e) => onUpdate({ weight: Number(e.target.value) })}
-        className="flex-[1.4] input text-sm text-center py-2.5 px-1 font-bold disabled:opacity-40 min-w-0" />
-      <select value={set.unit} onChange={(e) => onUpdate({ unit: e.target.value as WeightUnit })}
-        className="flex-1 input text-xs py-2.5 px-1 font-semibold min-w-0">
+        className="flex-[1.4] min-h-[40px] rounded-xl text-sm text-center py-2 px-1 font-semibold disabled:opacity-40 min-w-0"
+        style={{
+          background: "var(--satat-surface-high, #181C21)",
+          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+          color: "var(--text-primary)",
+        }}
+      />
+      <select
+        value={set.unit}
+        onChange={(e) => onUpdate({ unit: e.target.value as WeightUnit })}
+        className="flex-1 min-h-[40px] rounded-xl text-xs py-2 px-1 font-semibold min-w-0"
+        style={{
+          background: "var(--satat-surface-high, #181C21)",
+          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+          color: "var(--text-primary)",
+        }}
+      >
         <option value="kg">kg</option>
         <option value="lbs">lbs</option>
         <option value="bodyweight">BW</option>
       </select>
-      <button onClick={onRemove}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all flex-shrink-0"
-        style={{ color: "var(--text-3)" }}>
+      <button
+        onClick={onRemove}
+        aria-label="Remove set"
+        className="w-8 h-8 flex items-center justify-center rounded-lg hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
+        style={{ color: "var(--text-muted)" }}
+      >
         <X className="w-4 h-4" />
       </button>
     </div>

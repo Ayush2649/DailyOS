@@ -11,7 +11,7 @@ function Step({ n, text }: { n: number; text: string }) {
       >
         {n}
       </span>
-      <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-3)" }} dangerouslySetInnerHTML={{ __html: text }} />
+      <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-2)" }} dangerouslySetInnerHTML={{ __html: text }} />
     </div>
   );
 }
@@ -20,25 +20,25 @@ function PlatformGuide({ platform }: { platform: "apple" | "mi" }) {
   const [open, setOpen] = useState(false);
 
   const appleSteps = [
-    `On your iPhone, install <span class="font-semibold text-white">Health Auto Export</span> from the App Store (it's free with a one-time purchase for REST API).`,
-    `Open the app → tap <span class="font-semibold text-white">Automations</span> → <span class="font-semibold text-white">+ New Automation</span>.`,
-    `Choose <span class="font-semibold text-white">REST API</span> as the export type.`,
-    `Paste your sync link into the <span class="font-semibold text-white">URL</span> field. Method: <span class="font-semibold text-white">POST</span>. Format: <span class="font-semibold text-white">JSON</span>.`,
-    `Under <span class="font-semibold text-white">Data</span>, enable: <span class="font-semibold text-white">Workouts</span>, <span class="font-semibold text-white">Body Mass</span>, <span class="font-semibold text-white">Steps</span>.`,
-    `Set the <span class="font-semibold text-white">Key Mapping</span> → workouts array key: <span class="font-mono text-[10px] bg-black/30 px-1 rounded">workouts</span>, body mass key: <span class="font-mono text-[10px] bg-black/30 px-1 rounded">bodyWeightKg</span>, steps key: <span class="font-mono text-[10px] bg-black/30 px-1 rounded">steps</span>.`,
-    `Set schedule to <span class="font-semibold text-white">Every Hour</span> (or Daily). Tap <span class="font-semibold text-white">Save</span>.`,
-    `Tap <span class="font-semibold text-white">Run Now</span> once to test — then come back and tap <span class="font-semibold text-white">Send test data</span> above to confirm it worked.`,
+    `On your iPhone, install <span class="font-semibold" style="color: var(--text-1)">Health Auto Export</span> from the App Store (it's free with a one-time purchase for REST API).`,
+    `Open the app → tap <span class="font-semibold" style="color: var(--text-1)">Automations</span> → <span class="font-semibold" style="color: var(--text-1)">+ New Automation</span>.`,
+    `Choose <span class="font-semibold" style="color: var(--text-1)">REST API</span> as the export type.`,
+    `Paste your sync link into the <span class="font-semibold" style="color: var(--text-1)">URL</span> field. Method: <span class="font-semibold" style="color: var(--text-1)">POST</span>. Format: <span class="font-semibold" style="color: var(--text-1)">JSON</span>.`,
+    `Under <span class="font-semibold" style="color: var(--text-1)">Data</span>, enable: <span class="font-semibold" style="color: var(--text-1)">Workouts</span>, <span class="font-semibold" style="color: var(--text-1)">Body Mass</span>, <span class="font-semibold" style="color: var(--text-1)">Steps</span>.`,
+    `Set the <span class="font-semibold" style="color: var(--text-1)">Key Mapping</span> → workouts array key: <span class="font-mono text-[10px] px-1 rounded" style="background: var(--surface-3); color: var(--text-1); border: 1px solid var(--border)">workouts</span>, body mass key: <span class="font-mono text-[10px] px-1 rounded" style="background: var(--surface-3); color: var(--text-1); border: 1px solid var(--border)">bodyWeightKg</span>, steps key: <span class="font-mono text-[10px] px-1 rounded" style="background: var(--surface-3); color: var(--text-1); border: 1px solid var(--border)">steps</span>.`,
+    `Set schedule to <span class="font-semibold" style="color: var(--text-1)">Every Hour</span> (or Daily). Tap <span class="font-semibold" style="color: var(--text-1)">Save</span>.`,
+    `Tap <span class="font-semibold" style="color: var(--text-1)">Run Now</span> once to test — then come back and tap <span class="font-semibold" style="color: var(--text-1)">Send test data</span> above to confirm it worked.`,
   ];
 
   const miSteps = [
-    `<span class="font-semibold text-white">iPhone users:</span> Mi Fitness on iPhone syncs directly to <span class="font-semibold text-white">Apple Health</span> — skip to the Apple Watch guide above. Health Auto Export reads from Apple Health, so it picks up your Mi Watch data automatically.`,
-    `<span class="font-semibold text-white">Android users:</span> Install <span class="font-semibold text-white">Health Connect</span> from the Play Store (free, by Google).`,
-    `Open <span class="font-semibold text-white">Mi Fitness</span> → Profile → Settings → <span class="font-semibold text-white">Health Connect</span> → Enable sync. Allow all permissions (workouts, body weight, steps).`,
-    `Install <span class="font-semibold text-white">MacroDroid</span> (free) from the Play Store — the easiest way to send data to a webhook on Android.`,
-    `MacroDroid → <span class="font-semibold text-white">Macros</span> → + → Trigger: <span class="font-semibold text-white">Timer</span> → Repeat every 1 hour.`,
-    `Add Action → <span class="font-semibold text-white">Networking</span> → <span class="font-semibold text-white">HTTP Request</span>. Method: POST. URL: paste your sync link.`,
-    `Headers: <span class="font-mono text-[10px] bg-black/30 px-1 rounded">Content-Type: application/json</span>. Body: <span class="font-mono text-[10px] bg-black/30 px-1 rounded">{"steps":8000,"bodyWeightKg":75}</span> (swap in MacroDroid Health Connect variables for live data).`,
-    `Save and run once manually. Come back here and tap <span class="font-semibold text-white">Send test data</span> to confirm the endpoint is working.`,
+    `<span class="font-semibold" style="color: var(--text-1)">iPhone users:</span> Mi Fitness on iPhone syncs directly to <span class="font-semibold" style="color: var(--text-1)">Apple Health</span> — skip to the Apple Watch guide above. Health Auto Export reads from Apple Health, so it picks up your Mi Watch data automatically.`,
+    `<span class="font-semibold" style="color: var(--text-1)">Android users:</span> Install <span class="font-semibold" style="color: var(--text-1)">Health Connect</span> from the Play Store (free, by Google).`,
+    `Open <span class="font-semibold" style="color: var(--text-1)">Mi Fitness</span> → Profile → Settings → <span class="font-semibold" style="color: var(--text-1)">Health Connect</span> → Enable sync. Allow all permissions (workouts, body weight, steps).`,
+    `Install <span class="font-semibold" style="color: var(--text-1)">MacroDroid</span> (free) from the Play Store — the easiest way to send data to a webhook on Android.`,
+    `MacroDroid → <span class="font-semibold" style="color: var(--text-1)">Macros</span> → + → Trigger: <span class="font-semibold" style="color: var(--text-1)">Timer</span> → Repeat every 1 hour.`,
+    `Add Action → <span class="font-semibold" style="color: var(--text-1)">Networking</span> → <span class="font-semibold" style="color: var(--text-1)">HTTP Request</span>. Method: POST. URL: paste your sync link.`,
+    `Headers: <span class="font-mono text-[10px] px-1 rounded" style="background: var(--surface-3); color: var(--text-1); border: 1px solid var(--border)">Content-Type: application/json</span>. Body: <span class="font-mono text-[10px] px-1 rounded" style="background: var(--surface-3); color: var(--text-1); border: 1px solid var(--border)">{"steps":8000,"bodyWeightKg":75}</span> (swap in MacroDroid Health Connect variables for live data).`,
+    `Save and run once manually. Come back here and tap <span class="font-semibold" style="color: var(--text-1)">Send test data</span> to confirm the endpoint is working.`,
   ];
 
   const steps = platform === "apple" ? appleSteps : miSteps;
@@ -161,7 +161,7 @@ export default function HealthSyncSettings() {
       <div className="rounded-2xl px-4 py-4" style={{ background: "var(--surface-1)", border: "1px solid var(--border)" }}>
         <p className="text-sm font-bold" style={{ color: "var(--text-1)" }}>Sync your watch &amp; health data</p>
         <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-3)" }}>
-          Push workouts, body weight and steps into DailyOS from any device that can send data to a web address —
+          Push workouts, body weight and steps into SATAT from any device that can send data to a web address —
           they&apos;ll auto-appear on your Workout and Diet pages. This is your private sync link; keep it secret.
         </p>
       </div>

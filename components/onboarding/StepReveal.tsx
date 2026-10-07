@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dumbbell, Clock, Sun, Target, Sparkles, RefreshCw, Apple, CheckCircle2, ArrowRight } from "lucide-react";
+import { Dumbbell, Clock, Sun, Target, Sparkles, RefreshCw, Apple, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OnboardingFormValues } from "./types";
 
@@ -22,13 +22,31 @@ interface StepRevealProps {
       templateIds: string[];
     } | null;
   } | null;
+  isUpdateMode?: boolean;
+  onConfirmUpdate?: () => Promise<void> | void;
+  onBack?: () => void;
+  isSaving?: boolean;
 }
 
-export function StepReveal({ formValues, completedResult }: StepRevealProps) {
+export function StepReveal({
+  formValues,
+  completedResult,
+  isUpdateMode = false,
+  onConfirmUpdate,
+  onBack,
+  isSaving = false,
+}: StepRevealProps) {
   const [isActivating, setIsActivating] = useState(false);
 
   const handleActivate = () => {
     setIsActivating(true);
+    // Mark tour as dismissed so freshly onboarded user is not hit with an immediate modal on arrival
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("satat_tour_v1", "1");
+        localStorage.setItem("dailyos_tour_v1", "1");
+      } catch { /* storage restricted */ }
+    }
     // Hard navigate to dashboard so layout server component re-checks session/firestore
     window.location.href = "/dashboard";
   };
@@ -57,13 +75,15 @@ export function StepReveal({ formValues, completedResult }: StepRevealProps) {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 text-xs font-black tracking-widest uppercase">
-          ✦ Satat
+          {isUpdateMode ? "✦ Satat · Setup Update" : "✦ Satat"}
         </div>
         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight uppercase">
-          Your Satat System Is Ready
+          {isUpdateMode ? "Update your SATAT setup?" : "Your Satat System Is Ready"}
         </h1>
         <p className="text-sm font-medium italic text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-          &ldquo;Continuity is the catalyst. You are building a sustainable, energizing lifestyle.&rdquo;
+          {isUpdateMode
+            ? "SATAT will recalculate your plan based on your updated goals and preferences. Your existing activity history will remain intact."
+            : "\u201cContinuity is the catalyst. You are building a sustainable, energizing lifestyle.\u201d"}
         </p>
       </div>
 
@@ -189,17 +209,40 @@ export function StepReveal({ formValues, completedResult }: StepRevealProps) {
         </div>
       </div>
 
-      {/* Primary Action Button */}
+      {/* Action Buttons */}
       <div className="pt-2">
-        <button
-          type="button"
-          onClick={handleActivate}
-          disabled={isActivating}
-          className="w-full py-3.5 px-6 rounded-2xl bg-primary-600 text-white font-black text-sm tracking-wide uppercase shadow-lg hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-        >
-          <span>{isActivating ? "Entering Dashboard..." : "Activate My System & Enter Dashboard"}</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        {isUpdateMode ? (
+          <div className="flex flex-col-reverse sm:flex-row items-center gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              disabled={isSaving}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Go back</span>
+            </button>
+            <button
+              type="button"
+              onClick={onConfirmUpdate}
+              disabled={isSaving}
+              className="w-full sm:flex-1 py-3.5 px-6 rounded-2xl bg-primary-600 text-white font-black text-sm tracking-wide uppercase shadow-lg hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            >
+              <span>{isSaving ? "Updating your setup..." : "Update my setup"}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleActivate}
+            disabled={isActivating}
+            className="w-full py-3.5 px-6 rounded-2xl bg-primary-600 text-white font-black text-sm tracking-wide uppercase shadow-lg hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+          >
+            <span>{isActivating ? "Entering Dashboard..." : "Activate My System & Enter Dashboard"}</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );

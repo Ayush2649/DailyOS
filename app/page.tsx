@@ -2,7 +2,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signIn } from "next-auth/react";
-import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import {
   CheckCircle2, Dumbbell, Utensils, ArrowRight, Zap, BarChart3,
@@ -71,7 +70,7 @@ function DarkAppPreview() {
         <div style={{ flex:1, marginLeft:"6px", background:"var(--surface-2)", borderRadius:"5px",
           height:"20px", display:"flex", alignItems:"center", paddingLeft:"10px",
           border:"1px solid var(--border)" }}>
-          <span style={{ color:"var(--text-3)", fontSize:"10px" }}>dailyos.app/dashboard</span>
+          <span style={{ color:"var(--text-3)", fontSize:"10px" }}>satat.app/dashboard</span>
         </div>
       </div>
 
@@ -283,18 +282,14 @@ const stats = [
 ];
 
 const testimonials = [
-  { name: "Priya M.", role: "Product Manager", avatar: "P", color: "bg-violet-500", text: "DailyOS replaced my task app, gym tracker, and MyFitnessPal. It's the only app I open every morning." },
+  { name: "Priya M.", role: "Product Manager", avatar: "P", color: "bg-violet-500", text: "SATAT replaced my task app, gym tracker, and MyFitnessPal. It's the only app I open every morning." },
   { name: "Rahul K.", role: "Software Engineer", avatar: "R", color: "bg-blue-500", text: "The AI workout summary actually coaches me. It told me my pull-day volume was low before I even noticed." },
   { name: "Ananya S.", role: "Fitness Coach", avatar: "A", color: "bg-emerald-500", text: "I snap a photo of my meal and get macros in 3 seconds. My clients are obsessed with this feature." },
 ];
 
 export default function LandingPage() {
   const { data: session } = useSession();
-  const { resolvedTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -302,9 +297,7 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  const logoSrc = mounted && resolvedTheme === "dark"
-    ? "/BrandLogo_Header_DarkMode.png"
-    : "/BrandLogo_Header.png";
+  const logoSrc = "/BrandLogo_Header.png";
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--surface-1)", color: "var(--text-1)" }}>
@@ -319,8 +312,8 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src={logoSrc} alt="DailyOS" width={32} height={32} className="rounded-xl" />
-            <span className="font-display font-extrabold text-[var(--text-1)] dark:text-white text-xl tracking-tight">DailyOS</span>
+            <Image src={logoSrc} alt="SATAT" width={32} height={32} className="rounded-xl" />
+            <span className="font-display font-extrabold text-[var(--text-1)] dark:text-white text-xl tracking-tight">SATAT</span>
           </div>
           <div className="flex items-center gap-3">
             {session ? (
@@ -350,7 +343,7 @@ export default function LandingPage() {
           </div>
 
           <h1 className="font-display text-[34px] leading-tight sm:text-[42px] font-semibold text-[var(--text-1)] mb-4 animate-rise" style={{ animationDelay: "40ms" }}>
-            DailyOS
+            SATAT
           </h1>
 
           <p className="text-base text-[var(--text-2)] max-w-xl mx-auto mb-7 leading-relaxed animate-rise" style={{ animationDelay: "100ms" }}>
@@ -456,7 +449,7 @@ export default function LandingPage() {
             <div className="flex items-center justify-center gap-1 mb-4">
               {[1,2,3,4,5].map(i => <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />)}
             </div>
-            <h2 className="font-display text-3xl sm:text-[34px] font-semibold text-[var(--text-1)]">From DailyOS users</h2>
+            <h2 className="font-display text-3xl sm:text-[34px] font-semibold text-[var(--text-1)]">From SATAT users</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {testimonials.map((t) => (
@@ -504,10 +497,10 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className="py-8 px-5 text-center text-sm" style={{ background: "var(--surface-1)", color: "var(--text-3)", borderTop: "1px solid var(--border-subtle)" }}>
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Image src={logoSrc} alt="DailyOS" width={24} height={24} className="rounded-md" />
-          <span className="font-bold" style={{ color: "var(--text-1)" }}>DailyOS</span>
+          <Image src={logoSrc} alt="SATAT" width={24} height={24} className="rounded-md" />
+          <span className="font-bold" style={{ color: "var(--text-1)" }}>SATAT</span>
         </div>
-        <p>© {new Date().getFullYear()} DailyOS · Built for people who do the work.</p>
+        <p>© {new Date().getFullYear()} SATAT · Built for people who do the work.</p>
       </footer>
     </div>
   );

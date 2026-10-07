@@ -88,11 +88,10 @@ function TimeRow({
         type="time"
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="text-xs font-mono font-bold rounded-lg px-2 py-1.5 border-0 outline-none focus:ring-1 focus:ring-indigo-500"
+        className="text-xs font-mono font-bold rounded-lg px-2 py-1.5 border-0 outline-none focus:ring-1 focus:ring-[var(--accent)]"
         style={{
           background: "var(--surface-3)",
           color: "var(--text-1)",
-          colorScheme: "dark",
         }}
       />
     </div>
@@ -159,7 +158,7 @@ function IOSInstallGuide() {
         </div>
         <div>
           <p className="text-sm font-bold" style={{ color: "var(--text-1)" }}>
-            Install DailyOS to enable notifications
+            Install SATAT to enable notifications
           </p>
           <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "var(--text-3)" }}>
             iPhone requires the app to be added to your Home Screen before notifications can be enabled.
@@ -172,7 +171,7 @@ function IOSInstallGuide() {
         {[
           { icon: Share, label: "Tap the Share button in Safari's toolbar" },
           { icon: Plus,  label: 'Tap "Add to Home Screen"' },
-          { icon: Bell,  label: "Open DailyOS from your Home Screen, then come back here" },
+          { icon: Bell,  label: "Open SATAT from your Home Screen, then come back here" },
         ].map(({ icon: Icon, label }, i) => (
           <div key={i} className="flex items-center gap-3">
             <div
@@ -363,8 +362,8 @@ export default function NotificationSettings() {
             </p>
             <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "var(--text-3)" }}>
               {isDenied
-                ? "Go to Settings → Safari → DailyOS and allow notifications."
-                : "Allow DailyOS to remind you to log meals, workouts, and tasks."}
+                ? "Go to Settings → Safari → SATAT and allow notifications."
+                : "Allow SATAT to remind you to log meals, workouts, and tasks."}
             </p>
             {!isDenied && (
               <button

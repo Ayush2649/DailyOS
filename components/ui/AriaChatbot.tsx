@@ -51,7 +51,14 @@ export default function AriaChatbot() {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+
+    const handleOrbitTrigger = () => setOpen(true);
+    window.addEventListener("satat:open-orbit", handleOrbitTrigger);
+
+    return () => {
+      window.removeEventListener("resize", check);
+      window.removeEventListener("satat:open-orbit", handleOrbitTrigger);
+    };
   }, []);
 
   useEffect(() => {
@@ -136,7 +143,7 @@ export default function AriaChatbot() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-black text-sm leading-none" style={{ color: "var(--text-1)" }}>Orbit</p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>Daily assistant</p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>AI Coach</p>
         </div>
         {activeMode && (
           <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 flex-shrink-0", activeMode.color)}>
@@ -300,54 +307,42 @@ export default function AriaChatbot() {
     return (
       <>
         {/* Panel: compact bottom sheet above nav bar */}
+        {/* Backdrop for mobile sheet */}
+        {open && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[149]"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         <div
           className="fixed left-0 right-0 z-[150] flex flex-col"
           style={{
-            bottom: 64, // sits above the h-16 mobile nav
-            maxHeight: "68vh",
-            background: "var(--surface-0)",
-            borderTop: "1px solid var(--border)",
+            bottom: "calc(58px + env(safe-area-inset-bottom, 0px))",
+            maxHeight: "72vh",
+            background: "var(--satat-surface, #0D0F11)",
+            borderTop: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            boxShadow: "var(--shadow-dialog)",
-            transform: open ? "translateY(0)" : "translateY(110%)",
-            transition: "transform 0.2s ease",
+            boxShadow: "0 -16px 36px rgba(0,0,0,0.8)",
+            transform: open ? "translateY(0)" : "translateY(115%)",
+            transition: "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)",
             pointerEvents: open ? "auto" : "none",
           }}
         >
           {/* Drag handle pill */}
           <div className="flex justify-center pt-2 pb-0 flex-shrink-0">
-            <div className="w-10 h-1 rounded-full" style={{ background: "var(--border)" }} />
+            <div className="w-10 h-1 rounded-full" style={{ background: "var(--satat-border-strong)" }} />
           </div>
           {chatContent}
         </div>
-
-        {/* Trigger button — hidden while the sheet is open so it can't overlap
-            the input/send button; the panel header has its own close (X). */}
-        <button
-          onClick={() => setOpen(o => !o)}
-          title="Ask Orbit"
-          aria-hidden={open}
-          className={cn(
-            "fixed bottom-20 right-4 z-[151]",
-            "w-11 h-11 rounded-lg flex items-center justify-center bg-accent",
-          )}
-          style={{
-            transition: "transform 0.2s cubic-bezier(0.34,1.4,0.64,1), opacity 0.2s ease, box-shadow 0.2s ease",
-            opacity: open ? 0 : 1,
-            transform: open ? "scale(0.96)" : "scale(1)",
-            color: "var(--on-accent)",
-            pointerEvents: open ? "none" : "auto",
-          }}
-        >
-          {triggerIcon}
-        </button>
       </>
     );
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     DESKTOP: original floating panel in bottom-right corner.
+     DESKTOP: floating panel in bottom-right corner.
   ════════════════════════════════════════════════════════════════════ */
   return (
     <div ref={desktopRef}
@@ -362,26 +357,27 @@ export default function AriaChatbot() {
           pointerEvents: open ? "auto" : "none",
           transformOrigin: "bottom right",
           maxHeight: "72vh",
-          background: "var(--surface-0)",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow-dialog)",
+          background: "var(--satat-surface, #0D0F11)",
+          border: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.8)",
         }}
-        className="w-[380px] rounded-xl flex flex-col overflow-hidden"
+        className="w-[380px] rounded-2xl flex flex-col overflow-hidden"
       >
         {chatContent}
       </div>
 
-      {/* Floating trigger button */}
+      {/* Desktop trigger button */}
       <button
         onClick={() => setOpen(o => !o)}
         title="Ask Orbit"
         className={cn(
-          "w-11 h-11 rounded-lg flex items-center justify-center pointer-events-auto bg-accent",
+          "w-11 h-11 rounded-xl flex items-center justify-center pointer-events-auto transition-transform active:scale-95",
         )}
         style={{
-          transition: "opacity 0.16s ease",
-          boxShadow: "none",
-          color: "var(--on-accent)",
+          background: "var(--satat-surface, #0D0F11)",
+          border: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
+          color: "var(--satat-brand, #6E8BFF)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
         }}
       >
         {triggerIcon}

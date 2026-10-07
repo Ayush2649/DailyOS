@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Mic, Square, Loader2, X, Check, Trash2, RotateCcw, Sparkles, Activity } from "lucide-react";
 import { generateId } from "@/lib/utils";
 import { useAudioRecorder, audioExt } from "@/hooks/useAudioRecorder";
-import type { ExerciseLog, CardioActivity } from "@/types";
+import type { ExerciseLog, CardioActivity, SetLog } from "@/types";
 
 type Phase = "idle" | "recording" | "processing" | "review" | "error";
 
@@ -81,13 +81,20 @@ export default function VoiceLogModal({
     const logs: ExerciseLog[] = parsed.map((p) => ({
       id: generateId(),
       name: p.name,
-      sets: (p.sets.length ? p.sets : [{ reps: 0, unit: "kg" }]).map((s) => ({
-        id: generateId(),
-        reps: Number(s.reps) || 0,
-        weight: s.unit === "bodyweight" ? undefined : s.weight != null ? Number(s.weight) : undefined,
-        unit: (s.unit === "lbs" || s.unit === "bodyweight" ? s.unit : "kg") as ExerciseLog["sets"][number]["unit"],
-        completed: false,
-      })),
+      sets: (p.sets.length ? p.sets : [{ reps: 0, unit: "kg" }]).map((s) => {
+        const isBw = s.unit === "bodyweight";
+        const unit = (s.unit === "lbs" || s.unit === "bodyweight" ? s.unit : "kg") as ExerciseLog["sets"][number]["unit"];
+        const set: SetLog = {
+          id: generateId(),
+          reps: Number(s.reps) || 0,
+          unit,
+          completed: false,
+        };
+        if (!isBw && s.weight != null && !Number.isNaN(Number(s.weight))) {
+          set.weight = Number(s.weight);
+        }
+        return set;
+      }),
     }));
     onAdd(logs, parsedCardio);
   };
