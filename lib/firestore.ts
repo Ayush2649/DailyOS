@@ -20,6 +20,27 @@ export async function createProject(userId: string, name: string, color: string)
   return { id: ref.id, ...data };
 }
 
+export async function ensureStarterProject(userId: string): Promise<Project> {
+  const existing = await getProjects(userId);
+  if (existing.length > 0) {
+    return existing[0];
+  }
+  // Idempotently create using deterministic doc ID so concurrent calls/refreshes never duplicate
+  const defaultDocRef = doc(db, "projects", `default_${userId}`);
+  const snap = await getDoc(defaultDocRef);
+  if (snap.exists()) {
+    return { id: snap.id, ...snap.data() } as Project;
+  }
+  const data = {
+    name: "General",
+    color: "#3E7563",
+    userId,
+    createdAt: Date.now(),
+  };
+  await setDoc(defaultDocRef, data, { merge: true });
+  return { id: defaultDocRef.id, ...data };
+}
+
 export async function deleteProject(projectId: string) {
   await deleteDoc(doc(db, "projects", projectId));
 }

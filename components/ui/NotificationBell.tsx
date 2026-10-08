@@ -75,11 +75,10 @@ export default function NotificationBell({ className }: { className?: string }) 
         aria-label={isGranted ? "Notifications on" : isDenied ? "Notifications blocked" : "Enable notifications"}
         title={isGranted ? "Notifications on" : isDenied ? "Notifications blocked — enable in browser settings" : "Enable notifications"}
         className={cn(
-          "w-8 h-8 inline-flex items-center justify-center rounded-lg transition-colors relative hover:bg-gray-100 dark:hover:bg-white/5",
-          isGranted ? "text-accent" : "opacity-70 hover:opacity-100",
+          "w-8 h-8 inline-flex items-center justify-center rounded-lg transition-colors relative hover:bg-white/5",
           className
         )}
-        style={{ color: isGranted ? undefined : "var(--text-3)" }}
+        style={{ color: isGranted ? "var(--brand)" : "var(--text-muted)" }}
       >
         {isLoading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -100,9 +99,9 @@ export default function NotificationBell({ className }: { className?: string }) 
         <div
           className="absolute right-0 top-full mt-2 w-64 rounded-lg p-4 z-50 animate-scale-in"
           style={{
-            background: "var(--surface-2)",
-            border: "1px solid var(--border)",
-            boxShadow: "var(--shadow-dialog)",
+            background: "var(--satat-surface, #0D0F11)",
+            border: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
+            boxShadow: "0 16px 36px rgba(0,0,0,0.8)",
           }}
         >
           <button

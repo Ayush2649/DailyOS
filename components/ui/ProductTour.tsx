@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { CheckSquare, Dumbbell, Utensils, Sparkles, ArrowRight, X, Brain, Camera, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const TOUR_KEY = "dailyos_tour_v1";
+const TOUR_KEYS = ["satat_tour_v1", "dailyos_tour_v1"];
 
 export default function ProductTour() {
   const [visible, setVisible]   = useState(false);
@@ -12,13 +12,21 @@ export default function ProductTour() {
   const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(TOUR_KEY)) {
+    const isSeen = TOUR_KEYS.some(k => {
+      try { return Boolean(localStorage.getItem(k)); } catch { return false; }
+    });
+    if (!isSeen) {
       const t = setTimeout(() => setVisible(true), 700);
       return () => clearTimeout(t);
     }
   }, []);
 
-  const dismiss = () => { localStorage.setItem(TOUR_KEY, "1"); setVisible(false); };
+  const dismiss = () => {
+    TOUR_KEYS.forEach(k => {
+      try { localStorage.setItem(k, "1"); } catch { /* ignore */ }
+    });
+    setVisible(false);
+  };
 
   const goTo = (next: number, direction: 1 | -1 = 1) => {
     if (animating) return;
@@ -123,7 +131,7 @@ function Step0({ onNext, onDismiss }: { onNext: () => void; onDismiss: () => voi
         </div>
 
         <h1 className="text-xl font-semibold mb-2 leading-tight" style={{ color: "var(--text-1)" }}>
-          Welcome to DailyOS
+          Welcome to SATAT
         </h1>
         <p className="text-sm leading-relaxed max-w-[300px] mx-auto" style={{ color: "var(--text-2)" }}>
           Plan tasks, record workouts, and keep track of meals in one place.

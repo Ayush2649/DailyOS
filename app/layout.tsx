@@ -47,13 +47,13 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "DailyOS – Your Personal OS",
-  description: "Manage tasks, track workouts, and log meals — all in one place.",
+  title: "SATAT – Continuous, Sustainable Wellness",
+  description: "Personal wellness, nutrition, and training system.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "DailyOS",
+    title: "SATAT",
   },
   icons: {
     icon: [
@@ -78,7 +78,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "var(--accent)",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#08090A" },
+    { media: "(prefers-color-scheme: light)", color: "#F7F7F4" },
+  ],
 };
 
 export default function RootLayout({
@@ -90,13 +93,13 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${jakarta.variable} ${inter.variable} theme-vital-sage`}
+      className={`${jakarta.variable} ${inter.variable}`}
     >
       <body suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={true}
           disableTransitionOnChange
         >
           <AuthProvider>

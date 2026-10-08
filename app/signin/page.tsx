@@ -19,8 +19,8 @@ export default function SignInPage() {
           <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold" style={{ color: "var(--text-1)" }}>Welcome to DailyOS</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-2)" }}>Sign in to manage your day, track workouts, and log meals.</p>
+          <h1 className="text-2xl font-extrabold" style={{ color: "var(--text-1)" }}>Welcome to SATAT</h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-2)" }}>Sign in to continue your journey of continuous, sustainable wellness.</p>
         </div>
 
         <div className="card shadow-modal p-6">

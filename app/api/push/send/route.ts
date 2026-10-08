@@ -24,7 +24,7 @@ function initVapid() {
 
 const FIXED_MESSAGES: Record<string, { title: string; body: string; url: string }> = {
   test: {
-    title: "🔔 DailyOS test",
+    title: "🔔 SATAT test",
     body: "Notifications are working! You'll get reminders at your configured times.",
     url: "/dashboard",
   },

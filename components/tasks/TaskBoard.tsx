@@ -7,7 +7,7 @@ import {
   Edit2, Flag, CalendarCheck,
 } from "lucide-react";
 import { cn, PROJECT_COLORS, todayString, localDateString } from "@/lib/utils";
-import { getTasks, createTask, updateTask, deleteTask, getProjects, createProject } from "@/lib/firestore";
+import { getTasks, createTask, updateTask, deleteTask, getProjects, createProject, ensureStarterProject } from "@/lib/firestore";
 import { useToast } from "@/components/ui/Toast";
 import { setTaskContext } from "@/lib/orbitContext";
 import type { Task, Project, TaskPriority } from "@/types";
@@ -121,9 +121,15 @@ export default function TaskBoard() {
   // ── Data loading ──
   useEffect(() => {
     if (!userId) return;
-    getProjects(userId).then(ps => {
-      setProjects(ps);
-      if (ps.length > 0 && !selectedProject) setSelectedProject(ps[0].id);
+    getProjects(userId).then(async (ps) => {
+      if (ps.length === 0) {
+        const starter = await ensureStarterProject(userId);
+        setProjects([starter]);
+        setSelectedProject(starter.id);
+      } else {
+        setProjects(ps);
+        if (!selectedProject) setSelectedProject(ps[0].id);
+      }
     });
   }, [userId]);
 
@@ -459,14 +465,14 @@ function ScheduleView({
 
             return (
               <button key={date} onClick={() => onSelectDate(date)} type="button" aria-pressed={isSelected}
-                className="min-h-16 flex flex-col items-center justify-center gap-1 rounded-md border transition-colors"
+                className="min-h-16 flex flex-col items-center justify-center gap-1 rounded-xl border transition-colors"
                 style={{
-                  background: isSelected ? "var(--accent-soft)" : "transparent",
-                  borderColor: isSelected ? "var(--accent)" : "transparent",
-                  color: isSelected ? "var(--text-1)" : isToday ? "var(--accent)" : "var(--text-2)",
-                  opacity: isPast && !isSelected ? 0.62 : 1,
+                  background: isSelected ? "var(--brand-subtle)" : "transparent",
+                  borderColor: isSelected ? "var(--brand)" : "transparent",
+                  color: isSelected ? "var(--brand)" : isToday ? "var(--brand)" : "var(--text-secondary)",
+                  opacity: isPast && !isSelected ? 0.6 : 1,
                 }}>
-                <span className="text-[11px] font-medium leading-none">
+                <span className="text-[11px] font-semibold leading-none">
                   {DAY_LABELS[i]}
                 </span>
                 <span className="text-sm font-semibold leading-none tabular-nums">
@@ -475,10 +481,10 @@ function ScheduleView({
                 {/* Dot indicators */}
                 <div className="flex gap-1 h-1.5">
                   {pending > 0 && (
-                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: isSelected ? "var(--accent)" : "var(--text-3)" }} />
+                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: isSelected ? "var(--satat-brand, #6E8BFF)" : "var(--text-muted)" }} />
                   )}
                   {done > 0 && (
-                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: "var(--success)" }} />
+                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: "var(--satat-mint, #63D2B8)" }} />
                   )}
                   {!hasTasks && <span className="w-1.5 h-1.5" />}
                 </div>

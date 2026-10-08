@@ -16,11 +16,11 @@ self.addEventListener("push", (event) => {
     try {
       data = event.data.json();
     } catch {
-      data = { title: "DailyOS", body: event.data.text() };
+      data = { title: "SATAT", body: event.data.text() };
     }
   }
 
-  const title = data.title || "DailyOS Reminder";
+  const title = data.title || "SATAT Reminder";
   const options = {
     body: data.body || "Time to check your daily goals!",
     icon: "/BrandLogo_Header.png",

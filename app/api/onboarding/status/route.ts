@@ -5,6 +5,8 @@ import { getUserKey } from "@/lib/auth/userKey";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { checkRateLimit } from "@/lib/onboarding/rateLimit";
 
+import { POLICY_LIMITS } from "@/lib/onboarding/constants";
+
 export const maxDuration = 30;
 
 export async function GET(req: NextRequest) {
@@ -33,16 +35,29 @@ export async function GET(req: NextRequest) {
         completed: false,
         lastStep: "step_0_consent",
         draftBaseline: null,
+        persistedBaseline: null,
       });
     }
 
     const data = snap.data();
     const isCompleted = typeof data?.completedAt === "number";
 
+    // Draft TTL Enforcement (§16 & docs/features/onboarding.md)
+    let draft = data?.draft ?? null;
+    if (draft && typeof data?.draftUpdatedAt === "number") {
+      const ttlMs = POLICY_LIMITS.DRAFT_TTL_DAYS * 24 * 60 * 60 * 1000;
+      if (Date.now() - data.draftUpdatedAt > ttlMs) {
+        draft = null;
+      }
+    }
+
     return NextResponse.json({
       completed: isCompleted,
       lastStep: data?.lastStepCompleted ?? "step_0_consent",
-      draftBaseline: isCompleted ? null : (data?.draft ?? null),
+      draftBaseline: draft,
+      persistedBaseline: isCompleted ? (data?.baseline ?? null) : null,
+      consentGivenAt: data?.consentGivenAt ?? null,
+      consentVersion: data?.consentVersion ?? null,
     });
   } catch (error: any) {
     console.error("[onboarding/status] Error:", error?.message);
