@@ -18,7 +18,7 @@ import { Loader2 } from "lucide-react";
 
 function OnboardingContent() {
   const searchParams = useSearchParams();
-  const isUpdateMode = searchParams.get("mode") === "update";
+  const isUpdateMode = searchParams?.get("mode") === "update";
 
   const {
     state,
