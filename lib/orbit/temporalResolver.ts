@@ -57,7 +57,12 @@ export function resolveTemporalReference(
   userTimezone?: string,
   currentTime?: Date,
 ): TemporalRange {
-  const tz = userTimezone || 'UTC'; // fallback documented in code comments
+  let tz = userTimezone || 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+  } catch {
+    tz = 'UTC';
+  }
   const now = currentTime ?? new Date();
   const { year, month, day } = getYMD(now, tz);
   const lower = phrase.toLowerCase().trim();

@@ -20,7 +20,14 @@ export async function POST(req: NextRequest) {
   const userPrompt = messages.map((m:any)=>m.content).join(" ");
   const requirements = inferContextRequirements(userPrompt);
   const orbitContext = await buildOrbitContext(requirements);
-  const userTimezone = orbitContext?.preferences?.timezone || "UTC";
+  const rawTz = orbitContext?.preferences?.timezone || "Asia/Kolkata";
+  let userTimezone = "Asia/Kolkata";
+  try {
+    new Intl.DateTimeFormat("en-IN", { timeZone: rawTz });
+    userTimezone = rawTz;
+  } catch {
+    userTimezone = "Asia/Kolkata";
+  }
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-IN", {
