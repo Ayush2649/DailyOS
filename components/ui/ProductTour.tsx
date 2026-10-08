@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { CheckSquare, Dumbbell, Utensils, Sparkles, ArrowRight, X, Brain, Camera, ChevronRight } from "lucide-react";
+import { CheckSquare, Dumbbell, Utensils, Sparkles, ArrowRight, X, Camera, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { OrbitMark } from "@/components/orbit/OrbitMark";
 
 const TOUR_KEYS = ["satat_tour_v1", "dailyos_tour_v1"];
 
@@ -353,7 +354,7 @@ function Step4({ onNext, onBack, onDismiss }: { onNext: () => void; onBack: () =
   const cards = [
     { icon: Dumbbell, title: "Workout summary", desc: "Review session volume, calories, and progress.", },
     { icon: Camera,   title: "Meal estimates", desc: "Estimate calories, protein, carbs, and fat from a photo.", },
-    { icon: Brain,    title: "Orbit assistant", desc: "Ask about your tasks, workouts, or nutrition.", },
+    { icon: OrbitMark, title: "Orbit assistant", desc: "Ask about your tasks, workouts, or nutrition.", },
   ];
 
   return (

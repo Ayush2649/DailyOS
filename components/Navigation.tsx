@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import {
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import NotificationBell from "@/components/ui/NotificationBell";
 import TrackSheet from "@/components/navigation/TrackSheet";
+import { OrbitMark } from "@/components/orbit/OrbitMark";
 
 const navItems = [
   {
@@ -52,6 +53,7 @@ const navItems = [
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -61,11 +63,16 @@ export default function Navigation() {
 
   const logoSrc = "/BrandLogo_Header.png";
 
-  const triggerOrbit = () => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("satat:open-orbit"));
-    }
-  };
+  // Handle global satat:open-orbit event by navigating to /dashboard/orbit
+  useEffect(() => {
+    const handleOrbitTrigger = () => {
+      if (pathname !== "/dashboard/orbit") {
+        router.push("/dashboard/orbit");
+      }
+    };
+    window.addEventListener("satat:open-orbit", handleOrbitTrigger);
+    return () => window.removeEventListener("satat:open-orbit", handleOrbitTrigger);
+  }, [pathname, router]);
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -97,6 +104,7 @@ export default function Navigation() {
     if (pathname?.startsWith("/dashboard/tasks")) return "Plan";
     if (pathname?.startsWith("/dashboard/workout")) return "Train";
     if (pathname?.startsWith("/dashboard/diet")) return "Nutrition";
+    if (pathname?.startsWith("/dashboard/orbit")) return "Orbit";
     if (pathname?.startsWith("/dashboard/settings")) return "You";
 
     return "SATAT";
@@ -426,23 +434,23 @@ export default function Navigation() {
             </div>
 
             <span className="app-mobile-nav-label">Track</span>
-          </button>
+          </div>
 
           {/* 4. Orbit */}
-          <button
-            type="button"
-            onClick={triggerOrbit}
-            aria-label="Ask Orbit AI"
-            className="app-mobile-nav-link"
+          <Link
+            href="/dashboard/orbit"
+            aria-label="Orbit AI companion"
+            aria-current={pathname?.startsWith("/dashboard/orbit") ? "page" : undefined}
+            className={cn("app-mobile-nav-slot", pathname?.startsWith("/dashboard/orbit") && "is-active")}
           >
             <Sparkles
               className="app-mobile-nav-icon"
               aria-hidden="true"
             />
             <span className="app-mobile-nav-label">Orbit</span>
-          </button>
+          </Link>
 
-          {/* 5. You */}
+          {/* 5. You (Profile DP or fallback avatar) */}
           <Link
             href="/dashboard/settings"
             aria-current={

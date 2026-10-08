@@ -1,0 +1,45 @@
+name: SATAT CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Run unit & invariant tests (Vitest)
+        run: npm test
+
+      - name: Build production application (Next.js)
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
