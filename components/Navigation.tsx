@@ -17,6 +17,7 @@ export default function Navigation() {
   const { data: session } = useSession();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showTrackSheet, setShowTrackSheet] = useState(false);
+  const [dpError, setDpError] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   const logoSrc = "/BrandLogo_Header.png";
@@ -246,65 +247,101 @@ export default function Navigation() {
 
       {/* ── Mobile bottom nav (Target 5: Home, Plan, Track, Orbit, You) ── */}
       <nav className="app-mobile-bottom-nav lg:hidden" aria-label="Primary navigation">
-        <div className="app-mobile-nav-list">
+        <div className="app-mobile-nav-grid">
           {/* 1. Home */}
           <Link
             href="/dashboard"
+            aria-label="Home"
             aria-current={pathname === "/dashboard" ? "page" : undefined}
-            className={cn("app-mobile-nav-link", pathname === "/dashboard" && "is-active")}
+            className={cn("app-mobile-nav-slot", pathname === "/dashboard" && "is-active")}
           >
-            <LayoutDashboard className="app-mobile-nav-icon" aria-hidden="true" />
+            <div className="app-mobile-nav-icon-container">
+              <LayoutDashboard className="w-5 h-5" aria-hidden="true" />
+            </div>
             <span className="app-mobile-nav-label">Home</span>
           </Link>
 
           {/* 2. Plan */}
           <Link
             href="/dashboard/tasks"
+            aria-label="Plan"
             aria-current={pathname?.startsWith("/dashboard/tasks") ? "page" : undefined}
-            className={cn("app-mobile-nav-link", pathname?.startsWith("/dashboard/tasks") && "is-active")}
+            className={cn("app-mobile-nav-slot", pathname?.startsWith("/dashboard/tasks") && "is-active")}
           >
-            <CheckSquare className="app-mobile-nav-icon" aria-hidden="true" />
+            <div className="app-mobile-nav-icon-container">
+              <CheckSquare className="w-5 h-5" aria-hidden="true" />
+            </div>
             <span className="app-mobile-nav-label">Plan</span>
           </Link>
 
-          {/* 3. Track (Fast Capture Center Button) */}
-          <button
-            type="button"
-            onClick={() => setShowTrackSheet(true)}
-            aria-label="Quick track"
-            className="app-mobile-nav-link"
-          >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-transform active:scale-95"
-              style={{
-                background: "rgba(110, 139, 255, 0.15)",
-                color: "var(--satat-brand, #6E8BFF)",
-                border: "1px solid rgba(110, 139, 255, 0.3)",
-              }}
+          {/* 3. Track (Centered Floating Action Button) */}
+          <div className="app-mobile-nav-slot">
+            <button
+              type="button"
+              onClick={() => setShowTrackSheet(true)}
+              aria-label="Quick track"
+              className="app-mobile-track-fab"
             >
-              <Plus className="w-4 h-4" />
-            </div>
+              <Plus className="w-6 h-6 stroke-[2.5]" style={{ color: "#FFFFFF" }} />
+            </button>
             <span className="app-mobile-nav-label">Track</span>
-          </button>
+          </div>
 
           {/* 4. Orbit */}
           <button
             type="button"
             onClick={triggerOrbit}
             aria-label="Ask Orbit AI"
-            className="app-mobile-nav-link"
+            className="app-mobile-nav-slot"
           >
-            <Sparkles className="app-mobile-nav-icon" aria-hidden="true" />
+            <div className="app-mobile-nav-icon-container">
+              <Sparkles className="w-5 h-5" aria-hidden="true" />
+            </div>
             <span className="app-mobile-nav-label">Orbit</span>
           </button>
 
-          {/* 5. You */}
+          {/* 5. You (Profile DP or fallback avatar) */}
           <Link
             href="/dashboard/settings"
+            aria-label="You (Settings & Profile)"
             aria-current={pathname?.startsWith("/dashboard/settings") ? "page" : undefined}
-            className={cn("app-mobile-nav-link", pathname?.startsWith("/dashboard/settings") && "is-active")}
+            className={cn("app-mobile-nav-slot", pathname?.startsWith("/dashboard/settings") && "is-active")}
           >
-            <User className="app-mobile-nav-icon" aria-hidden="true" />
+            <div className="app-mobile-nav-icon-container">
+              {session?.user?.image && !dpError ? (
+                <div
+                  className={cn(
+                    "w-[24px] h-[24px] rounded-full overflow-hidden shrink-0 border transition-all",
+                    pathname?.startsWith("/dashboard/settings")
+                      ? "border-brand ring-1.5 ring-brand/50"
+                      : "border-white/20"
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={session.user.image}
+                    alt={session.user.name || "Profile photo"}
+                    className="w-full h-full object-cover rounded-full"
+                    onError={() => setDpError(true)}
+                  />
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "w-[24px] h-[24px] rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all",
+                    pathname?.startsWith("/dashboard/settings")
+                      ? "bg-brand text-black ring-1.5 ring-brand/50"
+                      : "bg-white/10 text-white/80 border border-white/20"
+                  )}
+                >
+                  {session?.user?.name ? (
+                    session.user.name.charAt(0).toUpperCase()
+                  ) : (
+                    <User className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                </div>
+              )}
+            </div>
             <span className="app-mobile-nav-label">You</span>
           </Link>
         </div>

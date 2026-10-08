@@ -325,32 +325,17 @@ export default function HomeView() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-4 py-1 select-none animate-fade-in">
-      {/* ── 1. HERO AREA: Compact, Quiet, Meaningful (Section 1) ── */}
-      <div className="flex items-center justify-between pt-0.5 pb-1">
-        <div>
-          <h1
-            className="text-lg font-semibold tracking-tight"
-            style={{ fontFamily: "var(--font-display)", color: "var(--text-primary)" }}
-          >
-            {getGreeting(firstName)}
-          </h1>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
-            {formatCurrentDate()}
-          </p>
-        </div>
-
-        <Link
-          href="/dashboard/settings"
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0"
-          style={{
-            background: "var(--satat-surface, #0D0F11)",
-            border: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
-            color: "var(--text-secondary)",
-          }}
-          aria-label="Profile and Settings"
+      {/* ── 1. PRIMARY PAGE HEADING (Section 1 & 2) ── */}
+      <div className="pt-1 pb-1">
+        <h1
+          className="text-[24px] sm:text-[26px] font-bold tracking-tight leading-[1.2]"
+          style={{ fontFamily: "var(--font-display)", color: "var(--text-primary)" }}
         >
-          <span className="text-xs font-semibold uppercase">{firstName.charAt(0)}</span>
-        </Link>
+          {getGreeting(firstName)}
+        </h1>
+        <p className="text-xs sm:text-sm mt-1 font-medium" style={{ color: "var(--text-secondary)" }}>
+          {formatCurrentDate()}
+        </p>
       </div>
 
       {/* ── 2. TODAY AT A GLANCE (The Visual Centerpiece, Section 2, 3, 5, 6) ── */}
