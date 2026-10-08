@@ -29,6 +29,7 @@ import {
   Activity,
   Bot,
 } from "lucide-react";
+import { OrbitMark } from "@/components/orbit/OrbitMark";
 
 export type ScreenId =
   | "home"
@@ -957,7 +958,7 @@ export function MobileProductExperience({
           { id: "home", label: "Home", icon: LayoutDashboard },
           { id: "plan", label: "Plan", icon: Calendar },
           { id: "track", label: "Track", icon: PlusCircle, isPrimaryAction: true },
-          { id: "orbit", label: "Orbit", icon: Sparkles },
+          { id: "orbit", label: "Orbit", icon: OrbitMark },
           { id: "profile", label: "You", icon: User },
         ].map((tab) => {
           const isActive = currentScreen === tab.id;

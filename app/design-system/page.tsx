@@ -18,6 +18,7 @@ import {
   User,
   ArrowRight,
 } from "lucide-react";
+import { OrbitMark } from "@/components/orbit/OrbitMark";
 import { MobileProductExperience, ScreenId } from "./MobileProductExperience";
 
 type DisplayMode = "interactive" | "grid" | "compare";
@@ -36,7 +37,7 @@ export default function DesignSystemPage() {
     { id: "track", label: "3. Track (Fast Capture)", icon: PlusCircle },
     { id: "workout", label: "4. Workout (Active Session)", icon: Dumbbell },
     { id: "nutrition", label: "5. Nutrition (Clean Intake)", icon: Utensils },
-    { id: "orbit", label: "6. Orbit (Intelligence)", icon: Sparkles },
+    { id: "orbit", label: "6. Orbit (Intelligence)", icon: OrbitMark },
     { id: "progress", label: "7. Progress (Quiet Continuity)", icon: TrendingUp },
     { id: "profile", label: "8. You (System Settings)", icon: User },
   ];

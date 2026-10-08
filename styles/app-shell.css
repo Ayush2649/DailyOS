@@ -135,52 +135,95 @@
   background: var(--surface);
   border-top: 1px solid var(--border-subtle);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 0 var(--space-2) env(safe-area-inset-bottom, 0px);
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
   z-index: 100;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: visible;
 }
 
-.app-mobile-nav-list {
-  display: flex;
+.app-mobile-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   width: 100%;
   max-width: 440px;
-  justify-content: space-around;
-  align-items: center;
+  height: 58px;
+  position: relative;
+  overflow: visible;
 }
 
+.app-mobile-nav-slot,
 .app-mobile-nav-link {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-height: 48px; /* touch target */
+  justify-content: flex-end;
+  height: 58px;
+  padding-bottom: 7px;
   color: var(--text-muted);
-  transition: color 0.15s ease;
   text-decoration: none;
+  transition: color 0.15s ease;
+  user-select: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  position: relative;
+  overflow: visible;
 }
 
+.app-mobile-nav-slot:hover,
 .app-mobile-nav-link:hover {
   color: var(--text-secondary);
 }
 
+.app-mobile-nav-slot.is-active,
 .app-mobile-nav-link.is-active {
   color: var(--brand);
 }
 
+.app-mobile-nav-icon-container,
 .app-mobile-nav-icon {
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
 }
 
 .app-mobile-nav-label {
-  font-size: 0.6875rem;
+  font-size: 0.6875rem; /* 11px */
   font-weight: 500;
   line-height: 1;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+/* Floating Track Action Button */
+.app-mobile-track-fab {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  background: var(--satat-brand, #6E8BFF);
+  border: 3.5px solid var(--surface, #0D0F11);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.app-mobile-track-fab:active {
+  transform: translateX(-50%) scale(0.94);
 }
 
 /* Profile dropdown */
