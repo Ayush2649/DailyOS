@@ -1,19 +1,21 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import {
   CheckSquare, Dumbbell, Utensils, LogOut, User, ChevronDown,
-  LayoutDashboard, Settings, Plus, Sparkles,
+  LayoutDashboard, Settings, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import NotificationBell from "@/components/ui/NotificationBell";
 import TrackSheet from "@/components/navigation/TrackSheet";
+import { OrbitMark } from "@/components/orbit/OrbitMark";
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showTrackSheet, setShowTrackSheet] = useState(false);
@@ -22,11 +24,16 @@ export default function Navigation() {
 
   const logoSrc = "/BrandLogo_Header.png";
 
-  const triggerOrbit = () => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("satat:open-orbit"));
-    }
-  };
+  // Handle global satat:open-orbit event by navigating to /dashboard/orbit
+  useEffect(() => {
+    const handleOrbitTrigger = () => {
+      if (pathname !== "/dashboard/orbit") {
+        router.push("/dashboard/orbit");
+      }
+    };
+    window.addEventListener("satat:open-orbit", handleOrbitTrigger);
+    return () => window.removeEventListener("satat:open-orbit", handleOrbitTrigger);
+  }, [pathname, router]);
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -46,6 +53,7 @@ export default function Navigation() {
     if (pathname?.startsWith("/dashboard/tasks")) return "Plan";
     if (pathname?.startsWith("/dashboard/workout")) return "Train";
     if (pathname?.startsWith("/dashboard/diet")) return "Nutrition";
+    if (pathname?.startsWith("/dashboard/orbit")) return "Orbit";
     if (pathname?.startsWith("/dashboard/settings")) return "You";
     return "SATAT";
   };
@@ -115,14 +123,14 @@ export default function Navigation() {
               <span>Nutrition</span>
             </Link>
 
-            <button
-              type="button"
-              onClick={triggerOrbit}
-              className="app-shell-nav-link w-full text-left"
+            <Link
+              href="/dashboard/orbit"
+              aria-current={pathname?.startsWith("/dashboard/orbit") ? "page" : undefined}
+              className={cn("app-shell-nav-link", pathname?.startsWith("/dashboard/orbit") && "is-active")}
             >
-              <Sparkles className="app-shell-nav-icon" style={{ color: "var(--satat-brand, #6E8BFF)" }} aria-hidden="true" />
-              <span>Orbit AI</span>
-            </button>
+              <OrbitMark size={18} className="app-shell-nav-icon" />
+              <span>Orbit</span>
+            </Link>
 
             <Link
               href="/dashboard/settings"
@@ -288,17 +296,23 @@ export default function Navigation() {
           </div>
 
           {/* 4. Orbit */}
-          <button
-            type="button"
-            onClick={triggerOrbit}
-            aria-label="Ask Orbit AI"
-            className="app-mobile-nav-slot"
+          <Link
+            href="/dashboard/orbit"
+            aria-label="Orbit AI companion"
+            aria-current={pathname?.startsWith("/dashboard/orbit") ? "page" : undefined}
+            className={cn("app-mobile-nav-slot", pathname?.startsWith("/dashboard/orbit") && "is-active")}
           >
             <div className="app-mobile-nav-icon-container">
-              <Sparkles className="w-5 h-5" aria-hidden="true" />
+              <OrbitMark
+                size={20}
+                className={cn(
+                  "transition-colors",
+                  pathname?.startsWith("/dashboard/orbit") ? "text-brand" : "text-current"
+                )}
+              />
             </div>
             <span className="app-mobile-nav-label">Orbit</span>
-          </button>
+          </Link>
 
           {/* 5. You (Profile DP or fallback avatar) */}
           <Link

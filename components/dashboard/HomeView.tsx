@@ -4,10 +4,12 @@ import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
-  Dumbbell, Utensils, CheckSquare, Sparkles, ChevronRight,
+  Dumbbell, Utensils, CheckSquare, ChevronRight,
   Flame, Check, ArrowRight, Scale, Clock, AlertCircle, Plus,
   TrendingUp, Calendar
 } from "lucide-react";
+import { OrbitMark } from "@/components/orbit/OrbitMark";
+import { setDietContext, setWorkoutContext, setTaskContext } from "@/lib/orbitContext";
 import {
   getAllTasks, getMeals, getMacroGoals,
   getWorkoutSessions, getBodyWeightEntries, getAllMeals, getUserProfile,
@@ -92,6 +94,51 @@ export default function HomeView() {
         setWeights(w);
         setAllMeals(am);
         setProfile(p);
+
+        // Keep Orbit AI context populated with actual user data
+        const tDay = todayString();
+        setTaskContext({
+          todayDate: tDay,
+          pendingToday: t.filter((x: any) => x.status === "pending" && (!x.dueDate || x.dueDate <= tDay)).map((x: any) => ({ title: x.title, priority: x.priority })),
+          completedToday: t.filter((x: any) => x.status === "completed" && x.completedAt && localDateString(new Date(x.completedAt)) === tDay).map((x: any) => ({ title: x.title, completedAt: x.completedAt })),
+          overdue: t.filter((x: any) => x.status === "pending" && x.dueDate && x.dueDate < tDay).map((x: any) => ({ title: x.title, dueDate: x.dueDate })),
+          totalPending: t.filter((x: any) => x.status === "pending").length,
+        });
+
+        const mealTotals = m.reduce(
+          (acc: any, item: any) => ({
+            calories: acc.calories + (item.macros?.calories || 0),
+            proteinG: acc.proteinG + (item.macros?.proteinG || 0),
+            carbsG: acc.carbsG + (item.macros?.carbsG || 0),
+            fatG: acc.fatG + (item.macros?.fatG || 0),
+          }),
+          { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
+        );
+
+        setDietContext({
+          date: tDay,
+          meals: m.map((tm: any) => ({
+            name: tm.name,
+            calories: tm.macros?.calories || 0,
+            proteinG: tm.macros?.proteinG || 0,
+            carbsG: tm.macros?.carbsG || 0,
+            fatG: tm.macros?.fatG || 0,
+            fiberG: tm.macros?.fiberG,
+          })),
+          totals: mealTotals,
+          goals: g ? { calories: g.calories, proteinG: g.proteinG, carbsG: g.carbsG, fatG: g.fatG } : null,
+        });
+
+        setWorkoutContext({
+          bodyWeightKg: w.length > 0 ? w[0].weightKg : undefined,
+          recentSessions: s.map((sess: any) => ({
+            date: sess.date,
+            durationMinutes: sess.durationMinutes || 0,
+            exercises: sess.exercises || [],
+            cardio: sess.cardio || [],
+            summary: sess.summary,
+          })),
+        });
       })
       .finally(() => setLoading(false));
   }, [userId]);
@@ -302,7 +349,7 @@ export default function HomeView() {
     return {
       text: `Your daily momentum is active. Focus on executing your priority items.`,
       actionLabel: "Open Orbit",
-      actionHref: "#orbit",
+      actionHref: "/dashboard/orbit",
     };
   }, [todaySession, pendingTasks.length, proteinRemaining, meals.length, profile]);
 
@@ -756,40 +803,28 @@ export default function HomeView() {
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border"
+            style={{
+              background: "rgba(110, 139, 255, 0.12)",
+              borderColor: "rgba(110, 139, 255, 0.20)",
+              color: "var(--satat-brand, #6E8BFF)",
+            }}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <OrbitMark size={14} />
           </div>
           <p className="text-xs leading-snug truncate" style={{ color: "var(--text-primary)" }}>
             {orbitInsight.text}
           </p>
         </div>
 
-        {orbitInsight.actionHref.startsWith("#") ? (
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("satat:open-orbit"));
-              }
-            }}
-            className="text-xs font-semibold shrink-0 hover:underline flex items-center gap-1"
-            style={{ color: "var(--satat-brand, #6E8BFF)" }}
-          >
-            <span>{orbitInsight.actionLabel}</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        ) : (
-          <Link
-            href={orbitInsight.actionHref}
-            className="text-xs font-semibold shrink-0 hover:underline flex items-center gap-1"
-            style={{ color: "var(--satat-brand, #6E8BFF)" }}
-          >
-            <span>{orbitInsight.actionLabel}</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-        )}
+        <Link
+          href={orbitInsight.actionHref.startsWith("#") ? "/dashboard/orbit" : orbitInsight.actionHref}
+          className="text-xs font-semibold shrink-0 hover:underline flex items-center gap-1 transition-colors"
+          style={{ color: "var(--satat-brand, #6E8BFF)" }}
+        >
+          <span>{orbitInsight.actionLabel}</span>
+          <ArrowRight className="w-3 h-3" />
+        </Link>
       </div>
     </div>
   );
