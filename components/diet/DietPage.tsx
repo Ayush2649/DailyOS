@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from "next-auth/react";
 import {
   Plus, Minus, Utensils, Camera, Trash2, X, Loader2, Settings,
-  ChevronLeft, ChevronRight, Sparkles, CheckCircle2,
+  ChevronLeft, ChevronRight, Sparkles, CheckCircle2, AlertCircle,
   Bookmark, BookmarkPlus, Search, Mic, Edit3
 } from "lucide-react";
 import VoiceMealModal from "@/components/diet/VoiceMealModal";
@@ -775,6 +775,61 @@ function AddMealModal({ userId, date, onSave, onSaveTemplate, onClose }: {
 
 // TODO: When dedicated user AI consent modal/settings are implemented, ensure consent disclosure states: "Photos are processed by Google Gemini for nutritional identification."
 
+// Client-side image resize helper (max 1024px, JPEG 0.82)
+async function resizeImageClient(file: File, maxDim = 1024, quality = 0.82): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Failed to read image file"));
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const img = new Image();
+      img.onerror = () => {
+        const raw = dataUrl.split(",")[1];
+        resolve({ base64: raw, mimeType: file.type || "image/jpeg" });
+      };
+      img.onload = () => {
+        try {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            const raw = dataUrl.split(",")[1];
+            return resolve({ base64: raw, mimeType: file.type || "image/jpeg" });
+          }
+
+          // Solid white background for PNG/WebP transparency
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const scaledDataUrl = canvas.toDataURL("image/jpeg", quality);
+          const base64 = scaledDataUrl.split(",")[1];
+          resolve({ base64, mimeType: "image/jpeg" });
+        } catch {
+          const raw = dataUrl.split(",")[1];
+          resolve({ base64: raw, mimeType: file.type || "image/jpeg" });
+        }
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ── MealScannerModal ──────────────────────────────────────────────────────────
 function MealScannerModal({
   userId,
@@ -792,8 +847,10 @@ function MealScannerModal({
   onSwitchToVoice?: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [scanning, setScanning] = useState(false);
+  const [scanStage, setScanStage] = useState("Compressing photo...");
   const [reestimating, setReestimating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [hint, setHint] = useState("");
@@ -801,61 +858,116 @@ function MealScannerModal({
   const [calorieRange, setCalorieRange] = useState<{ low: number; high: number } | null>(null);
   const [editedName, setEditedName] = useState("");
   const [editedMacros, setEditedMacros] = useState({ calories: "", protein: "", carbs: "", fat: "", fiber: "" });
+  const [unverifiedFoods, setUnverifiedFoods] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [isPhotoUnavailable, setIsPhotoUnavailable] = useState(false);
 
-  const handleFile = async (file: File) => {
-    setError("");
-    setIsPhotoUnavailable(false);
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target?.result as string;
-      setPreview(dataUrl);
-      setScanning(true);
-      try {
-        const base64 = dataUrl.split(",")[1];
-        const mimeType = file.type;
-        const res = await fetch("/api/analyze-meal", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imageBase64: base64,
-            mimeType,
-            hint: hint.trim() || undefined,
-          }),
-        });
-        const data = await res.json();
-        if (data.error) {
-          if (data.error === "PHOTO_UNAVAILABLE" || data.message?.includes("Photo scan is busy")) {
-            setIsPhotoUnavailable(true);
-            setError("Photo scan is busy. Type or speak your meal instead.");
-          } else {
-            setError(data.error);
-          }
-        } else {
-          setResult(data);
-          setEditedName(data.name || "");
-          setSelectedOption(data.name || "");
-          if (data.calorieRange) {
-            setCalorieRange(data.calorieRange);
-          } else {
-            setCalorieRange(null);
-          }
-          setEditedMacros({
-            calories: String(data.calories ?? ""),
-            protein: String(data.proteinG ?? ""),
-            carbs: String(data.carbsG ?? ""),
-            fat: String(data.fatG ?? ""),
-            fiber: String(data.fiberG ?? ""),
-          });
-        }
-      } catch {
-        setError("Failed to analyze image. Please try again.");
-      } finally {
-        setScanning(false);
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
-    reader.readAsDataURL(file);
+  }, []);
+
+  const handleClose = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    onClose();
+  };
+
+  const handleFile = async (file: File) => {
+    if (scanning) return;
+    setError("");
+    setIsPhotoUnavailable(false);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setScanning(true);
+    setScanStage("Compressing photo...");
+
+    try {
+      const { base64, mimeType } = await resizeImageClient(file);
+      setPreview(`data:${mimeType};base64,${base64}`);
+
+      setScanStage("Identifying dishes & items...");
+      const stageTimer = setTimeout(() => {
+        if (!controller.signal.aborted) {
+          setScanStage("Calculating nutrition...");
+        }
+      }, 2000);
+
+      const res = await fetch("/api/analyze-meal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          imageBase64: base64,
+          mimeType,
+          hint: hint.trim() || undefined,
+        }),
+      });
+
+      clearTimeout(stageTimer);
+
+      if (controller.signal.aborted) return;
+
+      const data = await res.json();
+      if (data.error) {
+        if (data.error === "PHOTO_UNAVAILABLE" || data.message?.includes("Photo scan is busy")) {
+          setIsPhotoUnavailable(true);
+          setError("Photo scan is busy. Type or speak your meal instead.");
+        } else {
+          setError(data.error);
+        }
+      } else {
+        setResult(data);
+        const unverified = data.unknownFoods || [];
+        setUnverifiedFoods(unverified);
+        setEditedName(data.name || "");
+        setSelectedOption(data.name || "");
+        if (data.calorieRange) {
+          setCalorieRange(data.calorieRange);
+        } else {
+          setCalorieRange(null);
+        }
+        // Do NOT populate 0 as valid calories for unverified foods
+        const hasPositiveCalories = Number(data.calories) > 0;
+        setEditedMacros({
+          calories: hasPositiveCalories ? String(data.calories) : "",
+          protein: hasPositiveCalories ? String(data.proteinG ?? "") : "",
+          carbs: hasPositiveCalories ? String(data.carbsG ?? "") : "",
+          fat: hasPositiveCalories ? String(data.fatG ?? "") : "",
+          fiber: hasPositiveCalories ? String(data.fiberG ?? "") : "",
+        });
+      }
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
+      setError("Failed to analyze image. Please try again.");
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleRemoveUnverifiedFood = (foodToRemove: string) => {
+    const updated = unverifiedFoods.filter((f) => f !== foodToRemove);
+    setUnverifiedFoods(updated);
+    setError("");
+  };
+
+  const handleConfirmManualMacros = () => {
+    const cals = Number(editedMacros.calories) || 0;
+    if (cals <= 0) {
+      setError("Please enter valid calories (> 0) before confirming.");
+      return;
+    }
+    setUnverifiedFoods([]);
+    setError("");
   };
 
   const handleSelectOption = async (optionName: string) => {
@@ -899,10 +1011,21 @@ function MealScannerModal({
   };
 
   const handleLog = () => {
+    const cals = Number(editedMacros.calories) || 0;
+    if (cals <= 0) {
+      setError("Cannot log a meal with 0 calories. Please enter estimated calories.");
+      return;
+    }
+    if (unverifiedFoods.length > 0) {
+      setError("Please enter macros or remove unverified foods before logging.");
+      return;
+    }
     onSave({
-      userId, date, name: editedName || "Scanned meal",
+      userId,
+      date,
+      name: editedName.trim() || "Scanned meal",
       macros: {
-        calories: Number(editedMacros.calories) || 0,
+        calories: cals,
         proteinG: Number(editedMacros.protein) || 0,
         carbsG: Number(editedMacros.carbs) || 0,
         fatG: Number(editedMacros.fat) || 0,
@@ -928,8 +1051,10 @@ function MealScannerModal({
     ? result.needsClarification.options
     : (result?.candidates || []).map((c: any) => c.name);
 
+  const canLog = unverifiedFoods.length === 0 && Number(editedMacros.calories) > 0 && Boolean(editedName.trim());
+
   return (
-    <Modal title="Estimate from photo" onClose={onClose}>
+    <Modal title="Estimate from photo" onClose={handleClose}>
       {!preview ? (
         <div className="space-y-3">
           <div>
@@ -940,14 +1065,16 @@ function MealScannerModal({
               type="text"
               placeholder="What is this? (optional, e.g. 2 aloo parathas, sugar-free chai)"
               value={hint}
+              disabled={scanning}
               onChange={(e) => setHint(e.target.value)}
               className="input text-sm"
             />
           </div>
           <button
             type="button"
+            disabled={scanning}
             onClick={() => fileRef.current?.click()}
-            className="w-full border border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors hover:bg-surface-tertiary"
+            className="w-full border border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors hover:bg-surface-tertiary disabled:opacity-50 disabled:pointer-events-none"
             style={{ borderColor: "var(--border)" }}
           >
             <div className="w-10 h-10 rounded-md flex items-center justify-center mx-auto mb-3" style={{ background: "var(--accent-soft)" }}>
@@ -957,17 +1084,23 @@ function MealScannerModal({
             <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>JPG, PNG, or HEIC</p>
           </button>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
+            disabled={scanning}
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </div>
       ) : (
         <div className="space-y-4">
           <div className="relative">
-            <img src={preview} alt="meal" className="w-full h-44 object-cover rounded-xl" />
+            <img
+              src={preview}
+              alt="meal"
+              className="w-full h-44 object-cover rounded-xl"
+              onError={() => setError("Image preview not supported. Please select a JPG or PNG.")}
+            />
             {(scanning || reestimating) && (
               <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center gap-2 text-white">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 <span className="text-sm font-semibold">
-                  {scanning ? "Analyzing the meal for you..." : "Recalculating macros..."}
+                  {scanning ? scanStage : "Recalculating macros..."}
                 </span>
               </div>
             )}
@@ -1009,6 +1142,51 @@ function MealScannerModal({
 
           {!scanning && result && (
             <div className="space-y-3">
+              {/* Unverified / Unknown Foods Alert */}
+              {unverifiedFoods.length > 0 && (
+                <div className="rounded-lg p-3 bg-amber-500/10 border border-amber-500/20 text-xs space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold text-amber-600 dark:text-amber-400">
+                        Unverified foods detected:
+                      </span>
+                      <p className="text-[11px] mt-0.5" style={{ color: "var(--text-2)" }}>
+                        Automatic nutrition is not available for these items. Remove them or manually enter calories/macros below to log.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {unverifiedFoods.map((food) => (
+                      <span
+                        key={food}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium"
+                      >
+                        {food}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveUnverifiedFood(food)}
+                          className="hover:text-red-500 ml-0.5 font-bold"
+                          title={`Remove ${food}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleConfirmManualMacros}
+                      disabled={!(Number(editedMacros.calories) > 0)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Confirm manual macros
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Confidence / Ambiguity Badge & Notes */}
               <div className="flex items-center gap-2 flex-wrap">
                 {isAmbiguous ? (
@@ -1122,6 +1300,11 @@ function MealScannerModal({
                 </div>
               </div>
 
+              {/* Portion Uncertainty Notice */}
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 italic">
+                Portions are estimated from standard serving sizes. Adjust the portion if your serving was larger or smaller.
+              </p>
+
               <div className="flex gap-2">
                 <button
                   onClick={() => {
@@ -1131,6 +1314,7 @@ function MealScannerModal({
                     setIsPhotoUnavailable(false);
                     setCalorieRange(null);
                     setSelectedOption("");
+                    setUnverifiedFoods([]);
                   }}
                   className="btn-secondary flex-1 text-sm"
                 >
@@ -1138,7 +1322,8 @@ function MealScannerModal({
                 </button>
                 <button
                   onClick={handleLog}
-                  className="btn-primary flex-1 text-sm flex items-center justify-center gap-1.5"
+                  disabled={!canLog}
+                  className="btn-primary flex-1 text-sm flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Log meal
                 </button>

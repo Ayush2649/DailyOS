@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowUpRight, Dumbbell, Utensils, CheckSquare, Sparkles } from "lucide-react";
+import { ArrowUpRight, Dumbbell, Utensils, CheckSquare } from "lucide-react";
+import { OrbitMark } from "@/components/orbit/OrbitMark";
 import type { OrbitAction, OrbitInsight, OrbitRecommendation } from "@/types/orbit";
 
 interface ActionButtonProps {
@@ -79,7 +80,7 @@ export function OrbitRecommendationCard({
       case "tasks":
         return <CheckSquare className="w-3.5 h-3.5 text-brand" />;
       default:
-        return <Sparkles className="w-3.5 h-3.5 text-brand" />;
+        return <OrbitMark size={14} className="text-brand" />;
     }
   };
 

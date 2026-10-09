@@ -21,36 +21,104 @@
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import dishVocab from "../data/dish-vocab.json";
+import { MealVisionProvider } from "./types";
 
-// ── Circuit Breaker State (Module-Level) ──────────────────────────────────────
+// ── Circuit Breaker State (Per-User Scoped) ──────────────────────────────────
 
-let consecutiveFailures = 0;
-let circuitOpenUntil = 0; // timestamp ms
-
-export function isCircuitOpen(): boolean {
-  return Date.now() < circuitOpenUntil;
+interface UserCircuitState {
+  consecutiveFailures: number;
+  circuitOpenUntil: number;
+  halfOpenInFlight: boolean;
+  lastUpdated: number;
 }
 
-export function recordSuccess(): void {
-  consecutiveFailures = 0;
-  circuitOpenUntil = 0;
+// Bounded in-memory map keyed by user identifier (e.g. userId or "anonymous")
+const userCircuitMap = new Map<string, UserCircuitState>();
+
+// Maximum inactive duration before pruning stale entries (1 hour)
+const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+let lastPruneTime = Date.now();
+
+function getOrCreateUserState(userKey: string): UserCircuitState {
+  const now = Date.now();
+  if (now - lastPruneTime > PRUNE_INTERVAL_MS) {
+    userCircuitMap.forEach((state, key) => {
+      if (now - state.lastUpdated > PRUNE_INTERVAL_MS) {
+        userCircuitMap.delete(key);
+      }
+    });
+    lastPruneTime = now;
+  }
+
+  let state = userCircuitMap.get(userKey);
+  if (!state) {
+    state = {
+      consecutiveFailures: 0,
+      circuitOpenUntil: 0,
+      halfOpenInFlight: false,
+      lastUpdated: now,
+    };
+    userCircuitMap.set(userKey, state);
+  }
+  state.lastUpdated = now;
+  return state;
 }
 
-export function recordFailure(): void {
-  consecutiveFailures++;
-  if (consecutiveFailures >= 5) {
-    circuitOpenUntil = Date.now() + 5 * 60 * 1000; // 5 minutes
+export function isCircuitOpen(userKey = "global"): boolean {
+  const state = getOrCreateUserState(userKey);
+  const now = Date.now();
+  if (state.circuitOpenUntil === 0) {
+    return false;
+  }
+  if (now < state.circuitOpenUntil) {
+    return true;
+  }
+  // Cooldown has elapsed -> Half-open state
+  if (state.halfOpenInFlight) {
+    return true; // Another probe request is already testing the circuit for this user
+  }
+  // Allow this single probe request through
+  state.halfOpenInFlight = true;
+  return false;
+}
+
+export function recordSuccess(userKey = "global"): void {
+  const state = getOrCreateUserState(userKey);
+  state.consecutiveFailures = 0;
+  state.circuitOpenUntil = 0;
+  state.halfOpenInFlight = false;
+}
+
+export function recordFailure(userKey = "global"): void {
+  const state = getOrCreateUserState(userKey);
+  state.halfOpenInFlight = false;
+  state.consecutiveFailures++;
+  if (state.consecutiveFailures >= 3 || state.circuitOpenUntil > 0) {
+    state.circuitOpenUntil = Date.now() + 30 * 1000; // 30s cooldown
     console.warn(
-      `[ai/gemini] Circuit breaker TRIPPED after 5 consecutive failures. Skipping Gemini until ${new Date(
-        circuitOpenUntil
+      `[ai/gemini] Circuit breaker TRIPPED for user '${userKey}' after ${state.consecutiveFailures} failures. Skipping Gemini until ${new Date(
+        state.circuitOpenUntil
       ).toISOString()}`
     );
   }
 }
 
-export function resetCircuitBreaker(): void {
-  consecutiveFailures = 0;
-  circuitOpenUntil = 0;
+export function resetCircuitBreaker(userKey?: string): void {
+  if (userKey) {
+    userCircuitMap.delete(userKey);
+  } else {
+    userCircuitMap.clear();
+  }
+}
+
+export function getCircuitBreakerState(userKey = "global") {
+  const state = getOrCreateUserState(userKey);
+  return {
+    consecutiveFailures: state.consecutiveFailures,
+    circuitOpenUntil: state.circuitOpenUntil,
+    halfOpenInFlight: state.halfOpenInFlight,
+    isOpen: isCircuitOpen(userKey),
+  };
 }
 
 // ── Typed Error ───────────────────────────────────────────────────────────────
@@ -72,12 +140,15 @@ CRITICAL RULES:
 - The plate can be ANY Indian dish (cheela, dosa, uttapam, poha, upma, khichdi, halwa, rice dishes, thalis, street food, snacks, etc.). Do not assume it is a flatbread unless clearly visible.
 - Chapati vs Paratha: Chapati is thin, soft, puffed with dry tawa spots; Paratha is thicker, layered, crisp or golden-brown with ghee/oil.
 - When unsure or when dishes look visually similar, explain your uncertainty in notes and lower your confidence score.
-- Give approximate gram weights for each visible item (e.g. "rice ~150g", "dal ~120g", "2 rotis ~60g", "poha ~150g").
+- For each visible food item, specify the name, approximate numeric quantity, and unit (e.g. piece, katori, bowl, plate, cup, tbsp, grams, serving).
 - Candidates must be DISTINCT dishes with different calorie impacts. Return a numeric confidence from 0.0 to 1.0 for each candidate.
 - Return up to 3 candidate dishes sorted by confidence descending.
 
 Return ONLY raw JSON matching this schema:
 {
+  "foods": [
+    {"name": "<dish or item name>", "quantity": <number>, "unit": "<piece|katori|plate|bowl|cup|g|serving>", "confidence": <float 0.0-1.0>}
+  ],
   "candidates": [{"name": "<dish name>", "confidence": <float 0.0-1.0>}],
   "visibleItems": ["<item with approximate gram weight>"],
   "ambiguity": "low"|"medium"|"high",
@@ -86,19 +157,29 @@ Return ONLY raw JSON matching this schema:
 
 const DISH_NAMES_LIST = (dishVocab as { name: string }[]).map((d) => d.name).join(", ");
 
-const STATIC_INSTRUCTIONS_AND_VOCAB = `Identify all visible food items with approximate gram weights and up to 3 distinct candidate dishes with numeric confidence (0.0 to 1.0).
+const STATIC_INSTRUCTIONS_AND_VOCAB = `Identify all visible food items with approximate quantities, units, and gram weights, and up to 3 distinct candidate dishes with numeric confidence (0.0 to 1.0).
 
 DISH VOCABULARY LIST: [${DISH_NAMES_LIST}]
 RULE: Pick the closest name from this vocabulary list; if none fits, return your best name prefixed with 'other:'.`;
 
 // ── Zod Schema & Output Parsing (Resilient Defaults) ──────────────────────────
 
-const VisionCandidateSchema = z.object({
+export const VisionFoodItemSchema = z.object({
+  name: z.string().min(1),
+  quantity: z.coerce.number().min(0.1).default(1),
+  unit: z.string().default("serving"),
+  confidence: z.coerce.number().min(0).max(1).default(0.7),
+});
+
+export type VisionFoodItem = z.infer<typeof VisionFoodItemSchema>;
+
+export const VisionCandidateSchema = z.object({
   name: z.string().min(1),
   confidence: z.coerce.number().min(0).max(1).default(0.5),
 });
 
-const VisionAnalysisSchema = z.object({
+export const VisionAnalysisSchema = z.object({
+  foods: z.array(VisionFoodItemSchema).default([]),
   candidates: z.array(VisionCandidateSchema).default([]),
   visibleItems: z.array(z.string()).default([]),
   ambiguity: z.enum(["low", "medium", "high"]).default("high"),
@@ -119,6 +200,24 @@ function parseVisionJsonWithDefaults(rawJsonStr: string): VisionAnalysis {
 
   if (validated.candidates.length === 0) {
     validated.candidates.push({ name: "Unknown Indian Dish", confidence: 0.2 });
+  }
+
+  if (validated.foods.length === 0) {
+    if (validated.visibleItems.length > 0) {
+      validated.foods = validated.visibleItems.map((item) => ({
+        name: cleanDishName(item),
+        quantity: 1,
+        unit: "serving",
+        confidence: 0.6,
+      }));
+    } else {
+      validated.foods = validated.candidates.map((c) => ({
+        name: cleanDishName(c.name),
+        quantity: 1,
+        unit: "serving",
+        confidence: c.confidence,
+      }));
+    }
   }
 
   return validated;
@@ -257,6 +356,7 @@ export interface GeminiVisionOptions {
   base64: string;
   mimeType: string;
   hint?: string;
+  userKey?: string;
 }
 
 export interface CandidateItem {
@@ -266,11 +366,13 @@ export interface CandidateItem {
 }
 
 export interface GeminiVisionResult {
+  foods: VisionFoodItem[];
   candidates: CandidateItem[];
   visibleItems: string[];
   ambiguity: "low" | "medium" | "high";
   notes: string;
   model: string;
+  provider: "gemini";
   usage: {
     promptTokens: number;
     completionTokens: number;
@@ -283,7 +385,7 @@ export interface GeminiVisionResult {
 
 // ── Provider Core ─────────────────────────────────────────────────────────────
 
-const BUDGET_MS = 20_000; // 20s total budget
+const BUDGET_MS = 15_000; // 15s strict total budget
 
 export async function analyzeMealWithGemini(
   opts: GeminiVisionOptions
@@ -293,10 +395,14 @@ export async function analyzeMealWithGemini(
     throw new PhotoUnavailableError("GEMINI_API_KEY is not configured on the server.");
   }
 
-  // 1. Circuit breaker check
-  if (isCircuitOpen()) {
+  const userKey = opts.userKey || "global";
+
+  // 1. Circuit breaker check (per-user)
+  if (isCircuitOpen(userKey)) {
     console.warn(
-      `[ai/gemini] Circuit breaker is OPEN. Skipping Gemini until ${new Date(circuitOpenUntil).toISOString()}`
+      `[ai/gemini] Circuit breaker is OPEN for user '${userKey}'. Skipping Gemini until ${new Date(
+        getCircuitBreakerState(userKey).circuitOpenUntil
+      ).toISOString()}`
     );
     throw new PhotoUnavailableError("Photo scan is busy. Type or speak your meal instead.");
   }
@@ -353,11 +459,11 @@ export async function analyzeMealWithGemini(
     return { data, promptTokens, completionTokens, thinkingTokens, cachedTokens, totalTokens };
   }
 
-  // Attempt primary model: up to 2 retries on 503/500/timeouts
+  // Attempt primary model: 1 retry max on 503/500/timeouts within budget
   let primarySuccess: any = null;
   let primaryError: any = null;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     const elapsed = Date.now() - t0;
     const remainingBudget = BUDGET_MS - elapsed;
     if (remainingBudget < 1500) {
@@ -382,9 +488,9 @@ export async function analyzeMealWithGemini(
         break; // Break out of primary model loop immediately, do NOT retry primary model
       }
 
-      // Per-minute rate limit: wait once if delay <= 5s, else fail fast
+      // Per-minute rate limit: wait once if delay <= 3s, else fail fast
       if (rl.isPerMinute) {
-        if (!hasWaited429 && rl.retryDelayMs <= 5000) {
+        if (!hasWaited429 && rl.retryDelayMs <= 3000) {
           hasWaited429 = true;
           const waitMs = rl.retryDelayMs + 250;
           if (Date.now() - t0 + waitMs < BUDGET_MS - 2000) {
@@ -397,14 +503,12 @@ export async function analyzeMealWithGemini(
         break; // fail fast to fallback
       }
 
-      // 503/500/timeout: retry up to 2 times with exponential backoff (1s, 2s + jitter)
-      if (isRetryableServerError(err) && attempt < 2) {
-        const baseDelay = attempt === 0 ? 1000 : 2000;
-        const jitter = Math.floor(Math.random() * 300);
-        const waitMs = baseDelay + jitter;
+      // 503/500/timeout: retry 1 time with 1s backoff + jitter
+      if (isRetryableServerError(err) && attempt === 0) {
+        const waitMs = 1000 + Math.floor(Math.random() * 300);
 
         if (Date.now() - t0 + waitMs < BUDGET_MS - 2000) {
-          console.warn(`[ai/gemini] Retryable error (${err.message}) on attempt ${attempt + 1}. Retrying in ${waitMs}ms...`);
+          console.warn(`[ai/gemini] Retryable error (${err.message}) on attempt 1. Retrying in ${waitMs}ms...`);
           await new Promise((r) => setTimeout(r, waitMs));
           continue;
         }
@@ -418,39 +522,25 @@ export async function analyzeMealWithGemini(
 
   // If primary succeeded, format and return
   if (primarySuccess) {
-    return handleSuccess(primaryModel, primarySuccess, t0);
+    return handleSuccess(primaryModel, primarySuccess, t0, userKey);
   }
 
   // If primary failed, check remaining budget and try fallback model (gemini-3.7-flash)
   const remainingForFallback = BUDGET_MS - (Date.now() - t0);
-  if (remainingForFallback >= 3000) {
+  if (remainingForFallback >= 2500) {
     console.warn(`[ai/gemini] Primary model ${primaryModel} failed. Attempting fallback to ${fallbackModel}...`);
-    for (let fbAttempt = 0; fbAttempt < 2; fbAttempt++) {
-      const fbElapsed = Date.now() - t0;
-      const fbRemaining = BUDGET_MS - fbElapsed;
-      if (fbRemaining < 1500) break;
-      const fbTimeout = Math.min(10_000, fbRemaining);
+    const fbTimeout = Math.min(8_000, remainingForFallback);
 
-      try {
-        const fallbackSuccess = await callModel(fallbackModel, fbTimeout);
-        return handleSuccess(fallbackModel, fallbackSuccess, t0);
-      } catch (fallbackErr: any) {
-        console.warn(`[ai/gemini] Fallback model ${fallbackModel} attempt ${fbAttempt + 1} failed:`, fallbackErr?.message || fallbackErr);
-        if (isRetryableServerError(fallbackErr) && fbAttempt === 0) {
-          const waitMs = 1000 + Math.floor(Math.random() * 300);
-          if (Date.now() - t0 + waitMs < BUDGET_MS - 1500) {
-            console.warn(`[ai/gemini] Retrying fallback ${fallbackModel} in ${waitMs}ms...`);
-            await new Promise((r) => setTimeout(r, waitMs));
-            continue;
-          }
-        }
-        break;
-      }
+    try {
+      const fallbackSuccess = await callModel(fallbackModel, fbTimeout);
+      return handleSuccess(fallbackModel, fallbackSuccess, t0, userKey);
+    } catch (fallbackErr: any) {
+      console.warn(`[ai/gemini] Fallback model ${fallbackModel} failed:`, fallbackErr?.message || fallbackErr);
     }
   }
 
   // All attempts and fallbacks failed
-  recordFailure();
+  recordFailure(userKey);
   throw new PhotoUnavailableError("Photo scan is busy. Type or speak your meal instead.");
 }
 
@@ -464,9 +554,10 @@ function handleSuccess(
     cachedTokens: number;
     totalTokens: number;
   },
-  t0: number
+  t0: number,
+  userKey = "global"
 ): GeminiVisionResult {
-  recordSuccess();
+  recordSuccess(userKey);
   const latencyMs = Date.now() - t0;
 
   if (rawRes.cachedTokens > 0) {
@@ -499,17 +590,26 @@ function handleSuccess(
     };
   });
 
+  const cleanedFoods = rawRes.data.foods.map((f) => ({
+    name: cleanDishName(f.name),
+    quantity: f.quantity,
+    unit: f.unit,
+    confidence: f.confidence,
+  }));
+
   const effectiveAmbiguity = computeEffectiveAmbiguity(
     rawRes.data.candidates.map((c) => ({ name: c.name, confidence: c.confidence })),
     rawRes.data.ambiguity
   );
 
   return {
+    foods: cleanedFoods,
     candidates: cleanedCandidates,
     visibleItems: rawRes.data.visibleItems,
     ambiguity: effectiveAmbiguity,
     notes: rawRes.data.notes,
     model,
+    provider: "gemini",
     usage: {
       promptTokens: rawRes.promptTokens,
       completionTokens: rawRes.completionTokens,
@@ -520,3 +620,13 @@ function handleSuccess(
     },
   };
 }
+
+export const geminiVisionProvider: MealVisionProvider = {
+  id: "gemini",
+  analyzeMeal: (opts) => analyzeMealWithGemini(opts),
+  isCircuitOpen: (userKey) => isCircuitOpen(userKey),
+  recordSuccess: (userKey) => recordSuccess(userKey),
+  recordFailure: (userKey) => recordFailure(userKey),
+  resetCircuitBreaker: (userKey) => resetCircuitBreaker(userKey),
+  getCircuitBreakerState: (userKey) => getCircuitBreakerState(userKey),
+};

@@ -36,7 +36,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
   return (
-    <div className="min-h-screen flex flex-col relative" style={{ background: "var(--surface-1)" }}>
+    <div className="min-h-[100dvh] h-[100dvh] flex flex-col relative overflow-hidden" style={{ background: "var(--surface-1)" }}>
       <PageBackground />
       <NotificationScheduler />
       <div className="flex flex-1 min-h-0 overflow-hidden relative z-10">
