@@ -29,8 +29,8 @@ export default function AppearanceSettings() {
   }
 
   const options = [
-    { id: "dark", label: "Dark (Signature)", icon: Moon },
-    { id: "light", label: "Light", icon: Sun },
+    { id: "light", label: "Light (Default)", icon: Sun },
+    { id: "dark", label: "Dark", icon: Moon },
     { id: "system", label: "System", icon: Laptop },
   ];
 
@@ -47,7 +47,7 @@ export default function AppearanceSettings() {
           Interface Theme
         </h3>
         <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-          SATAT is dark-first by design. Light and System modes are fully supported.
+          Choose your interface appearance. Light mode is default.
         </p>
       </div>
 

@@ -81,8 +81,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#08090A" },
-    { media: "(prefers-color-scheme: light)", color: "#F7F7F4" },
+    { media: "(prefers-color-scheme: light)", color: "#F8F7F2" },
+    { media: "(prefers-color-scheme: dark)", color: "#101412" },
   ],
 };
 
@@ -100,8 +100,8 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem={true}
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <AuthProvider>

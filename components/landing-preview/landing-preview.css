@@ -1,0 +1,166 @@
+/**
+ * components/landing-preview/landing-preview.css
+ *
+ * Scoped tokens and motion utilities for the SATAT Landing Page Design Playground.
+ * Completely isolated to `.satat-preview-root` — zero impact on production dashboard.
+ */
+
+.satat-preview-root {
+  /* ── Light Palette (Default) ── */
+  --lp-bg: #F8F7F2;
+  --lp-bg-subtle: #F2EFE8;
+  --lp-surface: #FFFFFF;
+  --lp-surface-elevated: #FFFFFF;
+  --lp-surface-muted: #F1EFE9;
+  --lp-surface-inset: #ECEAE3;
+
+  /* Brand: Forest Green */
+  --lp-forest: #173D32;
+  --lp-forest-2: #1D493C;
+  --lp-forest-hover: #245747;
+  --lp-forest-support: #3E7563;
+  --lp-forest-subtle: rgba(23, 61, 50, 0.08);
+
+  /* Accent: Sage */
+  --lp-sage: #A8B89D;
+  --lp-sage-soft: #D8E1D2;
+  --lp-sage-subtle: rgba(168, 184, 157, 0.16);
+
+  /* Typography */
+  --lp-text-primary: #171A17;
+  --lp-text-secondary: #686D67;
+  --lp-text-tertiary: #8B908A;
+  --lp-text-on-forest: #F8F7F2;
+
+  /* Borders */
+  --lp-border: #E5E4DD;
+  --lp-border-subtle: #EDECE6;
+  --lp-border-strong: #D5D3C8;
+
+  /* Semantics */
+  --lp-success: #2E7D5B;
+  --lp-warning: #C27D38;
+  --lp-error: #B84743;
+
+  /* Shadows — Soft, natural, multi-layer */
+  --lp-shadow-sm: 0 1px 2px rgba(23, 26, 23, 0.03), 0 2px 6px rgba(23, 26, 23, 0.02);
+  --lp-shadow-md: 0 2px 4px rgba(23, 26, 23, 0.03), 0 8px 20px rgba(23, 26, 23, 0.04);
+  --lp-shadow-lg: 0 4px 8px rgba(23, 26, 23, 0.04), 0 16px 36px rgba(23, 26, 23, 0.06);
+  --lp-shadow-glass: 0 8px 32px rgba(23, 61, 50, 0.05);
+
+  /* Glass */
+  --lp-glass-bg: rgba(255, 255, 255, 0.72);
+  --lp-glass-border: rgba(255, 255, 255, 0.85);
+
+  background-color: var(--lp-bg);
+  color: var(--lp-text-primary);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ── Dark Scope ── */
+.satat-preview-root.preview-dark {
+  --lp-bg: #101412;
+  --lp-bg-subtle: #141A17;
+  --lp-surface: #181D1A;
+  --lp-surface-elevated: #202722;
+  --lp-surface-muted: #272F2A;
+  --lp-surface-inset: #0C0F0E;
+
+  --lp-forest: #2A5447;
+  --lp-forest-2: #346354;
+  --lp-forest-hover: #3E7563;
+  --lp-forest-support: #558E7B;
+  --lp-forest-subtle: rgba(168, 184, 157, 0.12);
+
+  --lp-sage: #B4C4AA;
+  --lp-sage-soft: #27332C;
+  --lp-sage-subtle: rgba(180, 196, 170, 0.14);
+
+  --lp-text-primary: #F4F5EF;
+  --lp-text-secondary: #A2A89F;
+  --lp-text-tertiary: #71786E;
+  --lp-text-on-forest: #FFFFFF;
+
+  --lp-border: rgba(255, 255, 255, 0.08);
+  --lp-border-subtle: rgba(255, 255, 255, 0.05);
+  --lp-border-strong: rgba(255, 255, 255, 0.14);
+
+  --lp-success: #4EAA82;
+  --lp-warning: #E0A05A;
+  --lp-error: #D66360;
+
+  --lp-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --lp-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --lp-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.6);
+  --lp-shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  --lp-glass-bg: rgba(24, 29, 26, 0.72);
+  --lp-glass-border: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Subtle Grain Background Overlay ── */
+.satat-grain-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.preview-dark .satat-grain-overlay {
+  opacity: 0.038;
+}
+
+/* ── Floating Motion ── */
+@keyframes lpFloatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes lpFloatAlt {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(5px); }
+}
+
+@keyframes lpPulseSubtle {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes lpPathFlow {
+  0% { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.lp-float-slow {
+  animation: lpFloatSlow 6s ease-in-out infinite;
+}
+
+.lp-float-alt {
+  animation: lpFloatAlt 7s ease-in-out infinite;
+}
+
+.lp-pulse-subtle {
+  animation: lpPulseSubtle 4s ease-in-out infinite;
+}
+
+/* ── Reduced Motion Preference ── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-float-slow,
+  .lp-float-alt,
+  .lp-pulse-subtle {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+.reduced-motion-active .lp-float-slow,
+.reduced-motion-active .lp-float-alt,
+.reduced-motion-active .lp-pulse-subtle {
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
