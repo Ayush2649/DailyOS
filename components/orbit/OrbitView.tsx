@@ -7,7 +7,8 @@ import {
   TrendingUp, X, Sparkles, AlertCircle, RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { OrbitMark } from "@/components/orbit/OrbitMark";
+import { OrbitIcon, OrbitMark } from "@/components/orbit/OrbitMark";
+import NotificationBell from "@/components/ui/NotificationBell";
 import { MarkdownText } from "@/components/ui/MarkdownText";
 import { OrbitRecommendationCard, OrbitInsightCard } from "@/components/orbit/OrbitActionCard";
 import { getDietContext, getWorkoutContext, getTaskContext } from "@/lib/orbitContext";
@@ -35,9 +36,26 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
   const [loading, setLoading] = useState(false);
   const [focusMode, setFocusMode] = useState<OrbitFocusMode>("all");
   const [error, setError] = useState<string | null>(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Handle mobile virtual keyboard dynamic resizing
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const handleViewportChange = () => {
+      const offset = window.innerHeight - vv.height;
+      setKeyboardOffset(offset > 60 ? offset : 0);
+    };
+    vv.addEventListener("resize", handleViewportChange);
+    vv.addEventListener("scroll", handleViewportChange);
+    return () => {
+      vv.removeEventListener("resize", handleViewportChange);
+      vv.removeEventListener("scroll", handleViewportChange);
+    };
+  }, []);
 
   // User first name
   const firstName = session?.user?.name?.split(" ")[0] || "there";
@@ -259,13 +277,16 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
   return (
     <div
       className={cn(
-        "flex flex-col h-full w-full max-w-3xl mx-auto select-none bg-surface",
+        "orbit-view-root flex flex-col h-full w-full max-w-3xl mx-auto select-none bg-surface overflow-hidden",
         className
       )}
     >
-      {/* ── 1. ORBIT HEADER (~60–72px) ── */}
+      {/* ── 1. ORBIT HEADER (Identity & Actions) ── */}
       <header
-        className="flex items-center justify-between px-4 sm:px-6 h-[64px] border-b shrink-0 z-10"
+        className={cn(
+          "flex items-center justify-between px-4 sm:px-6 border-b shrink-0 z-10 transition-all",
+          !isOverlay ? "h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] lg:h-[64px] lg:pt-0" : "h-[60px]"
+        )}
         style={{
           borderColor: "var(--border, rgba(255,255,255,0.08))",
           background: "var(--surface, #0D0F11)",
@@ -280,7 +301,7 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
               color: "var(--satat-brand, #6E8BFF)",
             }}
           >
-            <OrbitMark size={18} />
+            <OrbitIcon size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -302,12 +323,12 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {messages.length > 0 && (
             <button
               type="button"
               onClick={handleReset}
-              className="p-2 rounded-lg text-muted hover:text-primary hover:bg-white/5 transition-all text-xs flex items-center gap-1.5"
+              className="p-1.5 sm:p-2 rounded-lg text-muted hover:text-primary hover:bg-white/5 transition-all text-xs flex items-center gap-1.5"
               title="Reset conversation"
               aria-label="Reset conversation"
             >
@@ -315,6 +336,8 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
               <span className="hidden sm:inline text-xs">Clear</span>
             </button>
           )}
+
+          {!isOverlay && <NotificationBell />}
 
           {isOverlay && onClose && (
             <button
@@ -329,12 +352,82 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
         </div>
       </header>
 
-      {/* ── 2. CONVERSATION VIEWPORT / MESSAGES SCROLL AREA ── */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5 scrollbar-none">
+      {/* ── 2. USEFUL CURRENT CONTEXT (Context Selector & Active State) ── */}
+      <div
+        className="w-full shrink-0 border-b z-10"
+        style={{
+          borderColor: "var(--border, rgba(255,255,255,0.08))",
+          background: "var(--surface, #0D0F11)",
+        }}
+      >
+        <div className="px-4 sm:px-6 py-2 flex items-center justify-between gap-3 overflow-x-auto scrollbar-none">
+          {/* Mode filter pills */}
+          <div className="flex items-center gap-1.5 shrink-0 min-w-max">
+            <span className="text-[10px] uppercase font-bold text-muted mr-1 tracking-wider shrink-0">
+              Context:
+            </span>
+            {FOCUS_MODES.map((m) => {
+              const Icon = m.icon;
+              const isSelected = focusMode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setFocusMode(m.id)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all select-none border shrink-0",
+                    isSelected
+                      ? "border-brand bg-brand/10 text-brand"
+                      : "border-border-subtle bg-surface-elevated text-muted hover:text-primary"
+                  )}
+                  style={
+                    isSelected
+                      ? {
+                          borderColor: "rgba(110, 139, 255, 0.3)",
+                          backgroundColor: "rgba(110, 139, 255, 0.12)",
+                          color: "var(--satat-brand, #6E8BFF)",
+                        }
+                      : {
+                          borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.05))",
+                          backgroundColor: "var(--surface-elevated, #14171A)",
+                          color: "var(--text-muted, #7F8682)",
+                        }
+                  }
+                >
+                  <Icon className="w-3 h-3" />
+                  <span>{m.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick context summary (if real metrics logged) */}
+          {realMetrics.length > 0 && (
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+              {realMetrics.map((m, idx) => (
+                <span
+                  key={idx}
+                  className="text-[11px] font-medium px-2 py-0.5 rounded-md border"
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    borderColor: "var(--border-subtle, rgba(255,255,255,0.05))",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  <strong className="text-primary font-semibold">{m.label}:</strong> {m.value}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 3. CONVERSATION VIEWPORT / MESSAGES SCROLL AREA ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 space-y-4 scrollbar-none">
         {/* EMPTY STATE */}
         {messages.length === 0 && (
           <div className="flex flex-col items-center text-center py-6 sm:py-8 max-w-lg mx-auto animate-fade-in">
-            {/* Ambient OrbitMark */}
+            {/* Ambient OrbitIcon */}
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 border shadow-sm transition-transform hover:scale-105"
               style={{
@@ -343,7 +436,7 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
                 color: "var(--satat-brand, #6E8BFF)",
               }}
             >
-              <OrbitMark size={32} />
+              <OrbitIcon size={32} />
             </div>
 
             <h2
@@ -473,7 +566,7 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
                     color: "var(--satat-brand, #6E8BFF)",
                   }}
                 >
-                  <OrbitMark size={13} />
+                  <OrbitIcon size={13} />
                 </div>
                 <span className="text-xs font-bold" style={{ color: "var(--text-primary)" }}>
                   Orbit
@@ -543,7 +636,7 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
                   color: "var(--satat-brand, #6E8BFF)",
                 }}
               >
-                <OrbitMark size={13} animated={true} />
+                <OrbitIcon size={13} animated={true} />
               </div>
               <span className="text-xs font-bold" style={{ color: "var(--text-primary)" }}>
                 Orbit
@@ -606,54 +699,20 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── 3. INPUT AREA (Mobile-First, Comfortable Dock) ── */}
+      {/* ── 4. COMPOSER DOCK (Docked Above Bottom Navigation) ── */}
       <div
-        className="p-3 sm:p-4 border-t shrink-0 z-10"
+        className={cn(
+          "px-3 sm:px-4 pt-2.5 sm:pt-3 border-t shrink-0 z-20 transition-all duration-150",
+          !isOverlay
+            ? "pb-[calc(var(--bottom-nav-content-height)+env(safe-area-inset-bottom,0px)+var(--bottom-nav-fab-protrusion,20px)+8px)] lg:pb-4"
+            : "pb-3 sm:pb-4"
+        )}
         style={{
           borderColor: "var(--border, rgba(255,255,255,0.08))",
           background: "var(--surface, #0D0F11)",
+          transform: keyboardOffset > 0 ? `translateY(-${keyboardOffset}px)` : undefined,
         }}
       >
-        {/* Mode filter pills */}
-        <div className="flex items-center gap-1.5 mb-2 overflow-x-auto scrollbar-none pb-0.5">
-          <span className="text-[10px] uppercase font-bold text-muted mr-1 tracking-wider">
-            Context:
-          </span>
-          {FOCUS_MODES.map((m) => {
-            const Icon = m.icon;
-            const isSelected = focusMode === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setFocusMode(m.id)}
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all select-none border",
-                  isSelected
-                    ? "border-brand bg-brand/10 text-brand"
-                    : "border-border-subtle bg-surface-elevated text-muted hover:text-primary"
-                )}
-                style={
-                  isSelected
-                    ? {
-                        borderColor: "rgba(110, 139, 255, 0.3)",
-                        backgroundColor: "rgba(110, 139, 255, 0.12)",
-                        color: "var(--satat-brand, #6E8BFF)",
-                      }
-                    : {
-                        borderColor: "var(--border-subtle, rgba(255, 255, 255, 0.05))",
-                        backgroundColor: "var(--surface-elevated, #14171A)",
-                        color: "var(--text-muted, #7F8682)",
-                      }
-                }
-              >
-                <Icon className="w-3 h-3" />
-                <span>{m.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
         {/* Input Card Container */}
         <div
           className="flex items-end gap-2 rounded-2xl px-3.5 py-2.5 transition-all border focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/30"

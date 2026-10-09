@@ -171,6 +171,14 @@
 
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Navigation & Viewport Architecture */
+  --bottom-nav-content-height: 58px;
+  --bottom-nav-fab-protrusion: 20px;
+  --bottom-nav-total-height: calc(var(--bottom-nav-content-height) + var(--bottom-nav-fab-protrusion));
+  --bottom-nav-height: calc(var(--bottom-nav-content-height) + env(safe-area-inset-bottom, 0px));
+  --mobile-header-height: calc(3.5rem + env(safe-area-inset-top, 0px));
+  --spacing-page-bottom: var(--space-6); /* 1.5rem / 24px */
 }
 
 .light {
@@ -976,10 +984,11 @@ button:disabled { cursor: not-allowed; }
   z-index: 40;
   inset: 0 0 auto;
   display: flex;
-  min-height: calc(3.5rem + env(safe-area-inset-top));
+  min-height: var(--mobile-header-height);
+  height: var(--mobile-header-height);
   align-items: center;
   gap: var(--space-2);
-  padding: env(safe-area-inset-top) var(--space-3) 0;
+  padding: env(safe-area-inset-top, 0px) clamp(0.75rem, 3vw, 1rem) 0;
   background: var(--surface-base);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -987,18 +996,51 @@ button:disabled { cursor: not-allowed; }
 .app-mobile-page-title { overflow: hidden; color: var(--text-primary); font-size: 0.875rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .app-mobile-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 2px; margin-left: auto; }
 .app-mobile-profile-button { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; gap: 3px; border-radius: var(--radius-control); }
-.app-shell-main { min-width: 0; min-height: 0; flex: 1; overflow-y: auto; }
+
+.app-shell-main {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .app-shell-content {
-  width: min(100%, 72rem);
+  width: 100%;
+  max-width: 72rem;
   margin-inline: auto;
-  padding: calc(3.5rem + env(safe-area-inset-top) + var(--space-4)) var(--space-4) calc(4.5rem + env(safe-area-inset-bottom) + var(--space-4));
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: calc(var(--mobile-header-height) + var(--space-3));
+  padding-inline: clamp(0.75rem, 3vw, 1.25rem);
+  padding-bottom: calc(var(--bottom-nav-total-height) + env(safe-area-inset-bottom, 0px) + var(--spacing-page-bottom));
+}
+
+/* Dedicated viewport container for Orbit agent experience */
+.app-shell-content:has(.orbit-view-root) {
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
 }
 
 @media (min-width: 640px) {
   .app-shell-content { padding-inline: var(--space-6); }
+  .app-shell-content:has(.orbit-view-root) { padding-inline: 0; }
 }
 @media (min-width: 1024px) {
-  .app-shell-content { padding-block: var(--space-8); padding-inline: var(--space-8); }
+  .app-shell-content {
+    padding-top: var(--space-8);
+    padding-inline: var(--space-8);
+    padding-bottom: var(--space-8);
+  }
+  .app-shell-content:has(.orbit-view-root) {
+    padding: 0;
+  }
 }
 
 /* Legacy dashboard theme overrides removed – styling now handled via design tokens and CSS variables */

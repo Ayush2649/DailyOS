@@ -4,39 +4,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { callJsonStrict } from "@/lib/ai/groq";
 import { MODELS, MAX_TOKENS, GROQ_VISION_ENABLED } from "@/lib/ai/models";
-import { estimateMealMacros } from "@/lib/ai/nutrition-calculator";
+import { preprocessMealImage } from "@/lib/ai/image-preprocessing";
+import { calculateMealNutrition, InputFoodItem } from "@/lib/ai/nutrition/calculator";
 import {
-  analyzeMealWithGemini,
+  getMealVisionProvider,
   PhotoUnavailableError,
-} from "@/lib/ai/providers/gemini";
+} from "@/lib/ai/providers";
 
 export const maxDuration = 30;
-
-// ── Image downscaling ─────────────────────────────────────────────────────────
-// sharp is a native module that only runs in Node.js (not edge runtime).
-// It must be imported dynamically to avoid Vercel edge bundler picking it up.
-
-const MAX_PX = 768; // longest side in pixels
-
-async function downscaleBase64(
-  imageBase64: string,
-  mimeType: string
-): Promise<{ base64: string; mimeType: string }> {
-  try {
-    const sharp = (await import("sharp")).default;
-    const buf = Buffer.from(imageBase64, "base64");
-
-    const resized = await sharp(buf)
-      .resize(MAX_PX, MAX_PX, { fit: "inside", withoutEnlargement: true })
-      .flatten({ background: "var(--surface-0)" })
-      .jpeg({ quality: 75 })
-      .toBuffer();
-
-    return { base64: resized.toString("base64"), mimeType: "image/jpeg" };
-  } catch {
-    return { base64: imageBase64, mimeType };
-  }
-}
 
 // ── Legacy Groq Qwen Vision Schema & Prompts (Kept behind GROQ_VISION_ENABLED) ─
 
@@ -146,14 +121,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "imageBase64 and mimeType are required" }, { status: 400 });
   }
 
-  // Downscale to max 768px, JPEG quality 75
-  const { base64: scaledBase64, mimeType: scaledMime } = await downscaleBase64(
-    imageBase64,
-    mimeType
-  );
+  const userId = (session?.user as any)?.id || session?.user?.email || "anonymous";
+
+  // Server-side image preprocessing & downscaling
+  let scaledBase64 = imageBase64;
+  let scaledMime = mimeType;
+  try {
+    const preprocessed = await preprocessMealImage(imageBase64, mimeType);
+    scaledBase64 = preprocessed.base64;
+    scaledMime = preprocessed.mimeType;
+  } catch (prepErr: any) {
+    console.warn("[analyze-meal] Preprocessing warning, using raw buffer:", prepErr?.message);
+  }
 
   try {
     let visionData: {
+      foods: { name: string; quantity: number; unit: string; confidence: number }[];
       candidates: { name: string; confidence: "high" | "medium" | "low" }[];
       visibleItems: string[];
       ambiguity: "low" | "medium" | "high";
@@ -188,20 +171,34 @@ export async function POST(req: NextRequest) {
         schemaName: "analyze-meal-vision",
         feature: "analyzeMeal",
       });
-      visionData = visionResult.data;
+      visionData = {
+        foods: visionResult.data.visibleItems.map((item) => ({
+          name: item,
+          quantity: 1,
+          unit: "serving",
+          confidence: 0.6,
+        })),
+        candidates: visionResult.data.candidates,
+        visibleItems: visionResult.data.visibleItems,
+        ambiguity: visionResult.data.ambiguity,
+        notes: visionResult.data.notes,
+      };
     } else {
-      // ── Default Production Stage 1 Vision Path: Google Gemini ───────────
-      const geminiResult = await analyzeMealWithGemini({
+      // ── Stage 1 Vision Path: Configured Provider (Default: Gemini) ───────────
+      const provider = getMealVisionProvider();
+      const visionResult = await provider.analyzeMeal({
         base64: scaledBase64,
         mimeType: scaledMime,
         hint,
+        userKey: userId,
       });
 
       visionData = {
-        candidates: geminiResult.candidates,
-        visibleItems: geminiResult.visibleItems,
-        ambiguity: geminiResult.ambiguity,
-        notes: geminiResult.notes,
+        foods: visionResult.foods,
+        candidates: visionResult.candidates,
+        visibleItems: visionResult.visibleItems,
+        ambiguity: visionResult.ambiguity,
+        notes: visionResult.notes,
       };
     }
 
@@ -239,25 +236,33 @@ export async function POST(req: NextRequest) {
     const distinctCandidates = mergeCandidates(visionData.candidates, hasFlatbread);
     const primaryCandidate =
       distinctCandidates[0] || { name: "Indian Meal", confidence: "medium" as const };
-    const dishDescription = `${primaryCandidate.name}: ${visionData.visibleItems.join(", ")}`;
 
-    // Stage 2: Macro calculation (openai/gpt-oss-120b - unchanged)
-    const macros = await estimateMealMacros(dishDescription);
+    // Stage 2: Deterministic Nutrition Calculation (standard Indian food composition references, zero LLM calls)
+    const nutritionFoods: InputFoodItem[] =
+      visionData.foods && visionData.foods.length > 0
+        ? visionData.foods
+        : visionData.visibleItems.map((item) => ({ name: item, quantity: 1, unit: "serving" }));
+
+    const nutritionResult = calculateMealNutrition(nutritionFoods, primaryCandidate.name);
 
     // Response preserves all fields required by DietPage.tsx frontend, enriched with candidate & range details
     return NextResponse.json({
       name: primaryCandidate.name,
-      calories: macros.calories,
-      calorieRange: macros.calorieRange,
-      proteinG: macros.proteinG,
-      carbsG: macros.carbsG,
-      fatG: macros.fatG,
-      fiberG: macros.fiberG,
+      calories: nutritionResult.calories,
+      calorieRange: nutritionResult.calorieRange,
+      proteinG: nutritionResult.proteinG,
+      carbsG: nutritionResult.carbsG,
+      fatG: nutritionResult.fatG,
+      fiberG: nutritionResult.fiberG,
       confidence: primaryCandidate.confidence,
       notes: visionData.notes,
       candidates: distinctCandidates,
       visibleItems: visionData.visibleItems,
       ambiguity,
+      foods: nutritionResult.items,
+      unknownFoods: nutritionResult.unknownFoods,
+      allFoodsVerified: nutritionResult.allFoodsVerified,
+      requiresManualReview: nutritionResult.requiresManualReview,
       ...(needsClarification ? { needsClarification } : {}),
     });
   } catch (err: any) {

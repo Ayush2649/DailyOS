@@ -175,83 +175,85 @@ export default function Navigation() {
         )}
       </aside>
 
-      {/* ── Mobile top header ── */}
-      <header className="app-mobile-header lg:hidden">
-        <div className="app-mobile-context flex items-center gap-2">
-          <Image src={logoSrc} alt="SATAT" width={24} height={24} className="rounded-md" />
-          <span className="app-mobile-page-title text-sm font-semibold tracking-tight">
-            {getMobileTitle()}
-          </span>
-        </div>
-        <div className="app-mobile-actions flex items-center gap-2">
-          <NotificationBell />
-          {session?.user && (
-            <div ref={profileRef} className="relative">
-              <button
-                onClick={() => setShowProfileMenu(v => !v)}
-                type="button"
-                title="Account menu"
-                aria-label="Open account menu"
-                aria-expanded={showProfileMenu}
-                className="app-mobile-profile-button"
-              >
-                {session.user.image ? (
-                  <Image src={session.user.image} alt="" width={24} height={24} className="rounded-full" />
-                ) : (
+      {/* ── Mobile top header (shown on all pages except Orbit, which provides its own unified header) ── */}
+      {!pathname?.startsWith("/dashboard/orbit") && (
+        <header className="app-mobile-header lg:hidden">
+          <div className="app-mobile-context flex items-center gap-2">
+            <Image src={logoSrc} alt="SATAT" width={24} height={24} className="rounded-md" />
+            <span className="app-mobile-page-title text-sm font-semibold tracking-tight">
+              {getMobileTitle()}
+            </span>
+          </div>
+          <div className="app-mobile-actions flex items-center gap-2">
+            <NotificationBell />
+            {session?.user && (
+              <div ref={profileRef} className="relative">
+                <button
+                  onClick={() => setShowProfileMenu(v => !v)}
+                  type="button"
+                  title="Account menu"
+                  aria-label="Open account menu"
+                  aria-expanded={showProfileMenu}
+                  className="app-mobile-profile-button"
+                >
+                  {session.user.image ? (
+                    <Image src={session.user.image} alt="" width={24} height={24} className="rounded-full" />
+                  ) : (
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px]"
+                      style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+                    >
+                      <User className="w-3 h-3" />
+                    </div>
+                  )}
+                  <ChevronDown
+                    className={cn("w-3 h-3 transition-transform duration-150", showProfileMenu && "rotate-180")}
+                    style={{ color: "var(--text-muted)" }}
+                  />
+                </button>
+
+                {/* Profile dropdown */}
+                {showProfileMenu && (
                   <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px]"
-                    style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+                    className="absolute right-0 top-full mt-2 w-56 rounded-xl overflow-hidden z-50 animate-scale-in"
+                    style={{
+                      background: "var(--satat-surface, #0D0F11)",
+                      border: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
+                      boxShadow: "0 16px 36px rgba(0,0,0,0.8)",
+                    }}
                   >
-                    <User className="w-3 h-3" />
+                    <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))" }}>
+                      <p className="text-xs font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                        {session.user.name}
+                      </p>
+                      <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        {session.user.email}
+                      </p>
+                    </div>
+                    <Link
+                      href="/dashboard/settings"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-colors hover:bg-white/5"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                      <span>Settings & Profile</span>
+                    </Link>
+                    <button
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-colors hover:bg-red-500/10"
+                      style={{ color: "var(--satat-error, #EA7777)" }}
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign out</span>
+                    </button>
                   </div>
                 )}
-                <ChevronDown
-                  className={cn("w-3 h-3 transition-transform duration-150", showProfileMenu && "rotate-180")}
-                  style={{ color: "var(--text-muted)" }}
-                />
-              </button>
-
-              {/* Profile dropdown */}
-              {showProfileMenu && (
-                <div
-                  className="absolute right-0 top-full mt-2 w-56 rounded-xl overflow-hidden z-50 animate-scale-in"
-                  style={{
-                    background: "var(--satat-surface, #0D0F11)",
-                    border: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
-                    boxShadow: "0 16px 36px rgba(0,0,0,0.8)",
-                  }}
-                >
-                  <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))" }}>
-                    <p className="text-xs font-semibold truncate" style={{ color: "var(--text-primary)" }}>
-                      {session.user.name}
-                    </p>
-                    <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      {session.user.email}
-                    </p>
-                  </div>
-                  <Link
-                    href="/dashboard/settings"
-                    onClick={() => setShowProfileMenu(false)}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-colors hover:bg-white/5"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                    <span>Settings & Profile</span>
-                  </Link>
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-colors hover:bg-red-500/10"
-                    style={{ color: "var(--satat-error, #EA7777)" }}
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign out</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </header>
+              </div>
+            )}
+          </div>
+        </header>
+      )}
 
       {/* ── Mobile bottom nav (Target 5: Home, Plan, Track, Orbit, You) ── */}
       <nav className="app-mobile-bottom-nav lg:hidden" aria-label="Primary navigation">
