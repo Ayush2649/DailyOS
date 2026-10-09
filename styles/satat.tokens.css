@@ -1,19 +1,20 @@
 /**
- * SATAT Design System — Semantic Design Tokens
- * 75% Neutral Foundation | 15% Cobalt Brand | 5% Fresh Aqua | 3% Energy Coral | 2% Semantic Progress
- * "Progress, made continuous"
+ * SATAT Design System — Canonical Semantic Design Tokens
+ * 65% Ivory/White Foundation | 20% Warm Charcoal Text | 10% Forest Brand | 5% Sage Accent
+ * "Progress, made continuous."
  */
 
 :root,
-.dark {
-  color-scheme: dark;
-  /* Foundation — Pure Near-Black Linear-Grade Foundation (85-90%) */
-  --satat-bg: #08090A;
-  --satat-surface: #0D0F11;
-  --satat-surface-elevated: #121519;
-  --satat-surface-high: #181C21;
-  --satat-surface-subtle: #0D0F11;
-  --satat-surface-inset: #050607;
+.light {
+  color-scheme: light;
+
+  /* Foundation (65%) — Ivory Canvas & Pure White Card Surfaces */
+  --satat-bg: #F8F7F2;
+  --satat-surface: #FFFFFF;
+  --satat-surface-elevated: #FFFFFF;
+  --satat-surface-high: #EDECE6;
+  --satat-surface-subtle: #F3F3EE;
+  --satat-surface-inset: #ECEAE3;
 
   --background: var(--satat-bg);
   --surface: var(--satat-surface);
@@ -22,30 +23,30 @@
   --surface-subtle: var(--satat-surface-subtle);
   --surface-inset: var(--satat-surface-inset);
 
-  /* Content */
-  --satat-text-primary: #F5F5F3;
-  --satat-text-secondary: #A4A8AD;
-  --satat-text-muted: #6F747A;
+  /* Content (20%) — Warm Charcoal & Editorial Text */
+  --satat-text-primary: #171A17;
+  --satat-text-secondary: #686D67;
+  --satat-text-muted: #8B908A;
 
   --text-primary: var(--satat-text-primary);
   --text-secondary: var(--satat-text-secondary);
   --text-muted: var(--satat-text-muted);
 
-  /* Borders — Restrained Hairlines (Felt rather than seen) */
-  --satat-border: rgba(255, 255, 255, 0.08);
-  --satat-border-subtle: rgba(255, 255, 255, 0.05);
-  --satat-border-strong: rgba(255, 255, 255, 0.12);
+  /* Hairline Precision Borders */
+  --satat-border: #E5E4DD;
+  --satat-border-subtle: #EDECE6;
+  --satat-border-strong: #D5D5CC;
 
   --border: var(--satat-border);
   --border-subtle: var(--satat-border-subtle);
   --border-strong: var(--satat-border-strong);
 
-  /* Brand — SATAT Cobalt (8-12%, Rare, Intentional) */
-  --satat-brand: #6E8BFF;
-  --satat-brand-hover: #809AFF;
-  --satat-brand-active: #9AADFF;
-  --satat-brand-subtle: rgba(110, 139, 255, 0.12);
-  --satat-brand-text: #08090A;
+  /* Brand (10%) — Deep Forest Green (Discipline, Authority, Nature) */
+  --satat-brand: #173D32;
+  --satat-brand-hover: #245747;
+  --satat-brand-active: #1D493C;
+  --satat-brand-subtle: rgba(23, 61, 50, 0.08);
+  --satat-brand-text: #F8F7F2;
 
   --brand: var(--satat-brand);
   --brand-hover: var(--satat-brand-hover);
@@ -53,64 +54,67 @@
   --brand-subtle: var(--satat-brand-subtle);
   --brand-text: var(--satat-brand-text);
 
-  /* Supporting — Mint & Peach (2-5%) */
-  --satat-mint: #63D2B8;
-  --satat-mint-subtle: rgba(99, 210, 184, 0.12);
-  --satat-mint-strong: #63D2B8;
+  /* Forest Supporting Variations */
+  --satat-forest-2: #1D493C;
+  --satat-forest-hover: #245747;
+  --satat-forest-support: #3E7563;
 
-  --satat-peach: #F2A080;
-  --satat-peach-subtle: rgba(242, 160, 128, 0.12);
-  --satat-peach-strong: #F2A080;
+  /* Accent (5%) — Calm Sage (Continuous Momentum & Guidance) */
+  --satat-sage: #A8B89D;
+  --satat-sage-soft: #D8E1D2;
+  --satat-sage-subtle: rgba(168, 184, 157, 0.16);
 
-  --mint: var(--satat-mint);
-  --mint-subtle: var(--satat-mint-subtle);
-  --peach: var(--satat-peach);
-  --peach-subtle: var(--satat-peach-subtle);
+  --accent: var(--satat-sage);
+  --accent-hover: #96A78B;
+  --accent-subtle: var(--satat-sage-subtle);
+  --accent-soft: var(--satat-sage-soft);
+  --accent-text: #173D32;
 
-  /* Progress & Semantic */
-  --satat-success: #63D2B8;
-  --satat-warning: #E0AB57;
-  --satat-error: #EA7777;
-  --satat-info: #6E8BFF;
+  /* Backward compatibility aliases */
+  --mint: var(--satat-sage);
+  --mint-subtle: var(--satat-sage-subtle);
+  --mint-strong: #3E7563;
+  --peach: #D8E1D2;
+  --peach-subtle: rgba(216, 225, 210, 0.25);
+  --peach-strong: #A8B89D;
+
+  /* Semantics */
+  --satat-success: #2E7D5B;
+  --satat-warning: #C27D38;
+  --satat-error: #B84743;
+  --satat-info: #3E7563;
 
   --success: var(--satat-success);
-  --success-subtle: rgba(99, 210, 184, 0.12);
-  --progress: var(--satat-success);
-  --progress-subtle: rgba(99, 210, 184, 0.12);
-  --progress-hover: #75DFC7;
-  --progress-text: #08090A;
+  --success-subtle: rgba(46, 125, 91, 0.12);
+  --progress: var(--satat-brand);
+  --progress-hover: var(--satat-brand-hover);
+  --progress-subtle: var(--satat-brand-subtle);
+  --progress-text: var(--satat-brand-text);
 
   --warning: var(--satat-warning);
-  --warning-subtle: rgba(224, 171, 87, 0.12);
+  --warning-subtle: rgba(194, 125, 56, 0.12);
   --error: var(--satat-error);
-  --error-subtle: rgba(234, 119, 119, 0.12);
+  --error-subtle: rgba(184, 71, 67, 0.12);
   --info: var(--satat-info);
-  --info-subtle: rgba(110, 139, 255, 0.12);
+  --info-subtle: rgba(62, 117, 99, 0.12);
+
+  /* Macros */
+  --macro-protein: #173D32;
+  --macro-carbs: #A8B89D;
+  --macro-fat: #C27D38;
 
   /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint);
-  --secondary-subtle: var(--mint-subtle);
-  --secondary-text: #08090A;
-  --accent: var(--peach);
-  --accent-hover: var(--peach);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #08090A;
-  --accent-glow: rgba(110, 139, 255, 0.15);
-  --accent-gradient: var(--brand);
-  --accent-soft: var(--peach-subtle);
-  --macro-protein: #6E8BFF;
-  --macro-carbs: #F2A080;
-  --macro-fat: #E0AB57;
-
-  /* Backward compatibility mappings */
+  --secondary: var(--satat-forest-support);
+  --secondary-hover: var(--satat-brand-hover);
+  --secondary-subtle: var(--satat-brand-subtle);
+  --secondary-text: var(--satat-brand-text);
   --surface-page: var(--background);
   --surface-base: var(--surface);
-  --surface-raised: var(--surface-elevated);
+  --surface-raised: var(--surface-subtle);
   --surface-0: var(--surface);
   --surface-1: var(--background);
-  --surface-2: var(--surface-elevated);
-  --surface-3: var(--surface-high);
+  --surface-2: var(--surface-subtle);
+  --surface-3: var(--surface-inset);
   --border-default: var(--border);
   --text-1: var(--text-primary);
   --text-2: var(--text-secondary);
@@ -121,7 +125,17 @@
   --status-warning: var(--warning);
   --status-danger: var(--error);
   --status-info: var(--info);
-  --glow-color: transparent;
+  --accent-glow: rgba(168, 184, 157, 0.2);
+  --accent-gradient: var(--brand);
+
+  /* Restrained Atmospheric Shadows */
+  --shadow-xs: 0 1px 2px rgba(23, 26, 23, 0.03);
+  --shadow-sm: 0 1px 2px rgba(23, 26, 23, 0.03), 0 2px 6px rgba(23, 26, 23, 0.02);
+  --shadow-md: 0 2px 4px rgba(23, 26, 23, 0.03), 0 8px 20px rgba(23, 26, 23, 0.04);
+  --shadow-lg: 0 4px 8px rgba(23, 26, 23, 0.04), 0 16px 36px rgba(23, 26, 23, 0.06);
+  --shadow-card: var(--shadow-sm);
+  --shadow-raised: var(--shadow-md);
+  --shadow-dialog: 0 20px 48px rgba(23, 26, 23, 0.12);
 
   /* Typography Scale */
   --font-display: var(--font-plus-jakarta), sans-serif;
@@ -147,39 +161,37 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
-  /* Radius Scale — normalized sharp precision */
+  /* Radius Scale */
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
   --radius-pill: 9999px;
-  --radius-control: var(--radius-sm);
-  --radius-card: var(--radius-lg);
-  --radius-panel: var(--radius-xl);
+  --radius-control: 12px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
   --radius-app-shell: 20px;
 
-  /* Elevation (restrained micro-elevation) */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
-  --shadow-card: none;
-  --shadow-raised: none;
-  --shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.8);
+  /* Glass Primitives */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.85);
 
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.light {
-  color-scheme: light;
-  /* Foundation (75%) */
-  --satat-bg: #F7F7F4;
-  --satat-surface: #FFFFFF;
-  --satat-surface-elevated: #FFFFFF;
-  --satat-surface-high: #F0F1ED;
-  --satat-surface-subtle: #F0F1ED;
-  --satat-surface-inset: #F0F1ED;
+.dark {
+  color-scheme: dark;
+
+  /* Foundation (65%) — Deep Forest Charcoal Canvas */
+  --satat-bg: #101412;
+  --satat-surface: #181D1A;
+  --satat-surface-elevated: #202722;
+  --satat-surface-high: #272F2A;
+  --satat-surface-subtle: #141A17;
+  --satat-surface-inset: #0C0F0E;
 
   --background: var(--satat-bg);
   --surface: var(--satat-surface);
@@ -188,29 +200,29 @@
   --surface-subtle: var(--satat-surface-subtle);
   --surface-inset: var(--satat-surface-inset);
 
-  /* Content */
-  --satat-text-primary: #171A19;
-  --satat-text-secondary: #68716D;
-  --satat-text-muted: #8A928D;
+  /* Content (20%) — Warm Ivory & Muted Editorial Text */
+  --satat-text-primary: #F4F5EF;
+  --satat-text-secondary: #A2A89F;
+  --satat-text-muted: #71786E;
 
   --text-primary: var(--satat-text-primary);
   --text-secondary: var(--satat-text-secondary);
   --text-muted: var(--satat-text-muted);
 
   /* Borders */
-  --satat-border: #DDE1DD;
-  --satat-border-subtle: #ECEEED;
-  --satat-border-strong: #CBD1CC;
+  --satat-border: rgba(255, 255, 255, 0.08);
+  --satat-border-subtle: rgba(255, 255, 255, 0.05);
+  --satat-border-strong: rgba(255, 255, 255, 0.14);
 
   --border: var(--satat-border);
   --border-subtle: var(--satat-border-subtle);
   --border-strong: var(--satat-border-strong);
 
-  /* Brand — Cobalt */
-  --satat-brand: #4263EB;
-  --satat-brand-hover: #3452D1;
-  --satat-brand-active: #2945BC;
-  --satat-brand-subtle: #E9EDFF;
+  /* Brand (10%) — Luminous Forest */
+  --satat-brand: #2A5447;
+  --satat-brand-hover: #3E7563;
+  --satat-brand-active: #346354;
+  --satat-brand-subtle: rgba(168, 184, 157, 0.12);
   --satat-brand-text: #FFFFFF;
 
   --brand: var(--satat-brand);
@@ -219,63 +231,65 @@
   --brand-subtle: var(--satat-brand-subtle);
   --brand-text: var(--satat-brand-text);
 
-  /* Supporting — Fresh Mint & Peach */
-  --satat-mint: #43B5A0;
-  --satat-mint-subtle: #E3F5F1;
-  --satat-mint-strong: #2F9B87;
+  --satat-forest-2: #346354;
+  --satat-forest-hover: #3E7563;
+  --satat-forest-support: #558E7B;
 
-  --satat-peach: #F29A7A;
-  --satat-peach-subtle: #FFF0EA;
-  --satat-peach-strong: #E47E5D;
+  /* Accent (5%) — Luminous Calm Sage */
+  --satat-sage: #B4C4AA;
+  --satat-sage-soft: #27332C;
+  --satat-sage-subtle: rgba(180, 196, 170, 0.14);
 
-  --mint: var(--satat-mint);
-  --mint-subtle: var(--satat-mint-subtle);
-  --peach: var(--satat-peach);
-  --peach-subtle: var(--satat-peach-subtle);
+  --accent: var(--satat-sage);
+  --accent-hover: #C5D4BB;
+  --accent-subtle: var(--satat-sage-subtle);
+  --accent-soft: var(--satat-sage-soft);
+  --accent-text: #FFFFFF;
 
-  /* Progress & Semantic */
-  --satat-success: #68B36B;
-  --satat-warning: #D99A3D;
-  --satat-error: #D85C5C;
-  --satat-info: #4D7CC7;
+  --mint: var(--satat-sage);
+  --mint-subtle: var(--satat-sage-subtle);
+  --mint-strong: #558E7B;
+  --peach: #27332C;
+  --peach-subtle: rgba(39, 51, 44, 0.5);
+  --peach-strong: #B4C4AA;
+
+  /* Semantics */
+  --satat-success: #4EAA82;
+  --satat-warning: #E0A05A;
+  --satat-error: #D66360;
+  --satat-info: #558E7B;
 
   --success: var(--satat-success);
-  --success-subtle: #EAF6EA;
-  --progress: var(--satat-success);
-  --progress-subtle: #EAF6EA;
-  --progress-hover: #57A05A;
-  --progress-text: #171A19;
+  --success-subtle: rgba(78, 170, 130, 0.14);
+  --progress: var(--satat-brand);
+  --progress-hover: var(--satat-brand-hover);
+  --progress-subtle: var(--satat-brand-subtle);
+  --progress-text: var(--satat-brand-text);
 
   --warning: var(--satat-warning);
-  --warning-subtle: #FFF4DF;
+  --warning-subtle: rgba(224, 160, 90, 0.14);
   --error: var(--satat-error);
-  --error-subtle: #FDECEC;
+  --error-subtle: rgba(214, 99, 96, 0.14);
   --info: var(--satat-info);
-  --info-subtle: #EAF0FB;
+  --info-subtle: rgba(85, 142, 123, 0.14);
+
+  /* Macros */
+  --macro-protein: #2A5447;
+  --macro-carbs: #B4C4AA;
+  --macro-fat: #E0A05A;
 
   /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint-strong);
-  --secondary-subtle: var(--mint-subtle);
+  --secondary: var(--satat-forest-support);
+  --secondary-hover: var(--satat-forest-hover);
+  --secondary-subtle: var(--satat-brand-subtle);
   --secondary-text: #FFFFFF;
-  --accent: var(--peach);
-  --accent-hover: var(--peach-strong);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #171A19;
-  --accent-glow: rgba(66, 99, 235, 0.15);
-  --accent-gradient: var(--brand);
-  --accent-soft: var(--peach-subtle);
-  --macro-protein: #4263EB;
-  --macro-carbs: #F29A7A;
-  --macro-fat: #D99A3D;
-
-  --surface-0: var(--surface);
-  --surface-base: var(--surface);
-  --surface-raised: var(--surface-subtle);
   --surface-page: var(--background);
+  --surface-base: var(--surface);
+  --surface-raised: var(--surface-elevated);
+  --surface-0: var(--surface);
   --surface-1: var(--background);
-  --surface-2: var(--surface-subtle);
-  --surface-3: var(--surface-inset);
+  --surface-2: var(--surface-elevated);
+  --surface-3: var(--surface-high);
   --border-default: var(--border);
   --text-1: var(--text-primary);
   --text-2: var(--text-secondary);
@@ -286,195 +300,18 @@
   --status-warning: var(--warning);
   --status-danger: var(--error);
   --status-info: var(--info);
+  --accent-glow: rgba(180, 196, 170, 0.15);
+  --accent-gradient: var(--brand);
 
   /* Elevation */
-  --shadow-xs: 0 1px 2px 0 rgba(23, 26, 25, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(23, 26, 25, 0.06), 0 1px 2px -1px rgba(23, 26, 25, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(23, 26, 25, 0.07), 0 2px 4px -2px rgba(23, 26, 25, 0.04);
-  --shadow-card: var(--shadow-xs);
-  --shadow-raised: var(--shadow-sm);
-  --shadow-dialog: 0 12px 28px -4px rgba(23, 26, 25, 0.12);
-}
-
-/* ==========================================================================
-   SATAT THEME EXPLORATION (PLAYGROUND SCOPED TOKENS)
-   These scoped theme classes enable side-by-side Day vs Night evaluation
-   without altering any global or production theme defaults.
-   ========================================================================== */
-
-.satat-theme-day {
-  color-scheme: light;
-  /* Foundation (75%) */
-  --background: #F7F7F4;
-  --surface: #FFFFFF;
-  --surface-subtle: #F0F1ED;
-  --surface-elevated: #FFFFFF;
-  --surface-inset: #F0F1ED;
-
-  /* Content */
-  --text-primary: #171A19;
-  --text-secondary: #68716D;
-  --text-muted: #8A928D;
-
-  /* Borders */
-  --border: #DDE1DD;
-  --border-strong: #CBD1CC;
-  --border-subtle: #DDE1DD;
-
-  /* Brand — Cobalt (10-15%) */
-  --brand: #4263EB;
-  --brand-hover: #3452D1;
-  --brand-active: #2945BC;
-  --brand-subtle: #E9EDFF;
-  --brand-text: #FFFFFF;
-
-  /* Supporting — Fresh Mint (5-10%) */
-  --mint: #43B5A0;
-  --mint-subtle: #E3F5F1;
-  --mint-strong: #2F9B87;
-
-  /* Supporting — Energy Peach */
-  --peach: #F29A7A;
-  --peach-subtle: #FFF0EA;
-  --peach-strong: #E47E5D;
-
-  /* Progress */
-  --success: #68B36B;
-  --success-subtle: #EAF6EA;
-  --progress: #68B36B;
-  --progress-subtle: #EAF6EA;
-  --progress-hover: #57A05A;
-  --progress-text: #171A19;
-
-  /* Semantic */
-  --warning: #D99A3D;
-  --warning-subtle: #FFF4DF;
-  --error: #D85C5C;
-  --error-subtle: #FDECEC;
-  --info: #4D7CC7;
-  --info-subtle: #EAF0FB;
-
-  /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint-strong);
-  --secondary-subtle: var(--mint-subtle);
-  --secondary-text: #FFFFFF;
-  --accent: var(--peach);
-  --accent-hover: var(--peach-strong);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #171A19;
-  --text-1: var(--text-primary);
-  --text-2: var(--text-secondary);
-  --text-3: var(--text-muted);
-  --surface-0: var(--surface);
-  --surface-base: var(--surface);
-  --surface-raised: var(--surface-subtle);
-  --surface-page: var(--background);
-  --border-default: var(--border);
-
-  /* Radius scale (6px, 10px, 14px, 18px) */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-pill: 9999px;
-
-  /* Elevation (Restrained micro-elevation) */
-  --shadow-xs: 0 1px 2px 0 rgba(23, 26, 25, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(23, 26, 25, 0.06), 0 1px 2px -1px rgba(23, 26, 25, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(23, 26, 25, 0.07), 0 2px 4px -2px rgba(23, 26, 25, 0.04);
-  --shadow-card: var(--shadow-xs);
-  --shadow-raised: var(--shadow-sm);
-  --shadow-dialog: 0 12px 28px -4px rgba(23, 26, 25, 0.12);
-}
-
-.satat-theme-night {
-  color-scheme: dark;
-  /* Foundation — Pure Near-Black Linear-Grade Foundation */
-  --background: #08090A;
-  --surface: #0D0F11;
-  --surface-elevated: #121519;
-  --surface-high: #181C21;
-  --surface-subtle: #0D0F11;
-  --surface-inset: #050607;
-
-  /* Content */
-  --text-primary: #F5F5F3;
-  --text-secondary: #A4A8AD;
-  --text-muted: #6F747A;
-
-  /* Borders — Restrained Hairlines (Felt rather than seen) */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-strong: rgba(255, 255, 255, 0.12);
-
-  /* Brand — SATAT Cobalt (Rare, Intentional) */
-  --brand: #6E8BFF;
-  --brand-hover: #809AFF;
-  --brand-active: #9AADFF;
-  --brand-subtle: rgba(110, 139, 255, 0.12);
-  --brand-text: #08090A;
-
-  /* Supporting — Mint & Peach */
-  --mint: #63D2B8;
-  --mint-subtle: rgba(99, 210, 184, 0.12);
-  --mint-strong: #63D2B8;
-
-  --peach: #F2A080;
-  --peach-subtle: rgba(242, 160, 128, 0.12);
-  --peach-strong: #F2A080;
-
-  /* Progress */
-  --success: #63D2B8;
-  --success-subtle: rgba(99, 210, 184, 0.12);
-  --progress: #63D2B8;
-  --progress-subtle: rgba(99, 210, 184, 0.12);
-  --progress-hover: #75DFC7;
-  --progress-text: #08090A;
-
-  /* Semantic */
-  --warning: #E0AB57;
-  --warning-subtle: rgba(224, 171, 87, 0.12);
-  --error: #EA7777;
-  --error-subtle: rgba(234, 119, 119, 0.12);
-  --info: #6E8BFF;
-  --info-subtle: rgba(110, 139, 255, 0.12);
-
-  /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint);
-  --secondary-subtle: var(--mint-subtle);
-  --secondary-text: #08090A;
-  --accent: var(--peach);
-  --accent-hover: var(--peach);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #08090A;
-  --text-1: var(--text-primary);
-  --text-2: var(--text-secondary);
-  --text-3: var(--text-muted);
-  --surface-0: var(--surface);
-  --surface-1: var(--background);
-  --surface-2: var(--surface-elevated);
-  --surface-3: var(--surface-high);
-  --surface-base: var(--surface);
-  --surface-raised: var(--surface-elevated);
-  --surface-page: var(--background);
-  --border-default: var(--border);
-
-  /* Radius scale — normalized sharp precision */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-pill: 9999px;
-
-  /* Elevation — Tonal depth, zero heavy drop shadows */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
-  --shadow-card: none;
-  --shadow-raised: none;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.6);
+  --shadow-card: var(--shadow-sm);
+  --shadow-raised: var(--shadow-md);
   --shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.8);
+
+  --glass-bg: rgba(24, 29, 26, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
 }

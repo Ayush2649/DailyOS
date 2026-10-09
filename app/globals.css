@@ -6,490 +6,108 @@
 
 /* Fonts are self-hosted via next/font in app/layout.tsx (no runtime external request, no FOUT) */
 
-:root,
-.dark {
-  color-scheme: dark;
-  /* Foundation — Pure Near-Black Linear-Grade Foundation (85-90%) */
-  --satat-bg: #08090A;
-  --satat-surface: #0D0F11;
-  --satat-surface-elevated: #121519;
-  --satat-surface-high: #181C21;
-  --satat-surface-subtle: #0D0F11;
-  --satat-surface-inset: #050607;
 
-  --background: var(--satat-bg);
-  --surface: var(--satat-surface);
-  --surface-elevated: var(--satat-surface-elevated);
-  --surface-high: var(--satat-surface-high);
-  --surface-subtle: var(--satat-surface-subtle);
-  --surface-inset: var(--satat-surface-inset);
-
-  /* Content */
-  --satat-text-primary: #F5F5F3;
-  --satat-text-secondary: #A4A8AD;
-  --satat-text-muted: #6F747A;
-
-  --text-primary: var(--satat-text-primary);
-  --text-secondary: var(--satat-text-secondary);
-  --text-muted: var(--satat-text-muted);
-
-  /* Borders — Restrained Hairlines (Felt rather than seen) */
-  --satat-border: rgba(255, 255, 255, 0.08);
-  --satat-border-subtle: rgba(255, 255, 255, 0.05);
-  --satat-border-strong: rgba(255, 255, 255, 0.12);
-
-  --border: var(--satat-border);
-  --border-subtle: var(--satat-border-subtle);
-  --border-strong: var(--satat-border-strong);
-
-  /* Brand — SATAT Cobalt (8-12%, Rare, Intentional) */
-  --satat-brand: #6E8BFF;
-  --satat-brand-hover: #809AFF;
-  --satat-brand-active: #9AADFF;
-  --satat-brand-subtle: rgba(110, 139, 255, 0.12);
-  --satat-brand-text: #08090A;
-
-  --brand: var(--satat-brand);
-  --brand-hover: var(--satat-brand-hover);
-  --brand-active: var(--satat-brand-active);
-  --brand-subtle: var(--satat-brand-subtle);
-  --brand-text: var(--satat-brand-text);
-
-  /* Supporting — Mint & Peach (2-5%) */
-  --satat-mint: #63D2B8;
-  --satat-mint-subtle: rgba(99, 210, 184, 0.12);
-  --satat-mint-strong: #63D2B8;
-
-  --satat-peach: #F2A080;
-  --satat-peach-subtle: rgba(242, 160, 128, 0.12);
-  --satat-peach-strong: #F2A080;
-
-  --mint: var(--satat-mint);
-  --mint-subtle: var(--satat-mint-subtle);
-  --peach: var(--satat-peach);
-  --peach-subtle: var(--satat-peach-subtle);
-
-  /* Progress & Semantic */
-  --satat-success: #63D2B8;
-  --satat-warning: #E0AB57;
-  --satat-error: #EA7777;
-  --satat-info: #6E8BFF;
-
-  --success: var(--satat-success);
-  --success-subtle: rgba(99, 210, 184, 0.12);
-  --progress: var(--satat-success);
-  --progress-subtle: rgba(99, 210, 184, 0.12);
-  --progress-hover: #75DFC7;
-  --progress-text: #08090A;
-
-  --warning: var(--satat-warning);
-  --warning-subtle: rgba(224, 171, 87, 0.12);
-  --error: var(--satat-error);
-  --error-subtle: rgba(234, 119, 119, 0.12);
-  --info: var(--satat-info);
-  --info-subtle: rgba(110, 139, 255, 0.12);
-
-  /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint);
-  --secondary-subtle: var(--mint-subtle);
-  --secondary-text: #08090A;
-  --accent: var(--peach);
-  --accent-hover: var(--peach);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #08090A;
-  --accent-glow: rgba(110, 139, 255, 0.15);
-  --accent-gradient: var(--brand);
-  --accent-soft: var(--peach-subtle);
-  --macro-protein: #6E8BFF;
-  --macro-carbs: #F2A080;
-  --macro-fat: #E0AB57;
-
-  /* Backward compatibility mappings */
-  --surface-page: var(--background);
-  --surface-base: var(--surface);
-  --surface-raised: var(--surface-elevated);
-  --surface-0: var(--surface);
-  --surface-1: var(--background);
-  --surface-2: var(--surface-elevated);
-  --surface-3: var(--surface-high);
-  --border-default: var(--border);
-  --text-1: var(--text-primary);
-  --text-2: var(--text-secondary);
-  --text-3: var(--text-muted);
-  --danger: var(--error);
-  --on-accent: var(--brand-text);
-  --status-success: var(--success);
-  --status-warning: var(--warning);
-  --status-danger: var(--error);
-  --status-info: var(--info);
-  --glow-color: transparent;
-
-  /* Typography Scale */
-  --font-display: var(--font-plus-jakarta), sans-serif;
-  --font-sans: var(--font-inter), sans-serif;
-  --type-display: 2.25rem;
-  --type-page-title: 1.75rem;
-  --type-section-title: 1.25rem;
-  --type-card-title: 1rem;
-  --type-body: 0.9375rem;
-  --type-body-sm: 0.8125rem;
-  --type-secondary: 0.875rem;
-  --type-metadata: 0.75rem;
-  --type-metric: 2rem;
-  --type-metric-large: 2.5rem;
-
-  /* Spacing Scale */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-
-  /* Radius Scale — normalized sharp precision */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-pill: 9999px;
-  --radius-control: var(--radius-sm);
-  --radius-card: var(--radius-lg);
-  --radius-panel: var(--radius-xl);
-  --radius-app-shell: 20px;
-
-  /* Elevation (restrained micro-elevation) */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
-  --shadow-card: none;
-  --shadow-raised: none;
-  --shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.8);
-
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
+:root {
   /* Navigation & Viewport Architecture */
   --bottom-nav-content-height: 58px;
   --bottom-nav-fab-protrusion: 20px;
   --bottom-nav-total-height: calc(var(--bottom-nav-content-height) + var(--bottom-nav-fab-protrusion));
   --bottom-nav-height: calc(var(--bottom-nav-content-height) + env(safe-area-inset-bottom, 0px));
   --mobile-header-height: calc(3.5rem + env(safe-area-inset-top, 0px));
-  --spacing-page-bottom: var(--space-6); /* 1.5rem / 24px */
+  --spacing-page-bottom: var(--space-6);
 }
 
-.light {
-  color-scheme: light;
-  /* Foundation (75%) */
-  --satat-bg: #F7F7F4;
-  --satat-surface: #FFFFFF;
-  --satat-surface-elevated: #FFFFFF;
-  --satat-surface-high: #F0F1ED;
-  --satat-surface-subtle: #F0F1ED;
-  --satat-surface-inset: #F0F1ED;
-
-  --background: var(--satat-bg);
-  --surface: var(--satat-surface);
-  --surface-elevated: var(--satat-surface-elevated);
-  --surface-high: var(--satat-surface-high);
-  --surface-subtle: var(--satat-surface-subtle);
-  --surface-inset: var(--satat-surface-inset);
-
-  /* Content */
-  --satat-text-primary: #171A19;
-  --satat-text-secondary: #68716D;
-  --satat-text-muted: #8A928D;
-
-  --text-primary: var(--satat-text-primary);
-  --text-secondary: var(--satat-text-secondary);
-  --text-muted: var(--satat-text-muted);
-
-  /* Borders */
-  --satat-border: #DDE1DD;
-  --satat-border-subtle: #ECEEED;
-  --satat-border-strong: #CBD1CC;
-
-  --border: var(--satat-border);
-  --border-subtle: var(--satat-border-subtle);
-  --border-strong: var(--satat-border-strong);
-
-  /* Brand — Cobalt */
-  --satat-brand: #4263EB;
-  --satat-brand-hover: #3452D1;
-  --satat-brand-active: #2945BC;
-  --satat-brand-subtle: #E9EDFF;
-  --satat-brand-text: #FFFFFF;
-
-  --brand: var(--satat-brand);
-  --brand-hover: var(--satat-brand-hover);
-  --brand-active: var(--satat-brand-active);
-  --brand-subtle: var(--satat-brand-subtle);
-  --brand-text: var(--satat-brand-text);
-
-  /* Supporting — Fresh Mint & Peach */
-  --satat-mint: #43B5A0;
-  --satat-mint-subtle: #E3F5F1;
-  --satat-mint-strong: #2F9B87;
-
-  --satat-peach: #F29A7A;
-  --satat-peach-subtle: #FFF0EA;
-  --satat-peach-strong: #E47E5D;
-
-  --mint: var(--satat-mint);
-  --mint-subtle: var(--satat-mint-subtle);
-  --peach: var(--satat-peach);
-  --peach-subtle: var(--satat-peach-subtle);
-
-  /* Progress & Semantic */
-  --satat-success: #68B36B;
-  --satat-warning: #D99A3D;
-  --satat-error: #D85C5C;
-  --satat-info: #4D7CC7;
-
-  --success: var(--satat-success);
-  --success-subtle: #EAF6EA;
-  --progress: var(--satat-success);
-  --progress-subtle: #EAF6EA;
-  --progress-hover: #57A05A;
-  --progress-text: #171A19;
-
-  --warning: var(--satat-warning);
-  --warning-subtle: #FFF4DF;
-  --error: var(--satat-error);
-  --error-subtle: #FDECEC;
-  --info: var(--satat-info);
-  --info-subtle: #EAF0FB;
-
-  /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint-strong);
-  --secondary-subtle: var(--mint-subtle);
-  --secondary-text: #FFFFFF;
-  --accent: var(--peach);
-  --accent-hover: var(--peach-strong);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #171A19;
-  --accent-glow: rgba(66, 99, 235, 0.15);
-  --accent-gradient: var(--brand);
-  --accent-soft: var(--peach-subtle);
-  --macro-protein: #4263EB;
-  --macro-carbs: #F29A7A;
-  --macro-fat: #D99A3D;
-
-  --surface-0: var(--surface);
-  --surface-base: var(--surface);
-  --surface-raised: var(--surface-subtle);
-  --surface-page: var(--background);
-  --surface-1: var(--background);
-  --surface-2: var(--surface-subtle);
-  --surface-3: var(--surface-inset);
-  --border-default: var(--border);
-  --text-1: var(--text-primary);
-  --text-2: var(--text-secondary);
-  --text-3: var(--text-muted);
-  --danger: var(--error);
-  --on-accent: var(--brand-text);
-  --status-success: var(--success);
-  --status-warning: var(--warning);
-  --status-danger: var(--error);
-  --status-info: var(--info);
-
-  /* Elevation */
-  --shadow-xs: 0 1px 2px 0 rgba(23, 26, 25, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(23, 26, 25, 0.06), 0 1px 2px -1px rgba(23, 26, 25, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(23, 26, 25, 0.07), 0 2px 4px -2px rgba(23, 26, 25, 0.04);
-  --shadow-card: var(--shadow-xs);
-  --shadow-raised: var(--shadow-sm);
-  --shadow-dialog: 0 12px 28px -4px rgba(23, 26, 25, 0.12);
+/* Canonical SATAT Typography Scale */
+.type-display-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5.5vw, 5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
 }
 
-/* ==========================================================================
-   SATAT THEME EXPLORATION (PLAYGROUND SCOPED TOKENS)
-   These scoped theme classes enable side-by-side Day vs Night evaluation
-   without altering any global or production theme defaults.
-   ========================================================================== */
-
-.satat-theme-day {
-  color-scheme: light;
-  /* Foundation (75%) */
-  --background: #F7F7F4;
-  --surface: #FFFFFF;
-  --surface-subtle: #F0F1ED;
-  --surface-elevated: #FFFFFF;
-  --surface-inset: #F0F1ED;
-
-  /* Content */
-  --text-primary: #171A19;
-  --text-secondary: #68716D;
-  --text-muted: #8A928D;
-
-  /* Borders */
-  --border: #DDE1DD;
-  --border-strong: #CBD1CC;
-  --border-subtle: #DDE1DD;
-
-  /* Brand — Cobalt (10-15%) */
-  --brand: #4263EB;
-  --brand-hover: #3452D1;
-  --brand-active: #2945BC;
-  --brand-subtle: #E9EDFF;
-  --brand-text: #FFFFFF;
-
-  /* Supporting — Fresh Mint (5-10%) */
-  --mint: #43B5A0;
-  --mint-subtle: #E3F5F1;
-  --mint-strong: #2F9B87;
-
-  /* Supporting — Energy Peach */
-  --peach: #F29A7A;
-  --peach-subtle: #FFF0EA;
-  --peach-strong: #E47E5D;
-
-  /* Progress */
-  --success: #68B36B;
-  --success-subtle: #EAF6EA;
-  --progress: #68B36B;
-  --progress-subtle: #EAF6EA;
-  --progress-hover: #57A05A;
-  --progress-text: #171A19;
-
-  /* Semantic */
-  --warning: #D99A3D;
-  --warning-subtle: #FFF4DF;
-  --error: #D85C5C;
-  --error-subtle: #FDECEC;
-  --info: #4D7CC7;
-  --info-subtle: #EAF0FB;
-
-  /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint-strong);
-  --secondary-subtle: var(--mint-subtle);
-  --secondary-text: #FFFFFF;
-  --accent: var(--peach);
-  --accent-hover: var(--peach-strong);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #171A19;
-  --text-1: var(--text-primary);
-  --text-2: var(--text-secondary);
-  --text-3: var(--text-muted);
-  --surface-0: var(--surface);
-  --surface-1: var(--background);
-  --surface-2: var(--surface-subtle);
-  --surface-3: var(--surface-inset);
-  --surface-base: var(--surface);
-  --surface-raised: var(--surface-subtle);
-  --surface-page: var(--background);
-  --border-default: var(--border);
-
-  /* Radius scale */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-pill: 9999px;
-
-  /* Elevation */
-  --shadow-xs: 0 1px 2px 0 rgba(23, 26, 25, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(23, 26, 25, 0.06), 0 1px 2px -1px rgba(23, 26, 25, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(23, 26, 25, 0.07), 0 2px 4px -2px rgba(23, 26, 25, 0.04);
-  --shadow-card: var(--shadow-xs);
-  --shadow-raised: var(--shadow-sm);
-  --shadow-dialog: 0 12px 28px -4px rgba(23, 26, 25, 0.12);
+.type-display-l {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
-.satat-theme-night {
-  color-scheme: dark;
-  /* Foundation — Pure Near-Black Linear-Grade Foundation */
-  --background: #08090A;
-  --surface: #0D0F11;
-  --surface-elevated: #121519;
-  --surface-high: #181C21;
-  --surface-subtle: #0D0F11;
-  --surface-inset: #050607;
+.type-h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.375rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
 
-  /* Content */
-  --text-primary: #F5F5F3;
-  --text-secondary: #A4A8AD;
-  --text-muted: #6F747A;
+.type-h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 2.2vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
 
-  /* Borders — Restrained Hairlines (Felt rather than seen) */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-strong: rgba(255, 255, 255, 0.12);
+.type-h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
 
-  /* Brand — SATAT Cobalt (Rare, Intentional) */
-  --brand: #6E8BFF;
-  --brand-hover: #809AFF;
-  --brand-active: #9AADFF;
-  --brand-subtle: rgba(110, 139, 255, 0.12);
-  --brand-text: #08090A;
+.type-h4 {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+}
 
-  /* Supporting — Mint & Peach */
-  --mint: #63D2B8;
-  --mint-subtle: rgba(99, 210, 184, 0.12);
-  --mint-strong: #63D2B8;
+.type-body-lg {
+  font-family: var(--font-sans);
+  font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+  font-weight: 400;
+  line-height: 1.6;
+}
 
-  --peach: #F2A080;
-  --peach-subtle: rgba(242, 160, 128, 0.12);
-  --peach-strong: #F2A080;
+.type-body {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
 
-  /* Progress */
-  --success: #63D2B8;
-  --success-subtle: rgba(99, 210, 184, 0.12);
-  --progress: #63D2B8;
-  --progress-subtle: rgba(99, 210, 184, 0.12);
-  --progress-hover: #75DFC7;
-  --progress-text: #08090A;
+.type-body-sm {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
 
-  /* Semantic */
-  --warning: #E0AB57;
-  --warning-subtle: rgba(224, 171, 87, 0.12);
-  --error: #EA7777;
-  --error-subtle: rgba(234, 119, 119, 0.12);
-  --info: #6E8BFF;
-  --info-subtle: rgba(110, 139, 255, 0.12);
+.type-caption {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
 
-  /* System aliases */
-  --secondary: var(--mint);
-  --secondary-hover: var(--mint);
-  --secondary-subtle: var(--mint-subtle);
-  --secondary-text: #08090A;
-  --accent: var(--peach);
-  --accent-hover: var(--peach);
-  --accent-subtle: var(--peach-subtle);
-  --accent-text: #08090A;
-  --text-1: var(--text-primary);
-  --text-2: var(--text-secondary);
-  --text-3: var(--text-muted);
-  --surface-0: var(--surface);
-  --surface-1: var(--background);
-  --surface-2: var(--surface-elevated);
-  --surface-3: var(--surface-high);
-  --surface-base: var(--surface);
-  --surface-raised: var(--surface-elevated);
-  --surface-page: var(--background);
-  --border-default: var(--border);
+.type-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 
-  /* Radius scale — normalized sharp precision */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-pill: 9999px;
-
-  /* Elevation — Tonal depth, zero heavy drop shadows */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
-  --shadow-card: none;
-  --shadow-raised: none;
-  --shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.8);
+.type-numeric {
+  font-family: var(--font-sans);
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
 }
 
 @layer base {
