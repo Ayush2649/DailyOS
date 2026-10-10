@@ -29,6 +29,7 @@ export interface MealVisionUsage {
   promptTokens: number;
   completionTokens: number;
   thinkingTokens?: number;
+  reasoningTokens?: number;
   cachedTokens?: number;
   totalTokens: number;
   latencyMs: number;
@@ -42,7 +43,7 @@ export interface MealVisionResult {
   ambiguity: "low" | "medium" | "high";
   notes: string;
   model: string;
-  provider: "gemini" | "deepseek";
+  provider: "gemini" | "deepseek" | "nemotron";
   usage: MealVisionUsage;
 }
 
@@ -54,7 +55,7 @@ export interface CircuitBreakerState {
 }
 
 export interface MealVisionProvider {
-  readonly id: "gemini" | "deepseek";
+  readonly id: "gemini" | "deepseek" | "nemotron";
   analyzeMeal(input: MealVisionInput): Promise<MealVisionResult>;
   isCircuitOpen(userKey?: string): boolean;
   recordSuccess(userKey?: string): void;
@@ -65,9 +66,12 @@ export interface MealVisionProvider {
 
 export class PhotoUnavailableError extends Error {
   readonly code = "PHOTO_UNAVAILABLE";
-  constructor(message = "Photo scan is busy. Type or speak your meal instead.") {
+  constructor(message = "Photo scan is busy. Type or speak your meal instead.", options?: { cause?: unknown }) {
     super(message);
     this.name = "PhotoUnavailableError";
+    if (options?.cause) {
+      (this as any).cause = options.cause;
+    }
   }
 }
 

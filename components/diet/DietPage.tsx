@@ -1346,7 +1346,7 @@ function MealScannerModal({
         </div>
       )}
       <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center pt-2">
-        Photos are processed by Google Gemini for nutritional identification.
+        Photos are analyzed by AI to identify foods and estimate portions.
       </p>
     </Modal>
   );

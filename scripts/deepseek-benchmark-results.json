@@ -1,0 +1,437 @@
+[
+  {
+    "file": "Aloo_ka_paratha.jpg",
+    "originalSizeBytes": 1828387,
+    "preprocessedSizeBytes": 53366,
+    "preprocessLatencyMs": 96,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 11209,
+    "nutritionLatencyMs": 1,
+    "totalLatencyMs": 11306,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Aloo Paratha",
+      "White Butter",
+      "Red Pickle",
+      "Ghee/Oil Drizzle"
+    ],
+    "portionEstimates": [
+      "2 piece",
+      "2 piece",
+      "1 tbsp",
+      "1 tsp"
+    ],
+    "unknownFoods": [
+      "White Butter",
+      "Red Pickle",
+      "Ghee/Oil Drizzle"
+    ],
+    "calories": 400,
+    "macros": {
+      "proteinG": 10,
+      "carbsG": 56,
+      "fatG": 16,
+      "fiberG": 7
+    },
+    "manualCorrectionRequired": true,
+    "retryCount": 0,
+    "promptTokens": 1431,
+    "completionTokens": 1652,
+    "totalTokens": 3083,
+    "estimatedCostUsd": 0.00066
+  },
+  {
+    "file": "Besan Cheela.jpg",
+    "originalSizeBytes": 204472,
+    "preprocessedSizeBytes": 110974,
+    "preprocessLatencyMs": 235,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 4805,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 5040,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Besan Cheela",
+      "Plain Curd"
+    ],
+    "portionEstimates": [
+      "2 piece",
+      "1 katori"
+    ],
+    "unknownFoods": [],
+    "calories": 370,
+    "macros": {
+      "proteinG": 17,
+      "carbsG": 43,
+      "fatG": 15,
+      "fiberG": 6
+    },
+    "manualCorrectionRequired": false,
+    "retryCount": 0,
+    "promptTokens": 1421,
+    "completionTokens": 635,
+    "totalTokens": 2056,
+    "estimatedCostUsd": 0.00038
+  },
+  {
+    "file": "Dal_Bhat_Tarkari_2.jpg",
+    "originalSizeBytes": 4894918,
+    "preprocessedSizeBytes": 51378,
+    "preprocessLatencyMs": 2218,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 33355,
+    "nutritionLatencyMs": 4,
+    "totalLatencyMs": 35577,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Steamed Rice",
+      "Sambar",
+      "Papad",
+      "Chicken Fry",
+      "Cucumber",
+      "Lemon",
+      "Spinach Sabzi",
+      "Chutney"
+    ],
+    "portionEstimates": [
+      "1 serving",
+      "1 katori",
+      "2 piece",
+      "1 serving",
+      "3 piece",
+      "1 piece",
+      "1 katori",
+      "1 tbsp"
+    ],
+    "unknownFoods": [
+      "Papad",
+      "Chicken Fry",
+      "Cucumber",
+      "Lemon",
+      "Chutney"
+    ],
+    "calories": 401,
+    "macros": {
+      "proteinG": 11,
+      "carbsG": 72,
+      "fatG": 7,
+      "fiberG": 8
+    },
+    "manualCorrectionRequired": true,
+    "retryCount": 0,
+    "promptTokens": 1431,
+    "completionTokens": 6410,
+    "totalTokens": 7841,
+    "estimatedCostUsd": 0.002
+  },
+  {
+    "file": "Dosa.jpg",
+    "originalSizeBytes": 373642,
+    "preprocessedSizeBytes": 74693,
+    "preprocessLatencyMs": 167,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 5431,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 5598,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Plain Dosa",
+      "Potato Masala (aloo curry for dosa)",
+      "Coconut Chutney",
+      "Red Chutney (tomato/onion chutney)",
+      "Butter"
+    ],
+    "portionEstimates": [
+      "1 piece",
+      "1 katori",
+      "1 katori",
+      "1 katori",
+      "1 piece"
+    ],
+    "unknownFoods": [
+      "Red Chutney (tomato/onion chutney)",
+      "Butter"
+    ],
+    "calories": 695,
+    "macros": {
+      "proteinG": 14,
+      "carbsG": 85,
+      "fatG": 34,
+      "fiberG": 10
+    },
+    "manualCorrectionRequired": true,
+    "retryCount": 0,
+    "promptTokens": 1426,
+    "completionTokens": 684,
+    "totalTokens": 2110,
+    "estimatedCostUsd": 0.00039
+  },
+  {
+    "file": "Idli_sambar_and_coconut_chutney.jpg",
+    "originalSizeBytes": 6841312,
+    "preprocessedSizeBytes": 39297,
+    "preprocessLatencyMs": 464,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 27035,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 27499,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Plain Idli",
+      "Sambar",
+      "Rasam"
+    ],
+    "portionEstimates": [
+      "2 piece",
+      "1 katori",
+      "1 katori"
+    ],
+    "unknownFoods": [
+      "Rasam"
+    ],
+    "calories": 216,
+    "macros": {
+      "proteinG": 8,
+      "carbsG": 42,
+      "fatG": 2,
+      "fiberG": 5
+    },
+    "manualCorrectionRequired": true,
+    "retryCount": 0,
+    "promptTokens": 1435,
+    "completionTokens": 5281,
+    "totalTokens": 6716,
+    "estimatedCostUsd": 0.00168
+  },
+  {
+    "file": "Indori_Poha,_New_Delhi.jpg",
+    "originalSizeBytes": 4848763,
+    "preprocessedSizeBytes": 59453,
+    "preprocessLatencyMs": 363,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 4923,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 5286,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Indori Poha",
+      "Onion Pakora",
+      "Plain Curd"
+    ],
+    "portionEstimates": [
+      "1 plate",
+      "1 serving",
+      "1 katori"
+    ],
+    "unknownFoods": [
+      "Onion Pakora"
+    ],
+    "calories": 270,
+    "macros": {
+      "proteinG": 8,
+      "carbsG": 43,
+      "fatG": 8,
+      "fiberG": 3
+    },
+    "manualCorrectionRequired": true,
+    "retryCount": 0,
+    "promptTokens": 1437,
+    "completionTokens": 676,
+    "totalTokens": 2113,
+    "estimatedCostUsd": 0.00039
+  },
+  {
+    "file": "Khichdi_(Khichrri).jpeg",
+    "originalSizeBytes": 7260571,
+    "preprocessedSizeBytes": 65893,
+    "preprocessLatencyMs": 558,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 6536,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 7094,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Jeera Rice"
+    ],
+    "portionEstimates": [
+      "1 plate"
+    ],
+    "unknownFoods": [],
+    "calories": 221,
+    "macros": {
+      "proteinG": 4,
+      "carbsG": 43,
+      "fatG": 3,
+      "fiberG": 1
+    },
+    "manualCorrectionRequired": false,
+    "retryCount": 0,
+    "promptTokens": 1431,
+    "completionTokens": 914,
+    "totalTokens": 2345,
+    "estimatedCostUsd": 0.00046
+  },
+  {
+    "file": "Rajma_Chawal_from_India(1).jpg",
+    "originalSizeBytes": 2424883,
+    "preprocessedSizeBytes": 41918,
+    "preprocessLatencyMs": 188,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 3527,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 3715,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Steamed Rice",
+      "Rajma Masala",
+      "Kachumber Salad"
+    ],
+    "portionEstimates": [
+      "1 serving",
+      "1 katori",
+      "0.5 serving"
+    ],
+    "unknownFoods": [],
+    "calories": 363,
+    "macros": {
+      "proteinG": 13,
+      "carbsG": 69,
+      "fatG": 3,
+      "fiberG": 8
+    },
+    "manualCorrectionRequired": false,
+    "retryCount": 0,
+    "promptTokens": 1431,
+    "completionTokens": 424,
+    "totalTokens": 1855,
+    "estimatedCostUsd": 0.00032
+  },
+  {
+    "file": "Roti-Sabzi-Raita.jpeg",
+    "originalSizeBytes": 6769134,
+    "preprocessedSizeBytes": 73894,
+    "preprocessLatencyMs": 224,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 6218,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 6442,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Plain Roti",
+      "Cucumber Raita",
+      "Dal Fry"
+    ],
+    "portionEstimates": [
+      "1 piece",
+      "1 katori",
+      "1 katori"
+    ],
+    "unknownFoods": [
+      "Cucumber Raita"
+    ],
+    "calories": 205,
+    "macros": {
+      "proteinG": 11,
+      "carbsG": 36,
+      "fatG": 3,
+      "fiberG": 6
+    },
+    "manualCorrectionRequired": true,
+    "retryCount": 0,
+    "promptTokens": 1431,
+    "completionTokens": 933,
+    "totalTokens": 2364,
+    "estimatedCostUsd": 0.00046
+  },
+  {
+    "file": "Sooji_Halwa_(Rava_Sheera).jpg",
+    "originalSizeBytes": 3344559,
+    "preprocessedSizeBytes": 67696,
+    "preprocessLatencyMs": 244,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 4099,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 4343,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Sooji Halwa"
+    ],
+    "portionEstimates": [
+      "1 plate"
+    ],
+    "unknownFoods": [],
+    "calories": 560,
+    "macros": {
+      "proteinG": 8,
+      "carbsG": 84,
+      "fatG": 22,
+      "fiberG": 2
+    },
+    "manualCorrectionRequired": false,
+    "retryCount": 0,
+    "promptTokens": 1426,
+    "completionTokens": 502,
+    "totalTokens": 1928,
+    "estimatedCostUsd": 0.00034
+  },
+  {
+    "file": "Vegetable Pulao.jpeg",
+    "originalSizeBytes": 38888,
+    "preprocessedSizeBytes": 38888,
+    "preprocessLatencyMs": 2,
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "modelLatencyMs": 24233,
+    "nutritionLatencyMs": 0,
+    "totalLatencyMs": 24235,
+    "success": true,
+    "circuitBreakerOpen": false,
+    "foodsIdentified": [
+      "Vegetable Pulao",
+      "Raw Carrot",
+      "Green Beans"
+    ],
+    "portionEstimates": [
+      "1 bowl",
+      "2 piece",
+      "80 g"
+    ],
+    "unknownFoods": [
+      "Raw Carrot",
+      "Green Beans"
+    ],
+    "calories": 210,
+    "macros": {
+      "proteinG": 5,
+      "carbsG": 34,
+      "fatG": 6,
+      "fiberG": 3
+    },
+    "manualCorrectionRequired": true,
+    "retryCount": 0,
+    "promptTokens": 1421,
+    "completionTokens": 4529,
+    "totalTokens": 5950,
+    "estimatedCostUsd": 0.00147
+  }
+]

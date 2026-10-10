@@ -213,6 +213,10 @@ async function runBenchmark() {
   console.log("\n==================== BENCHMARK RESULTS TABLE ====================");
   console.log(JSON.stringify(results, null, 2));
 
+  const outPath = path.resolve(process.cwd(), "scripts", "deepseek-benchmark-results.json");
+  fs.writeFileSync(outPath, JSON.stringify(results, null, 2));
+  console.log(`Raw results saved to: ${outPath}\n`);
+
   // Compute aggregate statistics
   const total = results.length;
   const successes = results.filter((r) => r.success);

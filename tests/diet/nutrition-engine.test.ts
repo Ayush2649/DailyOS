@@ -145,5 +145,108 @@ describe("Deterministic Nutrition Engine (Zero LLM Dependency)", () => {
       expect(result.unknownFoods).toHaveLength(0);
     });
   });
+
+  describe("Food Matching Semantics & Composite Invariants (Tasks A, B, C, D)", () => {
+    it("proves true aliases resolve correctly to canonical records", () => {
+      expect(resolveFoodItem("alu paratha")?.id).toBe("paratha_aloo");
+      expect(resolveFoodItem("chapati")?.id).toBe("roti_plain");
+      expect(resolveFoodItem("dahi")?.id).toBe("curd_plain");
+      expect(resolveFoodItem("chawal")?.id).toBe("rice_steamed");
+      expect(resolveFoodItem("cucumber salad")?.id).toBe("salad_kachumber");
+      expect(resolveFoodItem("coconut chutney")?.id).toBe("chutney_coconut");
+      expect(resolveFoodItem("boondi raita")?.id).toBe("raita_boondi");
+    });
+
+    it("proves different foods are NOT incorrectly mapped to one another", () => {
+      // Must NOT alias Chicken Fry to Chicken Curry
+      expect(resolveFoodItem("Chicken Fry")).toBeNull();
+
+      // Must NOT alias Cucumber Raita to Plain Curd or Boondi Raita
+      expect(resolveFoodItem("Cucumber Raita")).toBeNull();
+
+      // Must NOT alias generic Chutney to Coconut Chutney
+      expect(resolveFoodItem("Chutney")).toBeNull();
+      expect(resolveFoodItem("Red Chutney")).toBeNull();
+
+      // Missing foods must NOT match unrelated items
+      expect(resolveFoodItem("Papad")).toBeNull();
+      expect(resolveFoodItem("Rasam")).toBeNull();
+      expect(resolveFoodItem("White Butter")).toBeNull();
+      expect(resolveFoodItem("Red Pickle")).toBeNull();
+      expect(resolveFoodItem("Onion Pakora")).toBeNull();
+    });
+
+    it("proves plain Cucumber does NOT resolve to Kachumber Salad merely because names overlap", () => {
+      expect(resolveFoodItem("Cucumber")).toBeNull();
+      expect(resolveFoodItem("Sliced Cucumber")).toBeNull();
+      expect(resolveFoodItem("Raw Cucumber")).toBeNull();
+
+      // Only actual salad alias matches
+      expect(resolveFoodItem("Cucumber Salad")?.id).toBe("salad_kachumber");
+      expect(resolveFoodItem("Kachumber")?.id).toBe("salad_kachumber");
+    });
+
+    it("ensures missing foods remain strictly unverified with zero fake calories", () => {
+      const result = calculateMealNutrition([
+        { name: "Papad", quantity: 2, unit: "piece" },
+        { name: "Rasam", quantity: 1, unit: "bowl" },
+      ]);
+
+      expect(result.calories).toBe(0);
+      expect(result.allFoodsVerified).toBe(false);
+      expect(result.requiresManualReview).toBe(true);
+      expect(result.unknownFoods).toContain("Papad");
+      expect(result.unknownFoods).toContain("Rasam");
+      expect(result.items.every((i) => !i.verified)).toBe(true);
+    });
+
+    it("does NOT double-count composite-dish ingredients when their relationship is established", () => {
+      const result = calculateMealNutrition([
+        { name: "Vegetable Biryani", quantity: 1, unit: "plate" },
+        { name: "Diced Carrots", quantity: 1, unit: "serving", isComponentOf: "Vegetable Biryani" },
+        { name: "Green Beans", quantity: 1, unit: "serving", isComponentOf: "Vegetable Biryani" },
+      ]);
+
+      // Vegetable Biryani is 280 kcal per plate
+      expect(result.calories).toBe(280);
+      expect(result.allFoodsVerified).toBe(true);
+      expect(result.requiresManualReview).toBe(false);
+      expect(result.unknownFoods).toHaveLength(0);
+
+      // Verify that component items are marked verified inside the dish without adding duplicate calories
+      const carrotItem = result.items.find((i) => i.name === "Diced Carrots");
+      expect(carrotItem?.calories).toBe(0);
+      expect(carrotItem?.verified).toBe(true);
+      expect(carrotItem?.matchedCanonicalName).toBe("Diced Carrots (in Vegetable Biryani)");
+    });
+
+    it("retains separate side dishes and calculates them independently", () => {
+      const result = calculateMealNutrition([
+        { name: "Vegetable Biryani", quantity: 1, unit: "plate" },
+        { name: "Kachumber Salad", quantity: 1, unit: "bowl / katori" }, // Separate side dish, no isComponentOf
+      ]);
+
+      // Biryani (280) + Kachumber Salad (20) = 300 kcal
+      expect(result.calories).toBe(300);
+      expect(result.items).toHaveLength(2);
+      expect(result.allFoodsVerified).toBe(true);
+      expect(result.items.find((i) => i.name === "Kachumber Salad")?.calories).toBe(20);
+    });
+
+    it("does NOT automatically discard additional cooking fat or toppings", () => {
+      const result = calculateMealNutrition([
+        { name: "Aloo Paratha", quantity: 2, unit: "piece" },
+        { name: "White Butter", quantity: 1, unit: "tbsp" }, // Additional fat, no isComponentOf
+      ]);
+
+      // Paratha is 400 kcal; White Butter is not discarded, but preserved as unknown requiring manual review
+      expect(result.calories).toBe(400);
+      expect(result.items).toHaveLength(2);
+      expect(result.unknownFoods).toContain("White Butter");
+      expect(result.allFoodsVerified).toBe(false);
+      expect(result.requiresManualReview).toBe(true);
+    });
+  });
 });
+
 

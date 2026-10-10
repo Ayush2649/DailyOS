@@ -20,6 +20,7 @@ export interface InputFoodItem {
   quantity?: number;
   unit?: string;
   confidence?: number;
+  isComponentOf?: string;
 }
 
 export interface CalculatedFoodItem {
@@ -163,6 +164,34 @@ export function calculateMealNutrition(
   for (const f of foods) {
     const rawName = (f.name || "").trim();
     if (!rawName) continue;
+
+    // If explicitly established as an internal constituent of another identified parent dish in the meal
+    if (
+      f.isComponentOf &&
+      foods.some((parent) => parent !== f && parent.name.toLowerCase() === f.isComponentOf?.toLowerCase())
+    ) {
+      const itemConf = typeof f.confidence === "number" ? Math.max(0, Math.min(1, f.confidence)) : 0.7;
+      const qty = typeof f.quantity === "number" && f.quantity > 0 ? f.quantity : 1;
+      const unit = f.unit || "serving";
+
+      calculatedItems.push({
+        name: rawName,
+        matchedFoodId: null,
+        matchedCanonicalName: `${rawName} (in ${f.isComponentOf})`,
+        quantity: qty,
+        unit,
+        grams: 0,
+        calories: 0,
+        proteinG: 0,
+        carbsG: 0,
+        fatG: 0,
+        fiberG: 0,
+        confidence: itemConf,
+        verified: true,
+      });
+      totalConfidenceSum += itemConf;
+      continue;
+    }
 
     const matched = resolveFoodItem(rawName);
     const itemConf = typeof f.confidence === "number" ? Math.max(0, Math.min(1, f.confidence)) : 0.7;
