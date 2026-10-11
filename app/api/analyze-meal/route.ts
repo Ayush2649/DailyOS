@@ -263,6 +263,11 @@ export async function POST(req: NextRequest) {
       unknownFoods: nutritionResult.unknownFoods,
       allFoodsVerified: nutritionResult.allFoodsVerified,
       requiresManualReview: nutritionResult.requiresManualReview,
+      hasUnresolvedItems: nutritionResult.hasUnresolvedItems,
+      unresolvedCount: nutritionResult.unresolvedCount,
+      estimatedCount: nutritionResult.estimatedCount,
+      verifiedCount: nutritionResult.verifiedCount,
+      hasIncompleteNutrition: nutritionResult.hasIncompleteNutrition,
       ...(needsClarification ? { needsClarification } : {}),
     });
   } catch (err: any) {
