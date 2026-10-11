@@ -905,12 +905,16 @@ function AddCardioForm({ bodyWeightKg, onAdd, onCancel }: {
 
   const handleAdd = () => {
     if (!duration || durationNum <= 0) return;
-    onAdd({
+    const log: Omit<CardioLog, "id"> = {
       activity,
       durationMinutes: durationNum,
-      distanceKm: distance ? parseFloat(distance) : undefined,
       caloriesBurned: estCals,
-    });
+    };
+    const parsedDist = parseFloat(distance);
+    if (!Number.isNaN(parsedDist) && parsedDist > 0) {
+      log.distanceKm = parsedDist;
+    }
+    onAdd(log);
   };
 
   return (

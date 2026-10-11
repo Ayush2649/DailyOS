@@ -144,8 +144,71 @@ export function resolveTemporalReference(
     const { start, end } = dayRange(ymd);
     return { label: 'two days ago', start, end, timezone: tz };
   }
+  // last 7 days (rolling window)
+  if (lower === 'last 7 days' || lower === 'last seven days' || lower === 'past 7 days') {
+    const startYmd = addDays({ year, month, day }, -6); // include today + 6 previous days
+    const { start } = dayRange(startYmd);
+    const { end } = dayRange({ year, month, day }); // exclusive end (midnight of next day)
+    return { label: 'last 7 days', start, end, timezone: tz };
+  }
+
+  // two weeks ago (full day)
+  if (lower === 'two weeks ago') {
+    const ymd = addDays({ year, month, day }, -14);
+    const { start, end } = dayRange(ymd);
+    return { label: 'two weeks ago', start, end, timezone: tz };
+  }
+
+  // explicit date like "on october 4" or "october 4"
+  const explicitDateMatch = lower.match(/^on?\s*([a-z]+)\s+(\d{1,2})(?:,\s*(\d{4}))?$/i);
+  if (explicitDateMatch) {
+    const monthName = explicitDateMatch[1];
+    const dayNum = Number(explicitDateMatch[2]);
+    const yearNum = explicitDateMatch[3] ? Number(explicitDateMatch[3]) : year;
+    const monthMap: Record<string, number> = {
+      january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+      july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+    };
+    const month = monthMap[monthName.toLowerCase()];
+    if (month) {
+      const { start, end } = dayRange({ year: yearNum, month, day: dayNum });
+      return { label: `${monthName} ${dayNum}`, start, end, timezone: tz };
+    }
+  }
+
+  // arbitrary range e.g., "from march 1 to march 5"
+  const rangeMatch = lower.match(/^from\s+([a-z]+\s+\d{1,2})\s+to\s+([a-z]+\s+\d{1,2})(?:,\s*(\d{4}))?$/i);
+  if (rangeMatch) {
+    const monthMap: Record<string, number> = {
+      january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+      july: 7, august: 8, september: 9, october: 10, November: 11, december: 12,
+    };
+    const parse = (text: string, defaultYear: number) => {
+      const parts = text.trim().split(/\s+/);
+      const month = monthMap[parts[0].toLowerCase()];
+      const day = Number(parts[1]);
+      const yr = rangeMatch[3] ? Number(rangeMatch[3]) : defaultYear;
+      return { year: yr, month: month!, day };
+    };
+    const startYmd = parse(rangeMatch[1], year);
+    const endYmd = parse(rangeMatch[2], year);
+    const { start } = dayRange(startYmd);
+    const { end } = dayRange(addDays(endYmd, 1)); // exclusive end
+    return { label: `from ${rangeMatch[1]} to ${rangeMatch[2]}`, start, end, timezone: tz };
+  }
+
+  // compare two periods, e.g., "compare this week with last week"
+  if (lower.startsWith('compare ')) {
+    const compareMatch = lower.match(/^compare\s+(.+?)\s+with\s+(.+)$/);
+    if (compareMatch) {
+      const first = resolveTemporalReference(compareMatch[1].trim(), tz, now);
+      const second = resolveTemporalReference(compareMatch[2].trim(), tz, now);
+      const start = first.start < second.start ? first.start : second.start;
+      const end = first.end > second.end ? first.end : second.end;
+      return { label: `compare ${compareMatch[1]} with ${compareMatch[2]}`, start, end, timezone: tz };
+    }
+  }
 
   // fallback – today range
   const { start, end } = dayRange({ year, month, day });
-  return { label: lower || 'today', start, end, timezone: tz };
-}
+  return { label: lower || 'today', start, end, timezone: tz };}

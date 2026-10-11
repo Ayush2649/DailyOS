@@ -245,12 +245,13 @@ export interface UserProfileDocument {
  * It combines user profile, nutrition goals, preferences, tasks, meals,
  * workouts, and body‑weight entries.
  */
+
 export interface OrbitContext {
   profile?: UserProfileDocument;
   macroGoals?: MacroGoals;
   preferences?: NotificationPrefs;
   tasks: {
-    all: any[]; // could be typed more specifically if needed
+    all: any[];
     today: any[];
   };
   meals: {
@@ -263,4 +264,9 @@ export interface OrbitContext {
     today: WorkoutSession[];
   };
   bodyWeightEntries: BodyWeightEntry[];
+  habits: {
+    all: any[];
+    today: any[];
+  };
 }
+

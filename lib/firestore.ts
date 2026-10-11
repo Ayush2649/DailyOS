@@ -118,6 +118,13 @@ export async function getAllMeals(userId: string): Promise<MealEntry[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as MealEntry));
 }
 
+// ── Habits ─────────────────────────────────────────────────────────────────────
+export async function getAllHabits(userId: string): Promise<any[]> {
+  const q = query(collection(db, "habits"), where("userId", "==", userId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
 export async function getMeals(userId: string, date: string): Promise<MealEntry[]> {
   const q = query(
     collection(db, "meals"),
