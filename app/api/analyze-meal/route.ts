@@ -6,6 +6,8 @@ import { callJsonStrict } from "@/lib/ai/groq";
 import { MODELS, MAX_TOKENS, GROQ_VISION_ENABLED } from "@/lib/ai/models";
 import { preprocessMealImage } from "@/lib/ai/image-preprocessing";
 import { calculateMealNutrition, InputFoodItem } from "@/lib/ai/nutrition/calculator";
+import { routeFoodItems } from "@/lib/ai/nutrition/router";
+import { estimateNutritionBatch, mergeRoutedNutrition } from "@/lib/ai/nutrition/aiEstimator";
 import {
   getMealVisionProvider,
   PhotoUnavailableError,
@@ -237,13 +239,19 @@ export async function POST(req: NextRequest) {
     const primaryCandidate =
       distinctCandidates[0] || { name: "Indian Meal", confidence: "medium" as const };
 
-    // Stage 2: Deterministic Nutrition Calculation (standard Indian food composition references, zero LLM calls)
+    // Stage 2: Nutrition Routing & AI Estimation Fallback
     const nutritionFoods: InputFoodItem[] =
       visionData.foods && visionData.foods.length > 0
         ? visionData.foods
         : visionData.visibleItems.map((item) => ({ name: item, quantity: 1, unit: "serving" }));
 
-    const nutritionResult = calculateMealNutrition(nutritionFoods, primaryCandidate.name);
+    const routed = routeFoodItems(nutritionFoods);
+    const estimatedMap = routed.aiEligible.length > 0
+      ? await estimateNutritionBatch(routed.aiEligible, { userKey: userId })
+      : new Map();
+    const finalFoods = mergeRoutedNutrition(routed, estimatedMap);
+
+    const nutritionResult = calculateMealNutrition(finalFoods, primaryCandidate.name);
 
     // Response preserves all fields required by DietPage.tsx frontend, enriched with candidate & range details
     return NextResponse.json({

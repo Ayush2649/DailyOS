@@ -270,6 +270,150 @@ export async function analyzeMealWithDeepSeek(
   throw new PhotoUnavailableError("Photo scan is busy. Type or speak your meal instead.");
 }
 
+// ── Text / Batch Nutrition Estimation ─────────────────────────────────────────
+
+export interface DeepSeekEstimateNutritionInput {
+  systemPrompt: string;
+  userPrompt: string;
+  userKey?: string;
+  timeoutMs?: number;
+}
+
+export interface DeepSeekEstimateNutritionOutput {
+  rawContent: string;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    latencyMs: number;
+    estimatedCostUsd: number;
+  };
+}
+
+export async function estimateNutritionWithDeepSeek(
+  opts: DeepSeekEstimateNutritionInput
+): Promise<DeepSeekEstimateNutritionOutput> {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) {
+    throw new Error("DEEPSEEK_API_KEY is not configured on the server.");
+  }
+
+  const userKey = opts.userKey || "global";
+
+  if (circuitBreaker.isCircuitOpen(userKey)) {
+    const cbState = circuitBreaker.getCircuitBreakerState(userKey);
+    throw new Error(
+      `DeepSeek circuit breaker is OPEN for user '${userKey}' until ${new Date(
+        cbState.circuitOpenUntil
+      ).toISOString()}`
+    );
+  }
+
+  const baseURL = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
+  const modelName = process.env.DEEPSEEK_NUTRITION_MODEL || process.env.DEEPSEEK_VISION_MODEL || "deepseek-flash";
+  const client = new OpenAI({
+    apiKey: key,
+    baseURL,
+    timeout: 10_000,
+  });
+
+  const t0 = Date.now();
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "system", content: opts.systemPrompt },
+    { role: "user", content: opts.userPrompt },
+  ];
+
+  let rawSuccess: any = null;
+  let retryCount = 0;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const elapsed = Date.now() - t0;
+    const remainingBudget = BUDGET_MS - elapsed;
+    if (remainingBudget < 2000) break;
+
+    const attemptTimeout = Math.min(opts.timeoutMs || 10_000, remainingBudget);
+
+    try {
+      const completion = await client.chat.completions.create(
+        {
+          model: modelName,
+          messages,
+          response_format: { type: "json_object" },
+          temperature: 0,
+        },
+        { timeout: attemptTimeout }
+      );
+
+      const choice = completion.choices?.[0];
+      const rawContent = choice?.message?.content || "";
+      const cleaned = rawContent.replace(/```(?:json)?\n?/g, "").replace(/\n?```/g, "").trim();
+
+      const promptTokens = completion.usage?.prompt_tokens ?? 0;
+      const completionTokens = completion.usage?.completion_tokens ?? 0;
+      const totalTokens = completion.usage?.total_tokens ?? (promptTokens + completionTokens);
+
+      rawSuccess = {
+        rawContent: cleaned,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+      };
+      break;
+    } catch (err: any) {
+      console.warn(`[ai/deepseek] Nutrition estimation attempt ${attempt + 1} failed:`, err?.message || err);
+
+      if (isRetryableServerError(err) && attempt === 0) {
+        retryCount++;
+        const waitMs = 1000 + Math.floor(Math.random() * 300);
+        if (Date.now() - t0 + waitMs < BUDGET_MS - 2000) {
+          console.warn(`[ai/deepseek] Retryable server error. Retrying in ${waitMs}ms...`);
+          await new Promise((r) => setTimeout(r, waitMs));
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  if (rawSuccess) {
+    circuitBreaker.recordSuccess(userKey);
+    const latencyMs = Date.now() - t0;
+    const estimatedCostUsd = calculateEstimatedCost(
+      rawSuccess.promptTokens,
+      rawSuccess.completionTokens
+    );
+
+    console.info(
+      JSON.stringify({
+        type: "ai_usage",
+        feature: "estimateNutrition",
+        provider: "deepseek",
+        model: modelName,
+        promptTokens: rawSuccess.promptTokens,
+        completionTokens: rawSuccess.completionTokens,
+        totalTokens: rawSuccess.totalTokens,
+        latencyMs,
+        estimatedCostUsd,
+        retries: retryCount,
+      })
+    );
+
+    return {
+      rawContent: rawSuccess.rawContent,
+      usage: {
+        promptTokens: rawSuccess.promptTokens,
+        completionTokens: rawSuccess.completionTokens,
+        totalTokens: rawSuccess.totalTokens,
+        latencyMs,
+        estimatedCostUsd,
+      },
+    };
+  }
+
+  circuitBreaker.recordFailure(userKey);
+  throw new Error("DeepSeek nutrition estimation failed after retries.");
+}
+
 export const deepseekVisionProvider: MealVisionProvider = {
   id: "deepseek",
   analyzeMeal: analyzeMealWithDeepSeek,
@@ -279,4 +423,5 @@ export const deepseekVisionProvider: MealVisionProvider = {
   resetCircuitBreaker: circuitBreaker.resetCircuitBreaker,
   getCircuitBreakerState: circuitBreaker.getCircuitBreakerState,
 };
+
 

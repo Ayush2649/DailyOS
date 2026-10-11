@@ -15,7 +15,7 @@ import { nemotronVisionProvider, analyzeMealWithNemotron } from "./nemotron";
 
 export * from "./types";
 export { geminiVisionProvider, analyzeMealWithGemini } from "./gemini";
-export { deepseekVisionProvider, analyzeMealWithDeepSeek } from "./deepseek";
+export { deepseekVisionProvider, analyzeMealWithDeepSeek, estimateNutritionWithDeepSeek } from "./deepseek";
 export { nemotronVisionProvider, analyzeMealWithNemotron } from "./nemotron";
 
 /**
