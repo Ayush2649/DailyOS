@@ -436,3 +436,116 @@ describe("Deterministic Nutrition Engine (Zero LLM Dependency)", () => {
 });
 
 
+
+// ── Manual Review Edge‑Case Tests ────────────────────────────────────────
+
+describe("Manual Review Edge Cases for Estimated Foods", () => {
+  // Helper to generate a non‑canonical food name that has estimated nutrition
+  const unknownFood = "Mystery Food Item";
+
+  it("LOW‑CONFIDENCE ESTIMATED FOOD triggers manual review", () => {
+    const result = calculateMealNutrition([
+      {
+        name: unknownFood,
+        quantity: 1,
+        unit: "serving",
+        confidence: 0.65, // >= 0.60 to allow estimator, < 0.70 triggers manual review
+        estimatedNutrition: {
+          calories: 200,
+          proteinG: 5,
+          carbsG: 25,
+          fatG: 9,
+          fiberG: 2,
+          source: "ai_estimate",
+        },
+      },
+    ]);
+
+    // Single estimated item with avgConfidence < 0.70
+    const item = result.items[0];
+    expect(item.nutritionStatus).toBe("estimated");
+    expect(item.verified).toBe(false);
+    expect(result.estimatedCount).toBe(1);
+    expect(result.unresolvedCount).toBe(0);
+    expect(result.requiresManualReview).toBe(true);
+  });
+
+  it("HIGH‑CONFIDENCE ESTIMATED FOOD does NOT trigger manual review", () => {
+    const result = calculateMealNutrition([
+      {
+        name: unknownFood,
+        quantity: 1,
+        unit: "serving",
+        confidence: 0.8, // >= 0.70 => avg confidence high, no manual review
+        estimatedNutrition: {
+          calories: 200,
+          proteinG: 5,
+          carbsG: 25,
+          fatG: 9,
+          fiberG: 2,
+          source: "ai_estimate",
+        },
+      },
+    ]);
+
+    const item = result.items[0];
+    expect(item.nutritionStatus).toBe("estimated");
+    expect(item.verified).toBe(false);
+    expect(result.estimatedCount).toBe(1);
+    expect(result.unresolvedCount).toBe(0);
+    expect(result.requiresManualReview).toBe(false);
+  });
+
+  it("FOOD WITH CONFIDENCE 0.50 is unresolved and triggers manual review", () => {
+    const result = calculateMealNutrition([
+      {
+        name: "Unrecognizable Item",
+        quantity: 1,
+        unit: "serving",
+        confidence: 0.5, // < 0.60 => unresolved
+      },
+    ]);
+
+    expect(result.estimatedCount).toBe(0);
+    expect(result.unresolvedCount).toBe(1);
+    const item = result.items[0];
+    expect(item.nutritionStatus).toBe("unresolved");
+    expect(item.verified).toBe(false);
+    expect(item.calories).toBeNull();
+    expect(result.requiresManualReview).toBe(true);
+  });
+
+  it("MIXED ESTIMATED + UNRESOLVED retains manual review", () => {
+    const result = calculateMealNutrition([
+      {
+        name: unknownFood,
+        quantity: 1,
+        unit: "serving",
+        confidence: 0.65, // estimated
+        estimatedNutrition: {
+          calories: 200,
+          proteinG: 5,
+          carbsG: 25,
+          fatG: 9,
+          fiberG: 2,
+          source: "ai_estimate",
+        },
+      },
+      {
+        name: "Unrecognizable Item",
+        quantity: 1,
+        unit: "serving",
+        confidence: 0.5, // below 0.60 threshold => unresolved
+      },
+    ]);
+
+    // Verify counts and flags
+    expect(result.estimatedCount).toBe(1);
+    expect(result.unresolvedCount).toBe(1);
+    expect(result.requiresManualReview).toBe(true);
+    const est = result.items.find((i) => i.name === unknownFood);
+    const unresolved = result.items.find((i) => i.name === "Unrecognizable Item");
+    expect(est?.nutritionStatus).toBe("estimated");
+    expect(unresolved?.nutritionStatus).toBe("unresolved");
+  });
+});
