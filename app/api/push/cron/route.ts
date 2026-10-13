@@ -12,7 +12,7 @@ function initVapid() {
   if (!pubKey || !privKey || pubKey.includes("your_vapid")) return false;
   try {
     webpush.setVapidDetails(
-      "mailto:" + (process.env.VAPID_EMAIL ?? "admin@dailyos.app"),
+      "mailto:" + (process.env.VAPID_EMAIL ?? "admin@satat.app"),
       pubKey,
       privKey
     );

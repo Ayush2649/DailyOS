@@ -1,4 +1,4 @@
-# DailyOS — Implementation Phases
+# SATAT — Implementation Phases
 
 **Status:** Canonical execution roadmap
 **Version:** 4.0 · **Last updated:** 2026-10-03

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signIn } from "next-auth/react";
 import { OrbitMark } from "@/components/orbit/OrbitMark";
+import Logo from "@/components/Logo";
 
 export default function LandingNav() {
   const { data: session } = useSession();
@@ -28,9 +29,7 @@ export default function LandingNav() {
       <div className="max-w-6xl mx-auto px-5 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
         {/* Brand identity */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-full bg-[var(--brand-subtle)] border border-[var(--border)] flex items-center justify-center text-[var(--brand)] transition-transform duration-200 group-hover:scale-105">
-            <OrbitMark size={18} />
-          </div>
+          <Logo size={28} className="rounded-lg transition-transform duration-200 group-hover:scale-105" priority />
           <span className="font-display font-extrabold text-xl sm:text-2xl tracking-tight text-[var(--text-primary)]">
             SATAT
           </span>

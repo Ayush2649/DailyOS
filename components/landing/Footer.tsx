@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { OrbitMark } from "@/components/orbit/OrbitMark";
+import Logo from "@/components/Logo";
 
 export default function Footer() {
   return (
@@ -10,9 +11,7 @@ export default function Footer() {
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
         {/* Brand & Core Positioning */}
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-[var(--brand-subtle)] flex items-center justify-center text-[var(--brand)]">
-            <OrbitMark size={14} />
-          </div>
+          <Logo size={22} className="rounded-md" />
           <span className="font-display font-bold text-sm tracking-tight text-[var(--text-primary)]">
             SATAT
           </span>

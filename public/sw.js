@@ -1,5 +1,5 @@
-// DailyOS Service Worker — handles Web Push notifications
-const CACHE_NAME = "dailyos-v2";
+// SATAT Service Worker — handles Web Push notifications
+const CACHE_NAME = "satat-v2";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -23,15 +23,15 @@ self.addEventListener("push", (event) => {
   const title = data.title || "SATAT Reminder";
   const options = {
     body: data.body || "Time to check your daily goals!",
-    icon: "/BrandLogo_Header.png",
-    badge: "/BrandLogo_Header.png",
+    icon: "/satat-icon-192.png",
+    badge: "/satat-icon-192.png",
     data: { url: data.url || "/dashboard" },
     vibrate: [100, 50, 100],
     actions: data.actions || [
       { action: "open", title: "Open" },
       { action: "dismiss", title: "Dismiss" },
     ],
-    tag: data.tag || "dailyos-reminder",
+    tag: data.tag || "satat-reminder",
     renotify: true,
   };
 

@@ -719,7 +719,7 @@ export function ThemeShowcase({ themeName, themeClass, mode }: ThemeShowcaseProp
               <input
                 type="text"
                 disabled
-                defaultValue="ayush@dailyos.internal"
+                defaultValue="ayush@satat.internal"
                 className="w-full px-3 py-2 text-sm rounded-[10px] border opacity-50 cursor-not-allowed"
                 style={{
                   backgroundColor: "var(--surface-subtle)",

@@ -47,6 +47,7 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://satat.app"),
   title: "SATAT – Continuous, Sustainable Wellness",
   description: "Personal wellness, nutrition, and training system.",
   manifest: "/manifest.json",
@@ -58,19 +59,45 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/BrandLogo_Header.png",
+        url: "/satat-icon-512.png",
         sizes: "512x512",
+        type: "image/png",
+      },
+      {
+        url: "/satat-icon-192.png",
+        sizes: "192x192",
         type: "image/png",
       },
     ],
     apple: [
       {
-        url: "/BrandLogo_Header.png",
-        sizes: "512x512",
+        url: "/apple-touch-icon.png",
+        sizes: "180x180",
         type: "image/png",
       },
     ],
-    shortcut: "/BrandLogo_Header.png",
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    title: "SATAT – Continuous, Sustainable Wellness",
+    description: "Personal wellness, nutrition, and training system.",
+    siteName: "SATAT",
+    images: [
+      {
+        url: "/satat-icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "SATAT",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "SATAT – Continuous, Sustainable Wellness",
+    description: "Personal wellness, nutrition, and training system.",
+    images: ["/satat-icon-512.png"],
   },
 };
 

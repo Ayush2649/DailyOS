@@ -2,7 +2,7 @@
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Sparkles } from "lucide-react";
+import Logo from "@/components/Logo";
 
 export default function SignInPage() {
   const { data: session } = useSession();
@@ -16,8 +16,8 @@ export default function SignInPage() {
     <div className="min-h-screen bg-surface-secondary flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Sparkles className="w-7 h-7 text-white" />
+          <div className="flex items-center justify-center mx-auto mb-4">
+            <Logo size={64} className="rounded-2xl shadow-lg" priority />
           </div>
           <h1 className="text-2xl font-extrabold" style={{ color: "var(--text-1)" }}>Welcome to SATAT</h1>
           <p className="mt-2 text-sm" style={{ color: "var(--text-2)" }}>Sign in to continue your journey of continuous, sustainable wellness.</p>

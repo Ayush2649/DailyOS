@@ -281,7 +281,7 @@ Provide a structured summary under 280 words (Overall Performance, What You Did 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log(`${BOLD}DailyOS AI Smoke Test${RESET}`);
+  console.log(`${BOLD}SATAT AI Smoke Test${RESET}`);
   console.log(`Groq key: ${process.env.GROQ_API_KEY ? "✅ present" : "❌ missing"}`);
   console.log(`Text model: ${MODELS.estimateMeal}`);
   console.log(`Vision model: ${MODELS.analyzeMeal}`);

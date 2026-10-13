@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import NotificationBell from "@/components/ui/NotificationBell";
 import TrackSheet from "@/components/navigation/TrackSheet";
 import { OrbitMark } from "@/components/orbit/OrbitMark";
+import Logo from "@/components/Logo";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -21,8 +22,6 @@ export default function Navigation() {
   const [showTrackSheet, setShowTrackSheet] = useState(false);
   const [dpError, setDpError] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-
-  const logoSrc = "/BrandLogo_Header.png";
 
   // Handle global satat:open-orbit event by navigating to /dashboard/orbit
   useEffect(() => {
@@ -64,7 +63,7 @@ export default function Navigation() {
       <aside className="app-shell-sidebar hidden lg:flex">
         {/* Logo */}
         <div className="app-shell-brand">
-          <Image src={logoSrc} alt="SATAT" width={28} height={28} className="rounded-lg" />
+          <Logo size={28} className="rounded-lg" priority />
           <span className="app-shell-brand-name font-bold tracking-tight">satat</span>
         </div>
 
@@ -179,7 +178,7 @@ export default function Navigation() {
       {!pathname?.startsWith("/dashboard/orbit") && (
         <header className="app-mobile-header lg:hidden">
           <div className="app-mobile-context flex items-center gap-2">
-            <Image src={logoSrc} alt="SATAT" width={24} height={24} className="rounded-md" />
+            <Logo size={24} className="rounded-md" priority />
             <span className="app-mobile-page-title text-sm font-semibold tracking-tight">
               {getMobileTitle()}
             </span>
