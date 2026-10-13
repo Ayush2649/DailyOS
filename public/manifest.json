@@ -8,7 +8,7 @@
   "theme_color": "#08090A",
   "orientation": "portrait",
   "icons": [
-    { "src": "/BrandLogo_Header.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/BrandLogo_Header.png", "sizes": "28x28", "type": "image/png" }
+    { "src": "/satat-icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/satat-icon-192.png", "sizes": "192x192", "type": "image/png" }
   ]
 }

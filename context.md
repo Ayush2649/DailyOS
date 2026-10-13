@@ -1,4 +1,4 @@
-# DailyOS — Project Context & Change Log
+# SATAT — Project Context & Change Log
 
 > This file is a reference for any AI model or developer working on this project.
 > It documents the architecture, decisions, and all changes made with dates.
@@ -7,7 +7,7 @@
 
 ## 📁 Project Overview
 
-**DailyOS** is a Next.js 14 PWA (Progressive Web App) — a personal productivity + fitness + nutrition tracker with AI coaching.
+**SATAT** (formerly DailyOS) is a Next.js 14 PWA (Progressive Web App) — a continuous, sustainable personal wellness system (tasks, workouts, nutrition, and Orbit AI coaching).
 
 - **Framework:** Next.js 14.2.5 (App Router)
 - **Database:** Firebase Firestore (Client SDK for reads/writes from browser, Admin SDK for server-side operations)
@@ -191,5 +191,5 @@ Set this same value in both your `.env` and Vercel Environment Variables dashboa
 
 3. **Vercel Cron**: The `* * * * *` schedule (every minute) is available on Vercel Pro plans. Hobby plans support `0 * * * *` (hourly) minimum. Adjust if needed.
 
-4. **NEXTAUTH_URL**: Must be set to your production URL on Vercel (e.g., `https://dailyos.app`). For local dev, use `http://localhost:3000`.
+4. **NEXTAUTH_URL**: Must be set to your production URL on Vercel (e.g., `https://satat.app`). For local dev, use `http://localhost:3000`.
 

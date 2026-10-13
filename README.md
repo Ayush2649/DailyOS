@@ -1,6 +1,6 @@
-# DailyOS
+# SATAT
 
-Your personal operating system — tasks, gym tracking, and nutrition in one clean app.
+Continuous, sustainable personal wellness system — tasks, gym tracking, and nutrition in one clean app.
 
 ## Tech Stack
 - **Next.js 14** (App Router) + TypeScript
@@ -81,7 +81,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ## Adding to iPhone (PWA)
 1. Open the app in Safari on your iPhone
 2. Tap the Share button → "Add to Home Screen"
-3. DailyOS will behave like a native app with full-screen mode
+3. SATAT will behave like a native app with full-screen mode
 
 ---
 
@@ -119,7 +119,7 @@ Because Vercel's Hobby plan limits Vercel Cron jobs to at most **once per day**,
 ### Setup with cron-job.org (Free):
 1. Sign up for a free account at [cron-job.org](https://cron-job.org).
 2. Create a new Cronjob:
-   - **Title:** `DailyOS Push Reminders`
+   - **Title:** `SATAT Push Reminders`
    - **URL:** `https://<your-vercel-domain>/api/push/cron`
    - **Execution Schedule:** Every minute (`* * * * *`)
    - **Request Method:** `GET`

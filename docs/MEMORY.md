@@ -1,4 +1,4 @@
-# DailyOS — Project Memory
+# SATAT — Project Memory
 
 **Status:** Living project-state document
 **Version:** 3.0 · **Last verified:** 2026-10-03
@@ -25,7 +25,7 @@ Source hierarchy: repository (reality) → MEMORY (state) → PRD (what) → ARC
 
 ## 2. Project
 
-- DailyOS: tasks, workout, diet, Orbit AI coach, push reminders, health sync link, PWA. Team of 3. Monetized product.
+- SATAT (rebranded from DailyOS): tasks, workout, diet, Orbit AI coach, push reminders, health sync link, PWA. Team of 3. Monetized product.
 - Stack: Next.js 14, NextAuth (JWT, Google), Firestore, Groq, Gemini, Vercel Hobby, Web Push. `[repo]`
 - Documentation set: PRD, ARCHITECTURE, AI_RULES, PHASES, MEMORY, DECISIONS (v3.0).
 

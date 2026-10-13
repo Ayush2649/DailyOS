@@ -28,7 +28,7 @@ process.env.MEAL_VISION_PROVIDER = "deepseek";
 // Mock ONLY next-auth to provide an authenticated session (DeepSeek and pipeline remain 100% real)
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn().mockResolvedValue({
-    user: { id: "benchmark-user", email: "benchmark@dailyos.internal" },
+    user: { id: "benchmark-user", email: "benchmark@satat.internal" },
   }),
 }));
 

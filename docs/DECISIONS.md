@@ -1,4 +1,4 @@
-# DailyOS — Decision Record
+# SATAT — Decision Record
 
 **Version:** 1.0 · **Started:** 2026-10-03
 

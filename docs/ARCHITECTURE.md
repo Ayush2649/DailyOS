@@ -1,4 +1,4 @@
-# DailyOS — Architecture
+# SATAT — Architecture
 
 **Status:** Canonical architecture direction
 **Version:** 3.0 · **Last updated:** 2026-10-03

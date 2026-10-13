@@ -1,4 +1,4 @@
-# DailyOS — AI Engineering Rules
+# SATAT — AI Engineering Rules
 
 **Status:** Mandatory contract for AI agents and humans
 **Version:** 3.0 · **Last updated:** 2026-10-03

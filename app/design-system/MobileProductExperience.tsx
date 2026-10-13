@@ -904,7 +904,7 @@ export function MobileProductExperience({
                   Ayush Sharma
                 </h1>
                 <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  ayush@dailyos.internal
+                  ayush@satat.internal
                 </p>
               </div>
             </div>

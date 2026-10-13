@@ -1,17 +1,17 @@
-# DailyOS — Product Requirements Document
+# SATAT — Product Requirements Document
 
 **Status:** Canonical product requirements
 **Version:** 3.0 · **Last updated:** 2026-10-03
 **Launch scope:** NOT YET FROZEN — proposal in §3, needs owner approval
 **Product model:** Monetized product for real users. Security, reliability and controlled scope are launch requirements.
 
-This PRD defines **what** DailyOS does. How it is built is in `ARCHITECTURE.md`; order of work is in `PHASES.md`.
+This PRD defines **what** SATAT does. How it is built is in `ARCHITECTURE.md`; order of work is in `PHASES.md`.
 
 ---
 
 ## 1. Purpose and principles
 
-DailyOS helps people run daily life around personal goals: tasks, workouts, diet and an AI coach (Orbit), with reminders and progress tracking.
+SATAT helps people run daily life around personal goals: tasks, workouts, diet and an AI coach (Orbit), with reminders and progress tracking.
 
 Principles:
 

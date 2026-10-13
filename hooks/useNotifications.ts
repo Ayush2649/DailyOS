@@ -21,9 +21,9 @@ function showNotification(title: string, body: string, url = "/dashboard", tag?:
   if (typeof window === "undefined" || typeof Notification === "undefined" || Notification.permission !== "granted") return;
   const n = new Notification(title, {
     body,
-    icon: "/BrandLogo_Header.png",
-    badge: "/BrandLogo_Header.png",
-    tag: tag || `dailyos-${Date.now()}`,
+    icon: "/satat-icon-192.png",
+    badge: "/satat-icon-192.png",
+    tag: tag || `satat-${Date.now()}`,
     requireInteraction: false,
     vibrate: [100, 50, 100],
   } as NotificationOptions);
