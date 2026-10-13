@@ -102,6 +102,8 @@ export interface MealEntry {
   macros: MealMacros;
   imageUrl?: string;
   createdAt: number;
+  nutritionStatus?: "verified" | "estimated" | "unresolved" | "mixed";
+  hasIncompleteNutrition?: boolean;
 }
 
 export interface DietDay {

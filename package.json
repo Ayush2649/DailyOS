@@ -9,6 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "benchmark:phase-2b": "vitest run --config vitest.benchmark.config.ts",
     "check:models": "ts-node scripts/check-groq-models.ts",
     "smoke:ai": "ts-node scripts/ai-smoke-test.ts",
     "eval:photos": "ts-node scripts/photo-eval.ts"

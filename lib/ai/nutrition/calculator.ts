@@ -15,27 +15,55 @@
 
 import { INDIAN_FOOD_DATABASE, FoodCompositionItem } from "./database";
 
+export type NutritionStatus = "verified" | "estimated" | "unresolved";
+
+export type NutritionSource = "canonical" | "ai_estimate" | "unresolved" | "user_manual";
+
 export interface InputFoodItem {
   name: string;
   quantity?: number;
   unit?: string;
   confidence?: number;
+  isComponentOf?: string;
+  nutritionStatus?: NutritionStatus;
+  estimatedNutrition?: {
+    calories: number;
+    proteinG?: number;
+    carbsG?: number;
+    fatG?: number;
+    fiberG?: number;
+    source?: NutritionSource;
+    calorieRange?: { low: number; high: number };
+    grams?: number | null;
+    basis?: "per_100g" | "per_100ml" | "per_unit" | "per_serving";
+    nutritionPer100g?: {
+      calories: number;
+      proteinG: number;
+      carbsG: number;
+      fatG: number;
+      fiberG?: number;
+    };
+  };
 }
 
 export interface CalculatedFoodItem {
   name: string;
   matchedFoodId: string | null;
   matchedCanonicalName: string | null;
+  nutritionStatus: NutritionStatus;
+  source: NutritionSource;
   quantity: number;
   unit: string;
-  grams: number;
-  calories: number;
-  proteinG: number;
-  carbsG: number;
-  fatG: number;
-  fiberG: number;
+  grams: number | null;
+  calories: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  fiberG: number | null;
   confidence: number;
   verified: boolean;
+  calorieRange?: { low: number; high: number };
+  clarificationPrompt?: string;
 }
 
 export interface MealNutritionResult {
@@ -52,6 +80,11 @@ export interface MealNutritionResult {
   unknownFoods: string[];
   allFoodsVerified: boolean;
   requiresManualReview: boolean;
+  hasUnresolvedItems: boolean;
+  unresolvedCount: number;
+  estimatedCount: number;
+  verifiedCount: number;
+  hasIncompleteNutrition: boolean;
 }
 
 // ── Alias and Food Matching ───────────────────────────────────────────────────
@@ -100,7 +133,7 @@ export function normalizeQuantityToGrams(
   item: FoodCompositionItem | null,
   quantity = 1,
   unit = "serving"
-): number {
+): number | null {
   const q = Math.max(0.1, quantity);
   const u = (unit || "").toLowerCase().trim();
 
@@ -140,8 +173,8 @@ export function normalizeQuantityToGrams(
     return Math.round(q * item.gramsPerDefaultUnit);
   }
 
-  // Fallback for unknown items: assume ~100g per unit
-  return Math.round(q * 100);
+  // For non-canonical / unknown items: NEVER invent 100g for unknown servings/units!
+  return null;
 }
 
 // ── Deterministic Meal Nutrition Calculation ──────────────────────────────────
@@ -164,13 +197,43 @@ export function calculateMealNutrition(
     const rawName = (f.name || "").trim();
     if (!rawName) continue;
 
+    // If explicitly established as an internal constituent of another identified parent dish in the meal
+    if (
+      f.isComponentOf &&
+      foods.some((parent) => parent !== f && parent.name.toLowerCase() === f.isComponentOf?.toLowerCase())
+    ) {
+      const itemConf = typeof f.confidence === "number" ? Math.max(0, Math.min(1, f.confidence)) : 0.7;
+      const qty = typeof f.quantity === "number" && f.quantity > 0 ? f.quantity : 1;
+      const unit = f.unit || "serving";
+
+      calculatedItems.push({
+        name: rawName,
+        matchedFoodId: null,
+        matchedCanonicalName: `${rawName} (in ${f.isComponentOf})`,
+        nutritionStatus: "verified",
+        source: "canonical",
+        quantity: qty,
+        unit,
+        grams: 0,
+        calories: 0,
+        proteinG: 0,
+        carbsG: 0,
+        fatG: 0,
+        fiberG: 0,
+        confidence: itemConf,
+        verified: true,
+      });
+      totalConfidenceSum += itemConf;
+      continue;
+    }
+
     const matched = resolveFoodItem(rawName);
     const itemConf = typeof f.confidence === "number" ? Math.max(0, Math.min(1, f.confidence)) : 0.7;
     const qty = typeof f.quantity === "number" && f.quantity > 0 ? f.quantity : 1;
     const unit = f.unit || (matched ? matched.defaultUnit : "serving");
 
     if (matched) {
-      const grams = normalizeQuantityToGrams(matched, qty, unit);
+      const grams = normalizeQuantityToGrams(matched, qty, unit) ?? Math.round(qty * matched.gramsPerDefaultUnit);
       const cals = Math.round((matched.per100g.calories * grams) / 100);
       const prot = Math.round((matched.per100g.proteinG * grams) / 100);
       const carb = Math.round((matched.per100g.carbsG * grams) / 100);
@@ -181,6 +244,8 @@ export function calculateMealNutrition(
         name: rawName,
         matchedFoodId: matched.id,
         matchedCanonicalName: matched.name,
+        nutritionStatus: "verified",
+        source: "canonical",
         quantity: qty,
         unit,
         grams,
@@ -199,21 +264,84 @@ export function calculateMealNutrition(
       totalFatG += fat;
       totalFiberG += fib;
       totalConfidenceSum += itemConf;
+    } else if (f.estimatedNutrition) {
+      // Estimated nutrition provided: clearly labeled as "estimated" (never verified!)
+      const est = f.estimatedNutrition;
+      const detectedGrams = normalizeQuantityToGrams(null, qty, unit);
+      const grams = detectedGrams ?? (typeof est.grams === "number" ? est.grams : null);
+      const u = (unit || "").toLowerCase().trim();
+
+      let cals: number;
+      let prot: number;
+      let carb: number;
+      let fat: number;
+      let fib: number;
+      let calRange = est.calorieRange;
+
+      if (est.nutritionPer100g && detectedGrams !== null && (u === "g" || u === "gram" || u === "grams")) {
+        const factor = detectedGrams / 100;
+        const p100 = est.nutritionPer100g;
+        cals = Math.round(p100.calories * factor);
+        prot = Math.round(p100.proteinG * factor);
+        carb = Math.round(p100.carbsG * factor);
+        fat = Math.round(p100.fatG * factor);
+        fib = p100.fiberG !== undefined ? Math.round(p100.fiberG * factor) : Math.round(est.fiberG ?? 0);
+        if (calRange) {
+          calRange = {
+            low: Math.round(calRange.low * factor),
+            high: Math.round(calRange.high * factor),
+          };
+        }
+      } else {
+        cals = Math.round(est.calories);
+        prot = Math.round(est.proteinG ?? 0);
+        carb = Math.round(est.carbsG ?? 0);
+        fat = Math.round(est.fatG ?? 0);
+        fib = Math.round(est.fiberG ?? 0);
+      }
+
+      calculatedItems.push({
+        name: rawName,
+        matchedFoodId: null,
+        matchedCanonicalName: rawName,
+        nutritionStatus: "estimated",
+        source: est.source || "ai_estimate",
+        quantity: qty,
+        unit,
+        grams,
+        calories: cals,
+        proteinG: prot,
+        carbsG: carb,
+        fatG: fat,
+        fiberG: fib,
+        confidence: itemConf,
+        verified: false, // Never mark estimated as verified!
+        calorieRange: calRange,
+      });
+
+      totalCalories += cals;
+      totalProteinG += prot;
+      totalCarbsG += carb;
+      totalFatG += fat;
+      totalFiberG += fib;
+      totalConfidenceSum += itemConf;
     } else {
-      // Unknown food: DO NOT invent fake numbers.
+      // Unresolved food: DO NOT invent fake numbers. Use null, never 0!
       unknownFoods.push(rawName);
       calculatedItems.push({
         name: rawName,
         matchedFoodId: null,
         matchedCanonicalName: null,
+        nutritionStatus: "unresolved",
+        source: "unresolved",
         quantity: qty,
         unit,
         grams: normalizeQuantityToGrams(null, qty, unit),
-        calories: 0,
-        proteinG: 0,
-        carbsG: 0,
-        fatG: 0,
-        fiberG: 0,
+        calories: null,
+        proteinG: null,
+        carbsG: null,
+        fatG: null,
+        fiberG: null,
         confidence: Math.min(itemConf, 0.4), // lower confidence for unrecognized food
         verified: false,
       });
@@ -240,10 +368,17 @@ export function calculateMealNutrition(
     high: totalCalories + spread,
   };
 
+  // Counts by nutrition status
+  const verifiedCount = calculatedItems.filter((i) => i.nutritionStatus === "verified").length;
+  const estimatedCount = calculatedItems.filter((i) => i.nutritionStatus === "estimated").length;
+  const unresolvedCount = calculatedItems.filter((i) => i.nutritionStatus === "unresolved").length;
+  const hasUnresolvedItems = unresolvedCount > 0;
+  const allFoodsVerified = calculatedItems.length > 0 && verifiedCount === calculatedItems.length;
+
   const avgConfidence =
     calculatedItems.length > 0 ? totalConfidenceSum / calculatedItems.length : 0.5;
   const catConfidence: "high" | "medium" | "low" =
-    avgConfidence >= 0.75 && unknownFoods.length === 0
+    avgConfidence >= 0.75 && unknownFoods.length === 0 && !hasUnresolvedItems
       ? "high"
       : avgConfidence >= 0.5
       ? "medium"
@@ -261,8 +396,22 @@ export function calculateMealNutrition(
     rawConfidence: Math.round(avgConfidence * 100) / 100,
     items: calculatedItems,
     unknownFoods,
-    allFoodsVerified: unknownFoods.length === 0,
-    requiresManualReview: unknownFoods.length > 0 || totalCalories === 0,
+    allFoodsVerified,
+    requiresManualReview:
+      hasUnresolvedItems ||
+      unknownFoods.length > 0 ||
+      totalCalories === 0 ||
+      calculatedItems.some(
+        (item) =>
+          item.nutritionStatus === "estimated" &&
+          item.confidence != null &&
+          item.confidence < 0.7
+      ),
+    hasUnresolvedItems,
+    unresolvedCount,
+    estimatedCount,
+    verifiedCount,
+    hasIncompleteNutrition: hasUnresolvedItems,
   };
 }
 

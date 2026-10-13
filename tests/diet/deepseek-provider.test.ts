@@ -309,6 +309,133 @@ describe("DeepSeek Vision Provider & Integration", () => {
 
       infoSpy.mockRestore();
     });
+
+    it("records structured per-call trace with monotonic duration and requestId", async () => {
+      createMock.mockResolvedValueOnce({
+        id: "chatcmpl-test-trace-123",
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                foods: [{ name: "Poha", quantity: 1, unit: "plate", confidence: 0.9 }],
+                candidates: [{ name: "Indori Poha", confidence: 0.9 }],
+                visibleItems: ["1 plate poha"],
+                ambiguity: "low",
+                notes: "Flat flattened rice dish",
+              }),
+            },
+          },
+        ],
+        usage: { prompt_tokens: 500, completion_tokens: 80, total_tokens: 580 },
+      });
+
+      const result = await analyzeMealWithDeepSeek({
+        base64: "dummyBase64",
+        mimeType: "image/jpeg",
+        userKey: "user-trace",
+      });
+
+      expect(result.calls).toBeDefined();
+      expect(result.calls).toHaveLength(1);
+      const call = result.calls![0];
+      expect(call.provider).toBe("deepseek");
+      expect(call.model).toBe("deepseek-flash");
+      expect(call.feature).toBe("analyzeMeal");
+      expect(call.attempt).toBe(1);
+      expect(call.outcome).toBe("success");
+      expect(call.requestId).toBe("chatcmpl-test-trace-123");
+      expect(call.durationMs).toBeGreaterThanOrEqual(0);
+      expect(call.promptTokens).toBe(500);
+      expect(call.completionTokens).toBe(80);
+      expect(call.costStatus).toBe("ESTIMATED_FROM_USAGE");
+      expect(call.costUsd).toBeGreaterThan(0);
+      expect(call.costInr).toBeGreaterThan(0);
+    });
+
+    it("tracks retry attempts, backoff duration, and UNKNOWN cost on failed attempts", async () => {
+      createMock.mockRejectedValueOnce({
+        status: 500,
+        message: "Internal Server Error",
+        request_id: "req-fail-500",
+      });
+
+      createMock.mockResolvedValueOnce({
+        id: "chatcmpl-success-retry",
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                foods: [{ name: "Upma", quantity: 1, unit: "bowl", confidence: 0.85 }],
+                candidates: [{ name: "Rava Upma", confidence: 0.85 }],
+                visibleItems: ["1 bowl upma"],
+                ambiguity: "low",
+                notes: "Semolina dish",
+              }),
+            },
+          },
+        ],
+        usage: { prompt_tokens: 600, completion_tokens: 70, total_tokens: 670 },
+      });
+
+      const result = await analyzeMealWithDeepSeek({
+        base64: "dummyBase64",
+        mimeType: "image/jpeg",
+        userKey: "user-retry-test",
+      });
+
+      expect(result.calls).toHaveLength(2);
+      // Attempt 1: Failed
+      const call1 = result.calls![0];
+      expect(call1.attempt).toBe(1);
+      expect(call1.outcome).toBe("error");
+      expect(call1.errorCategory).toBe("5xx");
+      expect(call1.costStatus).toBe("UNKNOWN");
+      expect(call1.costUsd).toBeNull();
+      expect(call1.requestId).toBe("req-fail-500");
+
+      // Attempt 2: Succeeded
+      const call2 = result.calls![1];
+      expect(call2.attempt).toBe(2);
+      expect(call2.outcome).toBe("success");
+      expect(call2.requestId).toBe("chatcmpl-success-retry");
+      expect(call2.costStatus).toBe("ESTIMATED_FROM_USAGE");
+
+      expect(result.retryBackoffMs).toBeGreaterThanOrEqual(0);
+    });
+
+    it("passes bounded max_tokens constraint to chat completions client", async () => {
+      createMock.mockResolvedValueOnce({
+        id: "chatcmpl-max-tokens-test",
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                foods: [{ name: "Khichdi", quantity: 1, unit: "bowl", confidence: 0.9 }],
+                candidates: [{ name: "Khichdi", confidence: 0.9 }],
+                visibleItems: ["1 bowl khichdi"],
+                ambiguity: "low",
+                notes: "Lentil rice porridge",
+              }),
+            },
+          },
+        ],
+        usage: { prompt_tokens: 500, completion_tokens: 60, total_tokens: 560 },
+      });
+
+      await analyzeMealWithDeepSeek({
+        base64: "dummyBase64",
+        mimeType: "image/jpeg",
+      });
+
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          max_tokens: 2000,
+        }),
+        expect.objectContaining({
+          timeout: expect.any(Number),
+        })
+      );
+    });
   });
 });
 

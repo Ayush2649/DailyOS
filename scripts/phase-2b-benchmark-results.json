@@ -1,0 +1,1049 @@
+[
+  {
+    "file": "Aloo_ka_paratha.jpg",
+    "expectedDish": "Aloo Paratha",
+    "status": 200,
+    "totalLatencyMs": 26822,
+    "primaryCandidate": "Aloo Paratha",
+    "detectedFoods": [
+      "Aloo Paratha",
+      "Plain Curd",
+      "Mango Pickle",
+      "Orange Chutney"
+    ],
+    "foods": [
+      {
+        "name": "Aloo Paratha",
+        "confidence": 0.55,
+        "nutritionStatus": "verified",
+        "calories": 400,
+        "proteinG": 10,
+        "carbsG": 56,
+        "fatG": 16,
+        "fiberG": 7,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Plain Curd",
+        "confidence": 0.8,
+        "nutritionStatus": "verified",
+        "calories": 36,
+        "proteinG": 2,
+        "carbsG": 3,
+        "fatG": 2,
+        "fiberG": 0,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Mango Pickle",
+        "confidence": 0.7,
+        "nutritionStatus": "estimated",
+        "calories": 44,
+        "proteinG": 0,
+        "carbsG": 2,
+        "fatG": 4,
+        "fiberG": 1,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      },
+      {
+        "name": "Orange Chutney",
+        "confidence": 0.4,
+        "nutritionStatus": "unresolved",
+        "calories": null,
+        "proteinG": null,
+        "carbsG": null,
+        "fatG": null,
+        "fiberG": null,
+        "source": "unresolved",
+        "verified": false,
+        "unresolved": true,
+        "sentToAi": true
+      }
+    ],
+    "totalCalories": 480,
+    "totalProteinG": 12,
+    "totalCarbsG": 61,
+    "totalFatG": 22,
+    "totalFiberG": 8,
+    "requiresManualReview": true,
+    "hasIncompleteNutrition": true,
+    "estimatedCount": 1,
+    "verifiedCount": 2,
+    "unresolvedCount": 1,
+    "providerCalls": 2,
+    "promptTokens": 2031,
+    "completionTokens": 3790,
+    "totalTokens": 5821,
+    "estimatedCostUsd": 0.001346,
+    "estimatedCostInr": 0.113,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1479,
+        "completionTokens": 2999,
+        "totalTokens": 4478,
+        "latencyMs": 21858,
+        "costUsd": 0.001047,
+        "costInr": 0.0879,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      },
+      {
+        "feature": "estimateNutrition",
+        "model": "deepseek-flash",
+        "promptTokens": 552,
+        "completionTokens": 791,
+        "totalTokens": 1343,
+        "latencyMs": 4856,
+        "costUsd": 0.000299,
+        "costInr": 0.0251,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match",
+      "C. AI-estimated successfully",
+      "F. Unresolved",
+      "G. User/manual review required"
+    ]
+  },
+  {
+    "file": "Besan Cheela.jpg",
+    "expectedDish": "Besan Cheela + Curd",
+    "status": 200,
+    "totalLatencyMs": 9001,
+    "primaryCandidate": "Besan Cheela",
+    "detectedFoods": [
+      "Besan Cheela",
+      "Plain Curd"
+    ],
+    "foods": [
+      {
+        "name": "Besan Cheela",
+        "confidence": 0.55,
+        "nutritionStatus": "verified",
+        "calories": 260,
+        "proteinG": 11,
+        "carbsG": 33,
+        "fatG": 9,
+        "fiberG": 6,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Plain Curd",
+        "confidence": 0.45,
+        "nutritionStatus": "verified",
+        "calories": 48,
+        "proteinG": 2,
+        "carbsG": 4,
+        "fatG": 2,
+        "fiberG": 0,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      }
+    ],
+    "totalCalories": 308,
+    "totalProteinG": 13,
+    "totalCarbsG": 37,
+    "totalFatG": 11,
+    "totalFiberG": 6,
+    "requiresManualReview": false,
+    "hasIncompleteNutrition": false,
+    "estimatedCount": 0,
+    "verifiedCount": 2,
+    "unresolvedCount": 0,
+    "providerCalls": 1,
+    "promptTokens": 1469,
+    "completionTokens": 1017,
+    "totalTokens": 2486,
+    "estimatedCostUsd": 0.00049,
+    "estimatedCostInr": 0.0412,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1469,
+        "completionTokens": 1017,
+        "totalTokens": 2486,
+        "latencyMs": 8865,
+        "costUsd": 0.00049,
+        "costInr": 0.0412,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match"
+    ]
+  },
+  {
+    "file": "Dal_Bhat_Tarkari_2.jpg",
+    "expectedDish": "Dal Bhat Tarkari",
+    "status": 200,
+    "totalLatencyMs": 51625,
+    "primaryCandidate": "South Indian Thali",
+    "detectedFoods": [
+      "Steamed Rice",
+      "Sambar",
+      "Papad",
+      "Cucumber slices",
+      "Lemon wedge",
+      "Spinach Poriyal",
+      "Chicken Fry",
+      "Chutney"
+    ],
+    "foods": [
+      {
+        "name": "Steamed Rice",
+        "confidence": 0.95,
+        "nutritionStatus": "verified",
+        "calories": 195,
+        "proteinG": 4,
+        "carbsG": 43,
+        "fatG": 0,
+        "fiberG": 1,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Sambar",
+        "confidence": 0.85,
+        "nutritionStatus": "verified",
+        "calories": 86,
+        "proteinG": 4,
+        "carbsG": 14,
+        "fatG": 2,
+        "fiberG": 3,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Papad",
+        "confidence": 0.8,
+        "nutritionStatus": "estimated",
+        "calories": 42,
+        "proteinG": 2,
+        "carbsG": 7,
+        "fatG": 1,
+        "fiberG": 2,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      },
+      {
+        "name": "Cucumber slices",
+        "confidence": 0.8,
+        "nutritionStatus": "estimated",
+        "calories": 3,
+        "proteinG": 0,
+        "carbsG": 1,
+        "fatG": 0,
+        "fiberG": 0,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      },
+      {
+        "name": "Lemon wedge",
+        "confidence": 0.8,
+        "nutritionStatus": "estimated",
+        "calories": 3,
+        "proteinG": 0,
+        "carbsG": 1,
+        "fatG": 0,
+        "fiberG": 0,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      },
+      {
+        "name": "Spinach Poriyal",
+        "confidence": 0.4,
+        "nutritionStatus": "unresolved",
+        "calories": null,
+        "proteinG": null,
+        "carbsG": null,
+        "fatG": null,
+        "fiberG": null,
+        "source": "unresolved",
+        "verified": false,
+        "unresolved": true,
+        "sentToAi": true
+      },
+      {
+        "name": "Chicken Fry",
+        "confidence": 0.4,
+        "nutritionStatus": "unresolved",
+        "calories": null,
+        "proteinG": null,
+        "carbsG": null,
+        "fatG": null,
+        "fiberG": null,
+        "source": "unresolved",
+        "verified": false,
+        "unresolved": true,
+        "sentToAi": true
+      },
+      {
+        "name": "Chutney",
+        "confidence": 0.4,
+        "nutritionStatus": "unresolved",
+        "calories": null,
+        "proteinG": null,
+        "carbsG": null,
+        "fatG": null,
+        "fiberG": null,
+        "source": "unresolved",
+        "verified": false,
+        "unresolved": true,
+        "sentToAi": true
+      }
+    ],
+    "totalCalories": 329,
+    "totalProteinG": 10,
+    "totalCarbsG": 66,
+    "totalFatG": 3,
+    "totalFiberG": 6,
+    "requiresManualReview": true,
+    "hasIncompleteNutrition": true,
+    "estimatedCount": 3,
+    "verifiedCount": 2,
+    "unresolvedCount": 3,
+    "providerCalls": 2,
+    "promptTokens": 2067,
+    "completionTokens": 9066,
+    "totalTokens": 11133,
+    "estimatedCostUsd": 0.002827,
+    "estimatedCostInr": 0.2375,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1479,
+        "completionTokens": 5162,
+        "totalTokens": 6641,
+        "latencyMs": 32079,
+        "costUsd": 0.001652,
+        "costInr": 0.1388,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      },
+      {
+        "feature": "estimateNutrition",
+        "model": "deepseek-flash",
+        "promptTokens": 588,
+        "completionTokens": 3904,
+        "totalTokens": 4492,
+        "latencyMs": 19401,
+        "costUsd": 0.001175,
+        "costInr": 0.0987,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match",
+      "C. AI-estimated successfully",
+      "F. Unresolved",
+      "G. User/manual review required"
+    ]
+  },
+  {
+    "file": "Dosa.jpg",
+    "expectedDish": "Dosa",
+    "status": 200,
+    "totalLatencyMs": 29053,
+    "primaryCandidate": "Masala Dosa",
+    "detectedFoods": [
+      "Plain Dosa",
+      "Potato Masala (Aloo Sabzi)",
+      "Coconut Chutney",
+      "Red Chutney",
+      "Butter"
+    ],
+    "foods": [
+      {
+        "name": "Plain Dosa",
+        "confidence": 0.95,
+        "nutritionStatus": "verified",
+        "calories": 204,
+        "proteinG": 5,
+        "carbsG": 35,
+        "fatG": 5,
+        "fiberG": 2,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Potato Masala (Aloo Sabzi)",
+        "confidence": 0.9,
+        "nutritionStatus": "verified",
+        "calories": 80,
+        "proteinG": 2,
+        "carbsG": 10,
+        "fatG": 4,
+        "fiberG": 3,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Coconut Chutney",
+        "confidence": 0.9,
+        "nutritionStatus": "verified",
+        "calories": 108,
+        "proteinG": 2,
+        "carbsG": 5,
+        "fatG": 10,
+        "fiberG": 2,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Red Chutney",
+        "confidence": 0.85,
+        "nutritionStatus": "estimated",
+        "calories": 60,
+        "proteinG": 1,
+        "carbsG": 4,
+        "fatG": 4,
+        "fiberG": 1,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      },
+      {
+        "name": "Butter",
+        "confidence": 0.95,
+        "nutritionStatus": "estimated",
+        "calories": 36,
+        "proteinG": 0,
+        "carbsG": 0,
+        "fatG": 4,
+        "fiberG": 0,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      }
+    ],
+    "totalCalories": 488,
+    "totalProteinG": 10,
+    "totalCarbsG": 54,
+    "totalFatG": 27,
+    "totalFiberG": 8,
+    "requiresManualReview": false,
+    "hasIncompleteNutrition": false,
+    "estimatedCount": 2,
+    "verifiedCount": 3,
+    "unresolvedCount": 0,
+    "providerCalls": 2,
+    "promptTokens": 2048,
+    "completionTokens": 5079,
+    "totalTokens": 7127,
+    "estimatedCostUsd": 0.001709,
+    "estimatedCostInr": 0.1436,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1474,
+        "completionTokens": 2927,
+        "totalTokens": 4401,
+        "latencyMs": 17055,
+        "costUsd": 0.001026,
+        "costInr": 0.0862,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      },
+      {
+        "feature": "estimateNutrition",
+        "model": "deepseek-flash",
+        "promptTokens": 574,
+        "completionTokens": 2152,
+        "totalTokens": 2726,
+        "latencyMs": 11899,
+        "costUsd": 0.000683,
+        "costInr": 0.0574,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match",
+      "C. AI-estimated successfully"
+    ]
+  },
+  {
+    "file": "Idli_sambar_and_coconut_chutney.jpg",
+    "expectedDish": "Idli + Sambar + Rasam",
+    "status": 200,
+    "totalLatencyMs": 31124,
+    "primaryCandidate": "Idli Sambar",
+    "detectedFoods": [
+      "Idli",
+      "Sambar",
+      "Rasam"
+    ],
+    "foods": [
+      {
+        "name": "Idli",
+        "confidence": 0.98,
+        "nutritionStatus": "verified",
+        "calories": 130,
+        "proteinG": 4,
+        "carbsG": 28,
+        "fatG": 0,
+        "fiberG": 2,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Sambar",
+        "confidence": 0.75,
+        "nutritionStatus": "verified",
+        "calories": 86,
+        "proteinG": 4,
+        "carbsG": 14,
+        "fatG": 2,
+        "fiberG": 3,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Rasam",
+        "confidence": 0.4,
+        "nutritionStatus": "unresolved",
+        "calories": null,
+        "proteinG": null,
+        "carbsG": null,
+        "fatG": null,
+        "fiberG": null,
+        "source": "unresolved",
+        "verified": false,
+        "unresolved": true,
+        "sentToAi": true
+      }
+    ],
+    "totalCalories": 216,
+    "totalProteinG": 8,
+    "totalCarbsG": 42,
+    "totalFatG": 2,
+    "totalFiberG": 5,
+    "requiresManualReview": true,
+    "hasIncompleteNutrition": true,
+    "estimatedCount": 0,
+    "verifiedCount": 2,
+    "unresolvedCount": 1,
+    "providerCalls": 1,
+    "promptTokens": 1483,
+    "completionTokens": 4782,
+    "totalTokens": 6265,
+    "estimatedCostUsd": 0.001547,
+    "estimatedCostInr": 0.1299,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1483,
+        "completionTokens": 4782,
+        "totalTokens": 6265,
+        "latencyMs": 29178,
+        "costUsd": 0.001547,
+        "costInr": 0.1299,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match",
+      "F. Unresolved",
+      "G. User/manual review required"
+    ]
+  },
+  {
+    "file": "Indori_Poha,_New_Delhi.jpg",
+    "expectedDish": "Indori Poha + Onion Pakora + Curd",
+    "status": 200,
+    "totalLatencyMs": 4821,
+    "primaryCandidate": "Indori Poha",
+    "detectedFoods": [
+      "Indori Poha"
+    ],
+    "foods": [
+      {
+        "name": "Indori Poha",
+        "confidence": 0.82,
+        "nutritionStatus": "verified",
+        "calories": 240,
+        "proteinG": 4,
+        "carbsG": 48,
+        "fatG": 4,
+        "fiberG": 4,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      }
+    ],
+    "totalCalories": 240,
+    "totalProteinG": 4,
+    "totalCarbsG": 48,
+    "totalFatG": 4,
+    "totalFiberG": 4,
+    "requiresManualReview": false,
+    "hasIncompleteNutrition": false,
+    "estimatedCount": 0,
+    "verifiedCount": 1,
+    "unresolvedCount": 0,
+    "providerCalls": 1,
+    "promptTokens": 1485,
+    "completionTokens": 527,
+    "totalTokens": 2012,
+    "estimatedCostUsd": 0.000355,
+    "estimatedCostInr": 0.0298,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1485,
+        "completionTokens": 527,
+        "totalTokens": 2012,
+        "latencyMs": 4546,
+        "costUsd": 0.000355,
+        "costInr": 0.0298,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match"
+    ]
+  },
+  {
+    "file": "Khichdi_(Khichrri).jpeg",
+    "expectedDish": "Khichdi",
+    "status": 200,
+    "totalLatencyMs": 6505,
+    "primaryCandidate": "Lemon Rice",
+    "detectedFoods": [
+      "Lemon Rice"
+    ],
+    "foods": [
+      {
+        "name": "Lemon Rice",
+        "confidence": 0.4,
+        "nutritionStatus": "unresolved",
+        "calories": null,
+        "proteinG": null,
+        "carbsG": null,
+        "fatG": null,
+        "fiberG": null,
+        "source": "unresolved",
+        "verified": false,
+        "unresolved": true,
+        "sentToAi": true
+      }
+    ],
+    "totalCalories": 0,
+    "totalProteinG": 0,
+    "totalCarbsG": 0,
+    "totalFatG": 0,
+    "totalFiberG": 0,
+    "requiresManualReview": true,
+    "hasIncompleteNutrition": true,
+    "estimatedCount": 0,
+    "verifiedCount": 0,
+    "unresolvedCount": 1,
+    "providerCalls": 1,
+    "promptTokens": 1479,
+    "completionTokens": 750,
+    "totalTokens": 2229,
+    "estimatedCostUsd": 0.000417,
+    "estimatedCostInr": 0.035,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1479,
+        "completionTokens": 750,
+        "totalTokens": 2229,
+        "latencyMs": 6262,
+        "costUsd": 0.000417,
+        "costInr": 0.035,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "F. Unresolved",
+      "G. User/manual review required"
+    ]
+  },
+  {
+    "file": "Rajma_Chawal_from_India(1).jpg",
+    "expectedDish": "Rajma Chawal + Salad",
+    "status": 200,
+    "totalLatencyMs": 7353,
+    "primaryCandidate": "Rajma Chawal",
+    "detectedFoods": [
+      "Steamed Rice",
+      "Rajma Masala",
+      "Onion (sliced, raw)",
+      "Cucumber (sliced, raw)"
+    ],
+    "foods": [
+      {
+        "name": "Steamed Rice",
+        "confidence": 0.95,
+        "nutritionStatus": "verified",
+        "calories": 260,
+        "proteinG": 5,
+        "carbsG": 57,
+        "fatG": 1,
+        "fiberG": 1,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Rajma Masala",
+        "confidence": 0.9,
+        "nutritionStatus": "verified",
+        "calories": 158,
+        "proteinG": 9,
+        "carbsG": 24,
+        "fatG": 3,
+        "fiberG": 6,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Onion (sliced, raw)",
+        "confidence": 0.85,
+        "nutritionStatus": "estimated",
+        "calories": 8,
+        "proteinG": 0,
+        "carbsG": 2,
+        "fatG": 0,
+        "fiberG": 0,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      },
+      {
+        "name": "Cucumber (sliced, raw)",
+        "confidence": 0.85,
+        "nutritionStatus": "estimated",
+        "calories": 5,
+        "proteinG": 0,
+        "carbsG": 1,
+        "fatG": 0,
+        "fiberG": 0,
+        "source": "ai_estimate",
+        "verified": false,
+        "unresolved": false,
+        "sentToAi": true
+      }
+    ],
+    "totalCalories": 431,
+    "totalProteinG": 14,
+    "totalCarbsG": 84,
+    "totalFatG": 4,
+    "totalFiberG": 7,
+    "requiresManualReview": false,
+    "hasIncompleteNutrition": false,
+    "estimatedCount": 2,
+    "verifiedCount": 2,
+    "unresolvedCount": 0,
+    "providerCalls": 2,
+    "promptTokens": 2064,
+    "completionTokens": 1210,
+    "totalTokens": 3274,
+    "estimatedCostUsd": 0.000628,
+    "estimatedCostInr": 0.0527,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1479,
+        "completionTokens": 529,
+        "totalTokens": 2008,
+        "latencyMs": 3615,
+        "costUsd": 0.000355,
+        "costInr": 0.0298,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      },
+      {
+        "feature": "estimateNutrition",
+        "model": "deepseek-flash",
+        "promptTokens": 585,
+        "completionTokens": 681,
+        "totalTokens": 1266,
+        "latencyMs": 3641,
+        "costUsd": 0.000273,
+        "costInr": 0.0229,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match",
+      "C. AI-estimated successfully"
+    ]
+  },
+  {
+    "file": "Roti-Sabzi-Raita.jpeg",
+    "expectedDish": "Roti + Cucumber Raita + Dal",
+    "status": 200,
+    "totalLatencyMs": 7042,
+    "primaryCandidate": "Plain Roti",
+    "detectedFoods": [
+      "Plain Roti",
+      "Dal Tadka",
+      "Cucumber Raita"
+    ],
+    "foods": [
+      {
+        "name": "Plain Roti",
+        "confidence": 0.72,
+        "nutritionStatus": "verified",
+        "calories": 80,
+        "proteinG": 3,
+        "carbsG": 15,
+        "fatG": 1,
+        "fiberG": 2,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Dal Tadka",
+        "confidence": 0.55,
+        "nutritionStatus": "verified",
+        "calories": 125,
+        "proteinG": 8,
+        "carbsG": 21,
+        "fatG": 2,
+        "fiberG": 4,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      },
+      {
+        "name": "Cucumber Raita",
+        "confidence": 0.4,
+        "nutritionStatus": "unresolved",
+        "calories": null,
+        "proteinG": null,
+        "carbsG": null,
+        "fatG": null,
+        "fiberG": null,
+        "source": "unresolved",
+        "verified": false,
+        "unresolved": true,
+        "sentToAi": true
+      }
+    ],
+    "totalCalories": 205,
+    "totalProteinG": 11,
+    "totalCarbsG": 36,
+    "totalFatG": 3,
+    "totalFiberG": 6,
+    "requiresManualReview": true,
+    "hasIncompleteNutrition": true,
+    "estimatedCount": 0,
+    "verifiedCount": 2,
+    "unresolvedCount": 1,
+    "providerCalls": 1,
+    "promptTokens": 1479,
+    "completionTokens": 973,
+    "totalTokens": 2452,
+    "estimatedCostUsd": 0.00048,
+    "estimatedCostInr": 0.0403,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1479,
+        "completionTokens": 973,
+        "totalTokens": 2452,
+        "latencyMs": 6796,
+        "costUsd": 0.00048,
+        "costInr": 0.0403,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match",
+      "F. Unresolved",
+      "G. User/manual review required"
+    ]
+  },
+  {
+    "file": "Sooji_Halwa_(Rava_Sheera).jpg",
+    "expectedDish": "Sooji Halwa",
+    "status": 200,
+    "totalLatencyMs": 5252,
+    "primaryCandidate": "Sooji Halwa",
+    "detectedFoods": [
+      "Sooji Halwa"
+    ],
+    "foods": [
+      {
+        "name": "Sooji Halwa",
+        "confidence": 0.82,
+        "nutritionStatus": "verified",
+        "calories": 420,
+        "proteinG": 6,
+        "carbsG": 63,
+        "fatG": 17,
+        "fiberG": 2,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      }
+    ],
+    "totalCalories": 420,
+    "totalProteinG": 6,
+    "totalCarbsG": 63,
+    "totalFatG": 17,
+    "totalFiberG": 2,
+    "requiresManualReview": false,
+    "hasIncompleteNutrition": false,
+    "estimatedCount": 0,
+    "verifiedCount": 1,
+    "unresolvedCount": 0,
+    "providerCalls": 1,
+    "promptTokens": 1474,
+    "completionTokens": 613,
+    "totalTokens": 2087,
+    "estimatedCostUsd": 0.000378,
+    "estimatedCostInr": 0.0318,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1474,
+        "completionTokens": 613,
+        "totalTokens": 2087,
+        "latencyMs": 5115,
+        "costUsd": 0.000378,
+        "costInr": 0.0318,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match"
+    ]
+  },
+  {
+    "file": "Vegetable Pulao.jpeg",
+    "expectedDish": "Vegetable Pulao",
+    "status": 200,
+    "totalLatencyMs": 4824,
+    "primaryCandidate": "Vegetable Pulao",
+    "detectedFoods": [
+      "Vegetable Pulao"
+    ],
+    "foods": [
+      {
+        "name": "Vegetable Pulao",
+        "confidence": 0.62,
+        "nutritionStatus": "verified",
+        "calories": 252,
+        "proteinG": 5,
+        "carbsG": 41,
+        "fatG": 7,
+        "fiberG": 4,
+        "source": "canonical",
+        "verified": true,
+        "unresolved": false,
+        "sentToAi": false
+      }
+    ],
+    "totalCalories": 252,
+    "totalProteinG": 5,
+    "totalCarbsG": 41,
+    "totalFatG": 7,
+    "totalFiberG": 4,
+    "requiresManualReview": false,
+    "hasIncompleteNutrition": false,
+    "estimatedCount": 0,
+    "verifiedCount": 1,
+    "unresolvedCount": 0,
+    "providerCalls": 1,
+    "promptTokens": 1469,
+    "completionTokens": 616,
+    "totalTokens": 2085,
+    "estimatedCostUsd": 0.000378,
+    "estimatedCostInr": 0.0318,
+    "calls": [
+      {
+        "feature": "analyzeMeal",
+        "model": "deepseek-flash",
+        "promptTokens": 1469,
+        "completionTokens": 616,
+        "totalTokens": 2085,
+        "latencyMs": 4821,
+        "costUsd": 0.000378,
+        "costInr": 0.0318,
+        "costStatus": "ESTIMATED_FROM_USAGE"
+      }
+    ],
+    "retries": 0,
+    "errors": [],
+    "classifications": [
+      "B. Canonical database match"
+    ]
+  }
+]

@@ -223,6 +223,15 @@ describe("Vision Pipeline & Circuit Breaker Architecture", () => {
       expect(body.requiresManualReview).toBe(false);
       expect(body.unknownFoods).toHaveLength(0);
       expect(body.foods).toHaveLength(2);
+
+      // Check per-stage timings instrumentation
+      expect(body.timings).toBeDefined();
+      expect(typeof body.timings.imagePrepMs).toBe("number");
+      expect(typeof body.timings.visionProviderMs).toBe("number");
+      expect(typeof body.timings.dbLookupMs).toBe("number");
+      expect(typeof body.timings.nutritionEstimationMs).toBe("number");
+      expect(typeof body.timings.nutritionCalcMs).toBe("number");
+      expect(typeof body.timings.totalServerMs).toBe("number");
     });
 
     it("returns allFoodsVerified: false and requiresManualReview: true when unrecognized foods are detected", async () => {

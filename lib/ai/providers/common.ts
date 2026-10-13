@@ -18,19 +18,21 @@ CRITICAL RULES:
 - The plate can be ANY Indian dish (cheela, dosa, uttapam, poha, upma, khichdi, halwa, rice dishes, thalis, street food, snacks, etc.). Do not assume it is a flatbread unless clearly visible.
 - Chapati vs Paratha: Chapati is thin, soft, puffed with dry tawa spots; Paratha is thicker, layered, crisp or golden-brown with ghee/oil.
 - When unsure or when dishes look visually similar, explain your uncertainty in notes and lower your confidence score.
-- For each visible food item, specify the name, approximate numeric quantity, and unit (e.g. piece, katori, bowl, plate, cup, tbsp, grams, serving).
+- Notes must be concise (1-2 sentences maximum, under 40 words). Do not include conversational filler or lengthy essays.
+- For each visible food item, specify the name, approximate numeric quantity, and unit (prefer grams 'g' or 'ml' if known/estimated, e.g. 120 g, 160 g, 190 ml, or piece, katori, bowl, plate, cup, tbsp, serving).
+- In 'foods', specify the exact numeric quantity and unit corresponding to the detected physical portion.
 - Candidates must be DISTINCT dishes with different calorie impacts. Return a numeric confidence from 0.0 to 1.0 for each candidate.
 - Return up to 3 candidate dishes sorted by confidence descending.
 
 Return ONLY raw JSON matching this schema:
 {
   "foods": [
-    {"name": "<dish or item name>", "quantity": <number>, "unit": "<piece|katori|plate|bowl|cup|g|serving>", "confidence": <float 0.0-1.0>}
+    {"name": "<dish or item name>", "quantity": <number>, "unit": "<g|ml|piece|katori|plate|bowl|cup|serving>", "confidence": <float 0.0-1.0>}
   ],
   "candidates": [{"name": "<dish name>", "confidence": <float 0.0-1.0>}],
   "visibleItems": ["<item with approximate gram weight>"],
   "ambiguity": "low"|"medium"|"high",
-  "notes": "<visual deduction explanation>"
+  "notes": "<concise 1-2 sentence visual deduction explanation>"
 }`;
 
 export const DISH_NAMES_LIST = (dishVocab as { name: string }[]).map((d) => d.name).join(", ");
@@ -70,6 +72,139 @@ export function cleanDishName(name: string): string {
   return name.replace(/^other:\s*/i, "").trim();
 }
 
+/**
+ * Extracts approximate numeric quantity and normalized unit from a text string.
+ * Examples:
+ * - "French fries ~110-120g" -> { quantity: 115, unit: "g" }
+ * - "French fries 120g" -> { quantity: 120, unit: "g" }
+ * - "Burger ~160g" -> { quantity: 160, unit: "g" }
+ * - "160g Burger" -> { quantity: 160, unit: "g" }
+ * - "Coffee ~190ml" -> { quantity: 190, unit: "ml" }
+ * - "190ml Coffee" -> { quantity: 190, unit: "ml" }
+ * - "2 chapatis" -> { quantity: 2, unit: "piece" }
+ * - "1 katori dal" -> { quantity: 1, unit: "katori" }
+ * - "1 plate rice" -> { quantity: 1, unit: "plate" }
+ */
+export function parsePortionFromText(
+  text: string
+): { quantity: number; unit: string } | null {
+  if (!text || typeof text !== "string") return null;
+  const str = text.trim();
+
+  // 1. Range grams/ml: e.g. ~110-120g, 100 to 150 ml
+  const rangeMatch = str.match(
+    /(?:~|approx\.?|about)?\s*(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\s*(g|grams?|ml|milliliters?)\b/i
+  );
+  if (rangeMatch) {
+    const q1 = parseFloat(rangeMatch[1]);
+    const q2 = parseFloat(rangeMatch[2]);
+    const avg = Math.round((q1 + q2) / 2);
+    const u = rangeMatch[3].toLowerCase().startsWith("m") ? "ml" : "g";
+    return { quantity: avg, unit: u };
+  }
+
+  // 2. Single grams/ml: e.g. ~120g, 160 g, 190ml, 190 ml
+  const gramMlMatch = str.match(
+    /(?:~|approx\.?|about)?\s*(\d+(?:\.\d+)?)\s*(g|grams?|ml|milliliters?)\b/i
+  );
+  if (gramMlMatch) {
+    const q = parseFloat(gramMlMatch[1]);
+    const u = gramMlMatch[2].toLowerCase().startsWith("m") ? "ml" : "g";
+    return { quantity: q, unit: u };
+  }
+
+  // 3. Counted standard container/piece units: e.g. 2 katori, 1 bowl, 2 pieces, 3 slices
+  const containerMatch = str.match(
+    /(?:~|approx\.?|about)?\s*(\d+(?:\.\d+)?)\s*(katori|bowl|plate|cup|glass|piece|pieces|slice|slices|tbsp|tsp|serving|servings)\b/i
+  );
+  if (containerMatch) {
+    const q = parseFloat(containerMatch[1]);
+    const rawUnit = containerMatch[2].toLowerCase();
+    const u = rawUnit.endsWith("s") && rawUnit !== "glass" ? rawUnit.slice(0, -1) : rawUnit;
+    return { quantity: q, unit: u };
+  }
+
+  // 4. Count before food name (e.g. "2 chapatis", "2 rotis", "1 paratha", "2 samosas")
+  const leadingCountMatch = str.match(
+    /^\s*(\d+(?:\.\d+)?)\s+(?:piece|pieces\s+of\s+)?([a-zA-Z]+)/i
+  );
+  if (leadingCountMatch) {
+    const q = parseFloat(leadingCountMatch[1]);
+    const nextWord = leadingCountMatch[2].toLowerCase();
+    if (
+      /^(chapati|chapatis|roti|rotis|paratha|parathas|puri|puris|bhatura|bhature|idli|idlis|vada|vadas|samosa|samosas|dosa|dosas|egg|eggs)$/.test(
+        nextWord
+      )
+    ) {
+      return { quantity: q, unit: "piece" };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Reconciles parsed foods with visibleItems strings.
+ * If a food item has a generic unit ('serving', 'portion') or unstated portion,
+ * this checks visibleItems for matching portion descriptions (e.g. 'French fries ~110-120g')
+ * and upgrades the food's quantity and unit to the vision-detected portion.
+ */
+export function reconcileFoodPortions(
+  foods: VisionFoodItem[],
+  visibleItems: string[]
+): VisionFoodItem[] {
+  if (!foods || foods.length === 0) return [];
+  if (!visibleItems || visibleItems.length === 0) return foods;
+
+  return foods.map((food) => {
+    // 1. Check if the food's own name has portion information
+    const selfPortion = parsePortionFromText(food.name);
+    if (selfPortion) {
+      const cleaned = cleanDishName(
+        food.name
+          .replace(
+            /(?:~|approx\.?|about)?\s*\d+(?:\.\d+)?\s*(?:(?:-|to)\s*\d+(?:\.\d+)?\s*)?(?:g|grams?|ml|milliliters?|katori|bowl|plate|cup|glass|piece|pieces|slice|slices|tbsp|tsp|serving|servings)\b/gi,
+            ""
+          )
+          .replace(/[()]/g, "")
+          .trim()
+      );
+      return {
+        ...food,
+        name: cleaned || food.name,
+        quantity: selfPortion.quantity,
+        unit: selfPortion.unit,
+      };
+    }
+
+    // 2. If the food has a generic unit ('serving', 'portion'), look in visibleItems
+    const u = (food.unit || "").toLowerCase().trim();
+    if (u === "serving" || u === "portion" || u === "") {
+      const foodNameLower = food.name.toLowerCase();
+      const matchedVisible = visibleItems.find((v) => {
+        const vLower = v.toLowerCase();
+        return (
+          vLower.includes(foodNameLower) ||
+          foodNameLower.includes(cleanDishName(vLower).replace(/~.*$/, "").trim())
+        );
+      });
+
+      if (matchedVisible) {
+        const portion = parsePortionFromText(matchedVisible);
+        if (portion) {
+          return {
+            ...food,
+            quantity: portion.quantity,
+            unit: portion.unit,
+          };
+        }
+      }
+    }
+
+    return food;
+  });
+}
+
 export function parseVisionJsonWithDefaults(rawJsonStr: string): VisionAnalysis {
   let parsed: any;
   try {
@@ -86,12 +221,25 @@ export function parseVisionJsonWithDefaults(rawJsonStr: string): VisionAnalysis 
 
   if (validated.foods.length === 0) {
     if (validated.visibleItems.length > 0) {
-      validated.foods = validated.visibleItems.map((item) => ({
-        name: cleanDishName(item),
-        quantity: 1,
-        unit: "serving",
-        confidence: 0.6,
-      }));
+      validated.foods = validated.visibleItems.map((item) => {
+        const portion = parsePortionFromText(item);
+        const name =
+          cleanDishName(
+            item
+              .replace(
+                /(?:~|approx\.?|about)?\s*\d+(?:\.\d+)?\s*(?:(?:-|to)\s*\d+(?:\.\d+)?\s*)?(?:g|grams?|ml|milliliters?|katori|bowl|plate|cup|glass|piece|pieces|slice|slices|tbsp|tsp|serving|servings)\b/gi,
+                ""
+              )
+              .replace(/[()]/g, "")
+              .trim()
+          ) || cleanDishName(item);
+        return {
+          name,
+          quantity: portion?.quantity ?? 1,
+          unit: portion?.unit ?? "serving",
+          confidence: 0.6,
+        };
+      });
     } else {
       validated.foods = validated.candidates.map((c) => ({
         name: cleanDishName(c.name),
@@ -100,6 +248,8 @@ export function parseVisionJsonWithDefaults(rawJsonStr: string): VisionAnalysis 
         confidence: c.confidence,
       }));
     }
+  } else {
+    validated.foods = reconcileFoodPortions(validated.foods, validated.visibleItems);
   }
 
   return validated;

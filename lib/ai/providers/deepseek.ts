@@ -34,6 +34,7 @@ import {
   parseVisionJsonWithDefaults,
   VisionAnalysis,
 } from "./common";
+import { calculateApiCost, ApiCallTraceRecord, ApiCallErrorCategory } from "../cost-accounting";
 
 // ── Circuit Breaker (DeepSeek-Specific, Per-User Scoped) ──────────────────────
 
@@ -52,8 +53,29 @@ function isRetryableServerError(err: any): boolean {
   const status = err.status || err.statusCode || err.code;
   if (status === 500 || status === 502 || status === 503 || status === 504) return true;
   if (err.name === "AbortError" || err.name === "TimeoutError") return true;
-  if (/timeout|connection reset|econnreset|socket hang up/i.test(err.message || "")) return true;
+  if (/timeout|connection reset|econnreset|socket hang up|unexpected end of json|empty response|empty output/i.test(err.message || "")) return true;
   return false;
+}
+
+function classifyErrorCategory(err: any): ApiCallErrorCategory {
+  if (!err) return "network";
+  if (err.name === "AbortError" || err.name === "TimeoutError" || /timeout/i.test(err.message || "")) {
+    return "timeout";
+  }
+  const status = err.status || err.statusCode || err.code;
+  if (status === 429 || /rate limit|quota/i.test(err.message || "")) {
+    return "429";
+  }
+  if (typeof status === "number" && status >= 500 && status < 600) {
+    return "5xx";
+  }
+  if (typeof status === "number" && status >= 400 && status < 500) {
+    return "client_error";
+  }
+  if (/parse|syntax|invalid json/i.test(err.message || "")) {
+    return "parse_error";
+  }
+  return "network";
 }
 
 // ── Pricing Constants (DeepSeek published rates) ──────────────────────────────
@@ -61,15 +83,25 @@ function isRetryableServerError(err: any): boolean {
 const COST_PER_1M_INPUT_USD = 0.14;
 const COST_PER_1M_OUTPUT_USD = 0.28;
 
-function calculateEstimatedCost(promptTokens: number, completionTokens: number): number {
-  const inputCost = (promptTokens / 1_000_000) * COST_PER_1M_INPUT_USD;
-  const outputCost = (completionTokens / 1_000_000) * COST_PER_1M_OUTPUT_USD;
-  return Math.round((inputCost + outputCost) * 100_000) / 100_000;
+function calculateEstimatedCost(
+  promptTokens: number,
+  completionTokens: number,
+  model = "deepseek-flash",
+  operation = "analyzeMeal"
+) {
+  return calculateApiCost({
+    provider: "deepseek",
+    model,
+    operation,
+    promptTokens,
+    completionTokens,
+    latencyMs: 0,
+  });
 }
 
 // ── Core Provider Implementation ──────────────────────────────────────────────
 
-const BUDGET_MS = 15_000; // 15s strict total budget
+const BUDGET_MS = 25_000; // 25s total budget within route maxDuration 30s
 
 export async function analyzeMealWithDeepSeek(
   opts: MealVisionInput
@@ -101,10 +133,12 @@ export async function analyzeMealWithDeepSeek(
   const client = new OpenAI({
     apiKey: key,
     baseURL,
-    timeout: 10_000, // 10s timeout per call
+    timeout: 25_000, // 25s timeout within route maxDuration 30s
   });
 
-  const t0 = Date.now();
+  const t0 = performance.now();
+  const calls: ApiCallTraceRecord[] = [];
+  let totalRetryBackoffMs = 0;
 
   // User text instructions with hint if provided
   const userTextPrompt = opts.hint && opts.hint.trim()
@@ -133,11 +167,13 @@ export async function analyzeMealWithDeepSeek(
 
   // Internal helper to call DeepSeek Chat Completion
   async function callDeepSeek(timeoutMs: number) {
+    const maxTokens = parseInt(process.env.DEEPSEEK_MAX_TOKENS || "2000", 10) || 2000;
     const requestOptions: any = {
       model: modelName,
       messages,
       response_format: { type: "json_object" },
       temperature: 0,
+      max_tokens: maxTokens,
     };
 
     // If thinking mode is specifically configured or requested
@@ -167,29 +203,72 @@ export async function analyzeMealWithDeepSeek(
       promptTokens,
       completionTokens,
       totalTokens,
+      requestId: completion.id,
     };
   }
 
   // Attempt up to 2 times (1 retry) on 5xx or timeouts within budget
   for (let attempt = 0; attempt < 2; attempt++) {
-    const elapsed = Date.now() - t0;
+    const elapsed = performance.now() - t0;
     const remainingBudget = BUDGET_MS - elapsed;
     if (remainingBudget < 2000) break;
 
-    const attemptTimeout = Math.min(10_000, remainingBudget);
+    const attemptTimeout = Math.floor(Math.min(20_000, remainingBudget));
+    const attemptStart = performance.now();
 
     try {
       rawSuccess = await callDeepSeek(attemptTimeout);
+      const attemptDuration = performance.now() - attemptStart;
+      const costRecord = calculateEstimatedCost(
+        rawSuccess.promptTokens,
+        rawSuccess.completionTokens,
+        modelName,
+        "analyzeMeal"
+      );
+      calls.push({
+        provider: "deepseek",
+        model: modelName,
+        feature: "analyzeMeal",
+        attempt: attempt + 1,
+        durationMs: Math.round(attemptDuration * 10) / 10,
+        outcome: "success",
+        promptTokens: rawSuccess.promptTokens,
+        completionTokens: rawSuccess.completionTokens,
+        cachedTokens: 0,
+        totalTokens: rawSuccess.totalTokens,
+        costStatus: costRecord.costStatus,
+        costUsd: costRecord.totalCostUsd,
+        costInr: costRecord.totalCostInr,
+        requestId: rawSuccess.requestId,
+      });
       break;
     } catch (err: any) {
+      const attemptDuration = performance.now() - attemptStart;
+      const errorCat = classifyErrorCategory(err);
       console.warn(`[ai/deepseek] Attempt ${attempt + 1} failed:`, err?.message || err);
+
+      calls.push({
+        provider: "deepseek",
+        model: modelName,
+        feature: "analyzeMeal",
+        attempt: attempt + 1,
+        durationMs: Math.round(attemptDuration * 10) / 10,
+        outcome: errorCat === "timeout" ? "timeout" : "error",
+        errorCategory: errorCat,
+        costStatus: "UNKNOWN",
+        costUsd: null,
+        costInr: null,
+        requestId: err?.request_id || err?.response?.headers?.get?.("x-request-id") || undefined,
+      });
 
       if (isRetryableServerError(err) && attempt === 0) {
         retryCount++;
         const waitMs = 1000 + Math.floor(Math.random() * 300);
-        if (Date.now() - t0 + waitMs < BUDGET_MS - 2000) {
+        if (performance.now() - t0 + waitMs < BUDGET_MS - 2000) {
           console.warn(`[ai/deepseek] Retryable server error. Retrying in ${waitMs}ms...`);
+          const backoffStart = performance.now();
           await new Promise((r) => setTimeout(r, waitMs));
+          totalRetryBackoffMs += performance.now() - backoffStart;
           continue;
         }
       }
@@ -200,11 +279,15 @@ export async function analyzeMealWithDeepSeek(
 
   if (rawSuccess) {
     circuitBreaker.recordSuccess(userKey);
-    const latencyMs = Date.now() - t0;
-    const estimatedCostUsd = calculateEstimatedCost(
+    const latencyMs = Math.round(performance.now() - t0);
+    const costRecord = calculateEstimatedCost(
       rawSuccess.promptTokens,
-      rawSuccess.completionTokens
+      rawSuccess.completionTokens,
+      modelName,
+      "analyzeMeal"
     );
+    const estimatedCostUsd = costRecord.totalCostUsd ?? 0;
+    const estimatedCostInr = costRecord.totalCostInr ?? 0;
 
     // Structured ai_usage log line (Zero user content or raw image)
     console.info(
@@ -218,9 +301,14 @@ export async function analyzeMealWithDeepSeek(
         totalTokens: rawSuccess.totalTokens,
         latencyMs,
         estimatedCostUsd,
+        estimatedCostInr,
+        currency: "USD",
+        currencySecondary: "INR",
+        costStatus: costRecord.costStatus,
         retries: retryCount,
         thinkingMode: isThinkingEnabled,
         imageDetail,
+        requestId: rawSuccess.requestId,
       })
     );
 
@@ -261,13 +349,230 @@ export async function analyzeMealWithDeepSeek(
         totalTokens: rawSuccess.totalTokens,
         latencyMs,
         estimatedCostUsd,
+        estimatedCostInr,
+        costStatus: costRecord.costStatus,
       },
+      calls,
+      retryBackoffMs: Math.round(totalRetryBackoffMs * 10) / 10,
     };
   }
 
   // All attempts failed
   circuitBreaker.recordFailure(userKey);
   throw new PhotoUnavailableError("Photo scan is busy. Type or speak your meal instead.");
+}
+
+// ── Text / Batch Nutrition Estimation ─────────────────────────────────────────
+
+export interface DeepSeekEstimateNutritionInput {
+  systemPrompt: string;
+  userPrompt: string;
+  userKey?: string;
+  timeoutMs?: number;
+}
+
+export interface DeepSeekEstimateNutritionOutput {
+  rawContent: string;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    latencyMs: number;
+    estimatedCostUsd: number;
+    estimatedCostInr?: number;
+    costStatus?: string;
+  };
+  calls?: ApiCallTraceRecord[];
+  retryBackoffMs?: number;
+}
+
+export async function estimateNutritionWithDeepSeek(
+  opts: DeepSeekEstimateNutritionInput
+): Promise<DeepSeekEstimateNutritionOutput> {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) {
+    throw new Error("DEEPSEEK_API_KEY is not configured on the server.");
+  }
+
+  const userKey = opts.userKey || "global";
+
+  if (circuitBreaker.isCircuitOpen(userKey)) {
+    const cbState = circuitBreaker.getCircuitBreakerState(userKey);
+    throw new Error(
+      `DeepSeek circuit breaker is OPEN for user '${userKey}' until ${new Date(
+        cbState.circuitOpenUntil
+      ).toISOString()}`
+    );
+  }
+
+  const baseURL = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
+  const modelName = process.env.DEEPSEEK_NUTRITION_MODEL || process.env.DEEPSEEK_VISION_MODEL || "deepseek-flash";
+  const client = new OpenAI({
+    apiKey: key,
+    baseURL,
+    timeout: 25_000,
+  });
+
+  const t0 = performance.now();
+  const calls: ApiCallTraceRecord[] = [];
+  let totalRetryBackoffMs = 0;
+
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "system", content: opts.systemPrompt },
+    { role: "user", content: opts.userPrompt },
+  ];
+
+  let rawSuccess: any = null;
+  let retryCount = 0;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const elapsed = performance.now() - t0;
+    const remainingBudget = BUDGET_MS - elapsed;
+    if (remainingBudget < 2000) break;
+
+    const attemptTimeout = Math.floor(Math.min(opts.timeoutMs || 20_000, remainingBudget));
+    const attemptStart = performance.now();
+
+    try {
+      const maxTokens = parseInt(process.env.DEEPSEEK_NUTRITION_MAX_TOKENS || "1500", 10) || 1500;
+      const timeoutInteger = Math.max(1000, attemptTimeout);
+      const completion = await client.chat.completions.create(
+        {
+          model: modelName,
+          messages,
+          response_format: { type: "json_object" },
+          temperature: 0,
+          max_tokens: maxTokens,
+        },
+        { timeout: timeoutInteger }
+      );
+
+      const attemptDuration = performance.now() - attemptStart;
+      const choice = completion.choices?.[0];
+      const rawContent = choice?.message?.content || "";
+      const cleaned = rawContent.replace(/```(?:json)?\n?/g, "").replace(/\n?```/g, "").trim();
+
+      const promptTokens = completion.usage?.prompt_tokens ?? 0;
+      const completionTokens = completion.usage?.completion_tokens ?? 0;
+      const totalTokens = completion.usage?.total_tokens ?? (promptTokens + completionTokens);
+
+      rawSuccess = {
+        rawContent: cleaned,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        requestId: completion.id,
+      };
+
+      const costRecord = calculateEstimatedCost(
+        promptTokens,
+        completionTokens,
+        modelName,
+        "estimateNutrition"
+      );
+
+      calls.push({
+        provider: "deepseek",
+        model: modelName,
+        feature: "estimateNutrition",
+        attempt: attempt + 1,
+        durationMs: Math.round(attemptDuration * 10) / 10,
+        outcome: "success",
+        promptTokens,
+        completionTokens,
+        cachedTokens: 0,
+        totalTokens,
+        costStatus: costRecord.costStatus,
+        costUsd: costRecord.totalCostUsd,
+        costInr: costRecord.totalCostInr,
+        requestId: completion.id,
+      });
+
+      break;
+    } catch (err: any) {
+      const attemptDuration = performance.now() - attemptStart;
+      const errorCat = classifyErrorCategory(err);
+      console.warn(`[ai/deepseek] Nutrition estimation attempt ${attempt + 1} failed:`, err?.message || err);
+
+      calls.push({
+        provider: "deepseek",
+        model: modelName,
+        feature: "estimateNutrition",
+        attempt: attempt + 1,
+        durationMs: Math.round(attemptDuration * 10) / 10,
+        outcome: errorCat === "timeout" ? "timeout" : "error",
+        errorCategory: errorCat,
+        costStatus: "UNKNOWN",
+        costUsd: null,
+        costInr: null,
+        requestId: err?.request_id || err?.response?.headers?.get?.("x-request-id") || undefined,
+      });
+
+      if (isRetryableServerError(err) && attempt === 0) {
+        retryCount++;
+        const waitMs = 1000 + Math.floor(Math.random() * 300);
+        if (performance.now() - t0 + waitMs < BUDGET_MS - 2000) {
+          console.warn(`[ai/deepseek] Retryable server error. Retrying in ${waitMs}ms...`);
+          const backoffStart = performance.now();
+          await new Promise((r) => setTimeout(r, waitMs));
+          totalRetryBackoffMs += performance.now() - backoffStart;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  if (rawSuccess) {
+    circuitBreaker.recordSuccess(userKey);
+    const latencyMs = Math.round(performance.now() - t0);
+    const costRecord = calculateEstimatedCost(
+      rawSuccess.promptTokens,
+      rawSuccess.completionTokens,
+      modelName,
+      "estimateNutrition"
+    );
+    const estimatedCostUsd = costRecord.totalCostUsd ?? 0;
+    const estimatedCostInr = costRecord.totalCostInr ?? 0;
+
+    console.info(
+      JSON.stringify({
+        type: "ai_usage",
+        feature: "estimateNutrition",
+        provider: "deepseek",
+        model: modelName,
+        promptTokens: rawSuccess.promptTokens,
+        completionTokens: rawSuccess.completionTokens,
+        totalTokens: rawSuccess.totalTokens,
+        latencyMs,
+        estimatedCostUsd,
+        estimatedCostInr,
+        currency: "USD",
+        currencySecondary: "INR",
+        costStatus: costRecord.costStatus,
+        retries: retryCount,
+        requestId: rawSuccess.requestId,
+      })
+    );
+
+    return {
+      rawContent: rawSuccess.rawContent,
+      usage: {
+        promptTokens: rawSuccess.promptTokens,
+        completionTokens: rawSuccess.completionTokens,
+        totalTokens: rawSuccess.totalTokens,
+        latencyMs,
+        estimatedCostUsd,
+        estimatedCostInr,
+        costStatus: costRecord.costStatus,
+      },
+      calls,
+      retryBackoffMs: Math.round(totalRetryBackoffMs * 10) / 10,
+    };
+  }
+
+  circuitBreaker.recordFailure(userKey);
+  throw new Error("DeepSeek nutrition estimation failed after retries.");
 }
 
 export const deepseekVisionProvider: MealVisionProvider = {
@@ -279,4 +584,5 @@ export const deepseekVisionProvider: MealVisionProvider = {
   resetCircuitBreaker: circuitBreaker.resetCircuitBreaker,
   getCircuitBreakerState: circuitBreaker.getCircuitBreakerState,
 };
+
 
