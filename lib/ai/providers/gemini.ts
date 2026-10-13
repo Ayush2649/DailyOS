@@ -22,6 +22,7 @@ import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { z } from "zod";
 import dishVocab from "../data/dish-vocab.json";
 import { MealVisionProvider } from "./types";
+import { parsePortionFromText, reconcileFoodPortions } from "./common";
 
 // ── Circuit Breaker State (Per-User Scoped) ──────────────────────────────────
 
@@ -140,14 +141,15 @@ CRITICAL RULES:
 - The plate can be ANY Indian dish (cheela, dosa, uttapam, poha, upma, khichdi, halwa, rice dishes, thalis, street food, snacks, etc.). Do not assume it is a flatbread unless clearly visible.
 - Chapati vs Paratha: Chapati is thin, soft, puffed with dry tawa spots; Paratha is thicker, layered, crisp or golden-brown with ghee/oil.
 - When unsure or when dishes look visually similar, explain your uncertainty in notes and lower your confidence score.
-- For each visible food item, specify the name, approximate numeric quantity, and unit (e.g. piece, katori, bowl, plate, cup, tbsp, grams, serving).
+- For each visible food item, specify the name, approximate numeric quantity, and unit (prefer grams 'g' or 'ml' if known/estimated, e.g. 120 g, 160 g, 190 ml, or piece, katori, bowl, plate, cup, tbsp, serving).
+- In 'foods', specify the exact numeric quantity and unit corresponding to the detected physical portion.
 - Candidates must be DISTINCT dishes with different calorie impacts. Return a numeric confidence from 0.0 to 1.0 for each candidate.
 - Return up to 3 candidate dishes sorted by confidence descending.
 
 Return ONLY raw JSON matching this schema:
 {
   "foods": [
-    {"name": "<dish or item name>", "quantity": <number>, "unit": "<piece|katori|plate|bowl|cup|g|serving>", "confidence": <float 0.0-1.0>}
+    {"name": "<dish or item name>", "quantity": <number>, "unit": "<g|ml|piece|katori|plate|bowl|cup|serving>", "confidence": <float 0.0-1.0>}
   ],
   "candidates": [{"name": "<dish name>", "confidence": <float 0.0-1.0>}],
   "visibleItems": ["<item with approximate gram weight>"],
@@ -204,12 +206,25 @@ function parseVisionJsonWithDefaults(rawJsonStr: string): VisionAnalysis {
 
   if (validated.foods.length === 0) {
     if (validated.visibleItems.length > 0) {
-      validated.foods = validated.visibleItems.map((item) => ({
-        name: cleanDishName(item),
-        quantity: 1,
-        unit: "serving",
-        confidence: 0.6,
-      }));
+      validated.foods = validated.visibleItems.map((item) => {
+        const portion = parsePortionFromText(item);
+        const name =
+          cleanDishName(
+            item
+              .replace(
+                /(?:~|approx\.?|about)?\s*\d+(?:\.\d+)?\s*(?:(?:-|to)\s*\d+(?:\.\d+)?\s*)?(?:g|grams?|ml|milliliters?|katori|bowl|plate|cup|glass|piece|pieces|slice|slices|tbsp|tsp|serving|servings)\b/gi,
+                ""
+              )
+              .replace(/[()]/g, "")
+              .trim()
+          ) || cleanDishName(item);
+        return {
+          name,
+          quantity: portion?.quantity ?? 1,
+          unit: portion?.unit ?? "serving",
+          confidence: 0.6,
+        };
+      });
     } else {
       validated.foods = validated.candidates.map((c) => ({
         name: cleanDishName(c.name),
@@ -218,6 +233,8 @@ function parseVisionJsonWithDefaults(rawJsonStr: string): VisionAnalysis {
         confidence: c.confidence,
       }));
     }
+  } else {
+    validated.foods = reconcileFoodPortions(validated.foods, validated.visibleItems);
   }
 
   return validated;

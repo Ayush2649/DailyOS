@@ -33,6 +33,7 @@ vi.mock("next-auth", () => ({
 }));
 
 import { POST as analyzeMealPOST } from "@/app/api/analyze-meal/route";
+import { resetCircuitBreaker as resetDeepSeekCircuitBreaker } from "@/lib/ai/providers/deepseek";
 
 export interface FoodBenchmarkDetail {
   name: string;
@@ -54,6 +55,15 @@ export interface MealBenchmarkResult {
   expectedDish: string;
   status: number;
   totalLatencyMs: number;
+  timings?: {
+    imagePrepMs: number;
+    visionProviderMs: number;
+    dbLookupMs: number;
+    nutritionEstimationMs: number;
+    nutritionCalcMs: number;
+    totalServerMs: number;
+    retryBackoffMs?: number;
+  };
   primaryCandidate: string;
   detectedFoods: string[];
   foods: FoodBenchmarkDetail[];
@@ -72,6 +82,18 @@ export interface MealBenchmarkResult {
   completionTokens: number;
   totalTokens: number;
   estimatedCostUsd: number;
+  estimatedCostInr: number;
+  calls: {
+    feature: string;
+    model: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    latencyMs: number;
+    costUsd: number;
+    costInr: number;
+    costStatus: string;
+  }[];
   retries: number;
   errors: string[];
   classifications: string[];
@@ -95,6 +117,9 @@ describe("Phase 2B Real-Provider Benchmark", () => {
     ];
 
     const results: MealBenchmarkResult[] = [];
+
+    resetDeepSeekCircuitBreaker("benchmark-user");
+    resetDeepSeekCircuitBreaker();
 
     // Spy on console.info to capture structured ai_usage telemetry
     const originalInfo = console.info;
@@ -175,15 +200,48 @@ describe("Phase 2B Real-Provider Benchmark", () => {
       let completionTokens = 0;
       let totalTokens = 0;
       let estimatedCostUsd = 0;
+      let estimatedCostInr = 0;
       let retries = 0;
+      const calls: {
+        feature: string;
+        model: string;
+        promptTokens: number;
+        completionTokens: number;
+        totalTokens: number;
+        latencyMs: number;
+        costUsd: number;
+        costInr: number;
+        costStatus: string;
+      }[] = [];
 
       for (const ev of telemetryEvents) {
-        promptTokens += ev.promptTokens ?? 0;
-        completionTokens += ev.completionTokens ?? 0;
-        totalTokens += ev.totalTokens ?? 0;
-        estimatedCostUsd += ev.estimatedCostUsd ?? 0;
+        const pt = ev.promptTokens ?? 0;
+        const ct = ev.completionTokens ?? 0;
+        const tt = ev.totalTokens ?? 0;
+        const cUsd = ev.estimatedCostUsd ?? 0;
+        const cInr = ev.estimatedCostInr ?? Math.round(cUsd * 84 * 10000) / 10000;
+
+        promptTokens += pt;
+        completionTokens += ct;
+        totalTokens += tt;
+        estimatedCostUsd += cUsd;
+        estimatedCostInr += cInr;
         retries += ev.retries ?? 0;
+
+        calls.push({
+          feature: ev.feature || "unknown",
+          model: ev.model || "deepseek-flash",
+          promptTokens: pt,
+          completionTokens: ct,
+          totalTokens: tt,
+          latencyMs: ev.latencyMs ?? 0,
+          costUsd: Math.round(cUsd * 1000000) / 1000000,
+          costInr: Math.round(cInr * 10000) / 10000,
+          costStatus: ev.costStatus || "ESTIMATED_FROM_USAGE",
+        });
       }
+
+      console.log(`  -> Cost: $${estimatedCostUsd.toFixed(5)} (₹${estimatedCostInr.toFixed(4)}), Calls: ${telemetryEvents.length}`);
 
       const providerCalls = telemetryEvents.length;
 
@@ -232,6 +290,15 @@ describe("Phase 2B Real-Provider Benchmark", () => {
         expectedDish: tc.expected,
         status,
         totalLatencyMs: latency,
+        timings: body?.timings || {
+          imagePrepMs: 0,
+          visionProviderMs: latency,
+          dbLookupMs: 0,
+          nutritionEstimationMs: 0,
+          nutritionCalcMs: 0,
+          totalServerMs: latency,
+          retryBackoffMs: 0,
+        },
         primaryCandidate: body?.name || "Unknown",
         detectedFoods: foodDetails.map((f) => f.name),
         foods: foodDetails,
@@ -249,7 +316,9 @@ describe("Phase 2B Real-Provider Benchmark", () => {
         promptTokens,
         completionTokens,
         totalTokens,
-        estimatedCostUsd: Math.round(estimatedCostUsd * 100000) / 100000,
+        estimatedCostUsd: Math.round(estimatedCostUsd * 1000000) / 1000000,
+        estimatedCostInr: Math.round(estimatedCostInr * 10000) / 10000,
+        calls,
         retries,
         errors,
         classifications: Array.from(new Set(classifications)),
@@ -259,8 +328,8 @@ describe("Phase 2B Real-Provider Benchmark", () => {
       await new Promise((r) => setTimeout(r, 800));
     }
 
-    // Write raw results JSON
-    const resultsJsonPath = path.resolve(process.cwd(), "scripts", "phase-2b-benchmark-results.json");
+    // Write raw results JSON for Phase 2C
+    const resultsJsonPath = path.resolve(process.cwd(), "scripts", "phase-2c-benchmark-results.json");
     fs.writeFileSync(resultsJsonPath, JSON.stringify(results, null, 2), "utf-8");
     console.log(`\nRaw results saved to: ${resultsJsonPath}`);
 

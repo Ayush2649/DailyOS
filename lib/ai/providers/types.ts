@@ -34,7 +34,11 @@ export interface MealVisionUsage {
   totalTokens: number;
   latencyMs: number;
   estimatedCostUsd?: number;
+  estimatedCostInr?: number;
+  costStatus?: string;
 }
+
+import type { ApiCallTraceRecord } from "../cost-accounting";
 
 export interface MealVisionResult {
   foods: MealVisionFoodItem[];
@@ -45,6 +49,8 @@ export interface MealVisionResult {
   model: string;
   provider: "gemini" | "deepseek" | "nemotron";
   usage: MealVisionUsage;
+  calls?: ApiCallTraceRecord[];
+  retryBackoffMs?: number;
 }
 
 export interface CircuitBreakerState {

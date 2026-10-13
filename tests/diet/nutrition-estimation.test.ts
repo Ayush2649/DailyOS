@@ -49,6 +49,7 @@ import {
 } from "@/lib/ai/nutrition/aiEstimator";
 import { calculateMealNutrition, InputFoodItem } from "@/lib/ai/nutrition/calculator";
 import { estimateNutritionWithDeepSeek } from "@/lib/ai/providers/deepseek";
+import { parsePortionFromText, reconcileFoodPortions } from "@/lib/ai/providers/common";
 
 describe("Phase 2B: Real AI Nutrition Estimation Pipeline", () => {
   // ── 1. Nutrition Router Unit Tests ──────────────────────────────────────────
@@ -742,5 +743,205 @@ describe("Phase 2B: Real AI Nutrition Estimation Pipeline", () => {
       expect(carrot?.matchedCanonicalName).toBe("Carrot Pieces (in Vegetable Biryani)");
     });
   });
-});
 
+  // ── 6. Phase 2B.1 Hardening: Portion Extraction, Scaling & Invariants ────────
+
+  describe("Phase 2B.1: Portion Extraction & Reconciliation", () => {
+    it("parses portions accurately from various textual formats", () => {
+      expect(parsePortionFromText("French fries ~110-120g")).toEqual({ quantity: 115, unit: "g" });
+      expect(parsePortionFromText("Burger ~160g")).toEqual({ quantity: 160, unit: "g" });
+      expect(parsePortionFromText("120g French fries")).toEqual({ quantity: 120, unit: "g" });
+      expect(parsePortionFromText("Coffee ~190ml")).toEqual({ quantity: 190, unit: "ml" });
+      expect(parsePortionFromText("190ml Coffee")).toEqual({ quantity: 190, unit: "ml" });
+      expect(parsePortionFromText("2 chapatis")).toEqual({ quantity: 2, unit: "piece" });
+      expect(parsePortionFromText("1 katori dal")).toEqual({ quantity: 1, unit: "katori" });
+      expect(parsePortionFromText("1 plate rice")).toEqual({ quantity: 1, unit: "plate" });
+      expect(parsePortionFromText("Unknown Mystery Food")).toBeNull();
+    });
+
+    it("reconciles foods with visibleItems when unit is generic serving", () => {
+      const foods = [
+        { name: "French Fries", quantity: 1, unit: "serving", confidence: 0.92 },
+        { name: "Burger", quantity: 1, unit: "serving", confidence: 0.95 },
+        { name: "Coffee", quantity: 1, unit: "serving", confidence: 0.62 },
+      ];
+      const visibleItems = ["French fries ~110-120g", "Burger ~160g", "Coffee ~190ml"];
+
+      const reconciled = reconcileFoodPortions(foods, visibleItems);
+      expect(reconciled[0]).toEqual({ name: "French Fries", quantity: 115, unit: "g", confidence: 0.92 });
+      expect(reconciled[1]).toEqual({ name: "Burger", quantity: 160, unit: "g", confidence: 0.95 });
+      expect(reconciled[2]).toEqual({ name: "Coffee", quantity: 190, unit: "ml", confidence: 0.62 });
+    });
+  });
+
+  describe("Phase 2B.1: Portion Propagation, No Fake 100g & Deterministic Scaling", () => {
+    it("PORTION PROPAGATION: passes detected portions (120g fries, 160g burger, 190ml coffee) to estimator", async () => {
+      const items: InputFoodItem[] = [
+        { name: "French Fries", quantity: 120, unit: "g", confidence: 0.92 },
+        { name: "Burger", quantity: 160, unit: "g", confidence: 0.95 },
+        { name: "Coffee", quantity: 190, unit: "ml", confidence: 0.62 },
+      ];
+
+      let capturedPrompt = "";
+      const mockProvider = vi.fn().mockImplementation(async (input) => {
+        capturedPrompt = input.userPrompt;
+        return {
+          rawContent: JSON.stringify({
+            items: [
+              {
+                foodName: "French Fries",
+                basis: "per_100g",
+                calories: 300,
+                proteinG: 3,
+                carbsG: 40,
+                fatG: 15,
+                fiberG: 3,
+              },
+              {
+                foodName: "Burger",
+                basis: "per_100g",
+                calories: 250,
+                proteinG: 12,
+                carbsG: 25,
+                fatG: 12,
+                fiberG: 2,
+              },
+              {
+                foodName: "Coffee",
+                basis: "per_100ml",
+                calories: 15,
+                proteinG: 1,
+                carbsG: 2,
+                fatG: 0.5,
+              },
+            ],
+          }),
+          usage: { promptTokens: 150, completionTokens: 60, totalTokens: 210, latencyMs: 200, estimatedCostUsd: 0.0002 },
+        };
+      });
+
+      const estimatedMap = await estimateNutritionBatch(items, { providerFn: mockProvider });
+
+      // Verify the prompt contains the portions
+      expect(capturedPrompt).toContain('120g - please estimate standard nutrition per 100g');
+      expect(capturedPrompt).toContain('160g - please estimate standard nutrition per 100g');
+      expect(capturedPrompt).toContain('190ml - please estimate standard nutrition per 100ml');
+
+      // Verify deterministic scaling:
+      // French Fries: 300 kcal/100g * 1.2 = 360 kcal
+      const fries = estimatedMap.get("French Fries");
+      expect(fries?.calories).toBe(360);
+      expect(fries?.grams).toBe(120);
+      expect(fries?.basis).toBe("per_100g");
+
+      // Burger: 250 kcal/100g * 1.6 = 400 kcal
+      const burger = estimatedMap.get("Burger");
+      expect(burger?.calories).toBe(400);
+      expect(burger?.grams).toBe(160);
+
+      // Coffee: 15 kcal/100ml * 1.9 = 29 kcal
+      const coffee = estimatedMap.get("Coffee");
+      expect(coffee?.calories).toBe(29);
+      expect(coffee?.grams).toBe(190);
+    });
+
+    it("NO FAKE 100g FALLBACK: unknown food with unit 'serving' has grams === null, never 100g", () => {
+      const result = calculateMealNutrition([
+        {
+          name: "Unknown Dish",
+          quantity: 1,
+          unit: "serving",
+          confidence: 0.75,
+          estimatedNutrition: {
+            calories: 320,
+            proteinG: 10,
+            carbsG: 40,
+            fatG: 12,
+            source: "ai_estimate",
+          },
+        },
+      ]);
+
+      expect(result.estimatedCount).toBe(1);
+      const item = result.items[0];
+      expect(item.nutritionStatus).toBe("estimated");
+      // MUST be null, NEVER 100!
+      expect(item.grams).toBeNull();
+      expect(item.calories).toBe(320);
+    });
+
+    it("PORTION IN GRAMS: unknown food with unit 'g' retains explicit gram weight", () => {
+      const result = calculateMealNutrition([
+        {
+          name: "Unknown Snack",
+          quantity: 120,
+          unit: "g",
+          confidence: 0.8,
+          estimatedNutrition: {
+            calories: 360,
+            proteinG: 6,
+            carbsG: 45,
+            fatG: 18,
+            source: "ai_estimate",
+          },
+        },
+      ]);
+
+      const item = result.items[0];
+      expect(item.grams).toBe(120);
+      expect(item.calories).toBe(360);
+    });
+
+    it("CANONICAL PORTION: canonical food retains canonical gram weight", () => {
+      const result = calculateMealNutrition([
+        { name: "Plain Roti", quantity: 2, unit: "piece", confidence: 0.95 },
+      ]);
+
+      const item = result.items[0];
+      expect(item.grams).toBe(60); // 2 * 30g per piece
+      expect(item.nutritionStatus).toBe("verified");
+    });
+
+    it("DETERMINISTIC SCALING: calculator scales per100g nutrition deterministically", () => {
+      const result = calculateMealNutrition([
+        {
+          name: "Custom Fries",
+          quantity: 120,
+          unit: "g",
+          confidence: 0.85,
+          estimatedNutrition: {
+            calories: 300, // per 100g base
+            proteinG: 3,
+            carbsG: 40,
+            fatG: 15,
+            fiberG: 3,
+            source: "ai_estimate",
+            calorieRange: { low: 270, high: 330 },
+            nutritionPer100g: {
+              calories: 300,
+              proteinG: 3,
+              carbsG: 40,
+              fatG: 15,
+              fiberG: 3,
+            },
+          },
+        },
+      ]);
+
+      const item = result.items[0];
+      // 120g / 100 = 1.2
+      // 300 * 1.2 = 360
+      // 3 * 1.2 = 4
+      // 40 * 1.2 = 48
+      // 15 * 1.2 = 18
+      // 3 * 1.2 = 4
+      expect(item.calories).toBe(360);
+      expect(item.proteinG).toBe(4);
+      expect(item.carbsG).toBe(48);
+      expect(item.fatG).toBe(18);
+      expect(item.fiberG).toBe(4);
+      expect(item.grams).toBe(120);
+      expect(item.calorieRange).toEqual({ low: 324, high: 396 });
+    });
+  });
+});

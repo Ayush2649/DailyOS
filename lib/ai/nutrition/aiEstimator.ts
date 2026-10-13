@@ -26,23 +26,34 @@ Given a list of identified food items with quantities and units, estimate realis
 
 CRITICAL RULES:
 - Provide estimates for ONLY the requested foods.
+- For items measured in grams ('g' or 'grams'), provide standard nutritional values per 100g and set basis="per_100g" (or provide values in nutritionPer100g).
+- For items measured in milliliters ('ml'), provide nutritional values per 100ml and set basis="per_100ml".
+- For countable or serving-based items (pieces, katori, bowl, plate, cup, serving), provide nutritional values per 1 unit/serving and set basis="per_unit" or "per_serving".
 - For each food, return realistic calories, proteinG, carbsG, fatG, and optional fiberG (all non-negative numbers).
 - Return a realistic calorieRange {low, high} reflecting cooking and oil variance (low > 0, high >= low).
 - Ensure calories are physically consistent with macros (~4 kcal/g protein, ~4 kcal/g carbs, ~9 kcal/g fat).
-- Do NOT include any personal user info or extraneous conversational text.
+- Do NOT include any personal user info, commentary, or extraneous text. Output compact JSON only.
 
 Return ONLY a JSON object matching this schema:
 {
   "items": [
     {
       "foodName": "<exact name from the request>",
+      "basis": "per_100g"|"per_100ml"|"per_unit"|"per_serving",
       "calories": <positive number>,
       "proteinG": <non-negative number>,
       "carbsG": <non-negative number>,
       "fatG": <non-negative number>,
       "fiberG": <non-negative number>,
       "calorieRange": {"low": <positive number>, "high": <positive number>},
-      "confidence": <float 0.0 to 1.0>
+      "confidence": <float 0.0 to 1.0>,
+      "nutritionPer100g": {
+        "calories": <positive number>,
+        "proteinG": <non-negative number>,
+        "carbsG": <non-negative number>,
+        "fatG": <non-negative number>,
+        "fiberG": <non-negative number>
+      }
     }
   ]
 }`;
@@ -51,6 +62,7 @@ Return ONLY a JSON object matching this schema:
 
 export const AiNutritionItemSchema = z.object({
   foodName: z.string().min(1),
+  basis: z.enum(["per_100g", "per_100ml", "per_unit", "per_serving"]).optional(),
   calories: z.number().finite().positive(),
   proteinG: z.number().finite().nonnegative(),
   carbsG: z.number().finite().nonnegative(),
@@ -63,6 +75,33 @@ export const AiNutritionItemSchema = z.object({
     })
     .optional(),
   confidence: z.number().finite().min(0).max(1).optional(),
+  nutritionPer100g: z
+    .object({
+      calories: z.number().finite().positive(),
+      proteinG: z.number().finite().nonnegative(),
+      carbsG: z.number().finite().nonnegative(),
+      fatG: z.number().finite().nonnegative(),
+      fiberG: z.number().finite().nonnegative().optional(),
+    })
+    .optional(),
+  nutritionPer100ml: z
+    .object({
+      calories: z.number().finite().positive(),
+      proteinG: z.number().finite().nonnegative(),
+      carbsG: z.number().finite().nonnegative(),
+      fatG: z.number().finite().nonnegative(),
+      fiberG: z.number().finite().nonnegative().optional(),
+    })
+    .optional(),
+  nutritionPerUnit: z
+    .object({
+      calories: z.number().finite().positive(),
+      proteinG: z.number().finite().nonnegative(),
+      carbsG: z.number().finite().nonnegative(),
+      fatG: z.number().finite().nonnegative(),
+      fiberG: z.number().finite().nonnegative().optional(),
+    })
+    .optional(),
 });
 
 export const AiNutritionBatchSchema = z.object({
@@ -145,6 +184,15 @@ export interface EstimatedNutritionResult {
   fiberG?: number;
   source: "ai_estimate";
   calorieRange?: { low: number; high: number };
+  grams?: number | null;
+  basis?: "per_100g" | "per_100ml" | "per_unit" | "per_serving";
+  nutritionPer100g?: {
+    calories: number;
+    proteinG: number;
+    carbsG: number;
+    fatG: number;
+    fiberG?: number;
+  };
 }
 
 // ── Batch Estimator ───────────────────────────────────────────────────────────
@@ -166,11 +214,21 @@ export async function estimateNutritionBatch(
 
   // Build compact batch prompt without sending user PII
   const foodList = items
-    .map((f, idx) => `${idx + 1}. "${f.name.trim()}" (quantity: ${f.quantity ?? 1} ${f.unit || "serving"})`)
+    .map((f, idx) => {
+      const u = (f.unit || "serving").toLowerCase().trim();
+      const isGram = u === "g" || u === "gram" || u === "grams";
+      const isMl = u === "ml" || u === "milliliter" || u === "milliliters";
+      const hint = isGram
+        ? `[portion: ${f.quantity ?? 1}g - please estimate standard nutrition per 100g]`
+        : isMl
+        ? `[portion: ${f.quantity ?? 1}ml - please estimate standard nutrition per 100ml]`
+        : `[quantity: ${f.quantity ?? 1} ${f.unit || "serving"}]`;
+      return `${idx + 1}. "${f.name.trim()}" ${hint}`;
+    })
     .join("\n");
   const userPrompt = `Estimate nutritional values for the following food items:\n${foodList}`;
 
-  let rawOutput: DeepSeekEstimateNutritionOutput;
+  let rawOutput: DeepSeekEstimateNutritionOutput | undefined;
   try {
     rawOutput = await provider({
       systemPrompt: NUTRITION_ESTIMATION_SYSTEM_PROMPT,
@@ -178,6 +236,10 @@ export async function estimateNutritionBatch(
       userKey: opts?.userKey,
       timeoutMs: opts?.timeoutMs,
     });
+    if (rawOutput) {
+      (resultMap as any).calls = rawOutput.calls || [];
+      (resultMap as any).retryBackoffMs = rawOutput.retryBackoffMs || 0;
+    }
   } catch (err: any) {
     console.warn("[aiEstimator] Provider call failed:", err?.message || err);
     // Provider failure -> entire batch becomes unresolved
@@ -222,20 +284,136 @@ export async function estimateNutritionBatch(
       continue;
     }
 
-    resultMap.set(requested.name, {
-      calories: Math.round(matched.calories),
-      proteinG: Math.round(matched.proteinG),
-      carbsG: Math.round(matched.carbsG),
-      fatG: Math.round(matched.fatG),
-      fiberG: matched.fiberG !== undefined ? Math.round(matched.fiberG) : undefined,
-      source: "ai_estimate",
-      calorieRange: matched.calorieRange
+    const u = (requested.unit || "serving").toLowerCase().trim();
+    const isGram = u === "g" || u === "gram" || u === "grams";
+    const isMl = u === "ml" || u === "milliliter" || u === "milliliters";
+
+    if (isGram) {
+      const detectedGrams = requested.quantity ?? 100;
+      const factor = detectedGrams / 100;
+      const p100 = matched.nutritionPer100g || {
+        calories: matched.calories,
+        proteinG: matched.proteinG,
+        carbsG: matched.carbsG,
+        fatG: matched.fatG,
+        fiberG: matched.fiberG,
+      };
+
+      const scaledCals = Math.round(p100.calories * factor);
+      const scaledProt = Math.round(p100.proteinG * factor);
+      const scaledCarbs = Math.round(p100.carbsG * factor);
+      const scaledFat = Math.round(p100.fatG * factor);
+      const scaledFib = p100.fiberG !== undefined ? Math.round(p100.fiberG * factor) : undefined;
+      const scaledRange = matched.calorieRange
         ? {
-            low: Math.round(matched.calorieRange.low),
-            high: Math.round(matched.calorieRange.high),
+            low: Math.round(matched.calorieRange.low * factor),
+            high: Math.round(matched.calorieRange.high * factor),
           }
-        : undefined,
-    });
+        : undefined;
+
+      resultMap.set(requested.name, {
+        calories: scaledCals,
+        proteinG: scaledProt,
+        carbsG: scaledCarbs,
+        fatG: scaledFat,
+        fiberG: scaledFib,
+        source: "ai_estimate",
+        calorieRange: scaledRange,
+        grams: detectedGrams,
+        basis: "per_100g",
+        nutritionPer100g: {
+          calories: Math.round(p100.calories),
+          proteinG: Math.round(p100.proteinG),
+          carbsG: Math.round(p100.carbsG),
+          fatG: Math.round(p100.fatG),
+          fiberG: p100.fiberG !== undefined ? Math.round(p100.fiberG) : undefined,
+        },
+      });
+    } else if (isMl) {
+      const detectedMl = requested.quantity ?? 100;
+      const factor = detectedMl / 100;
+      const p100ml = matched.nutritionPer100ml || {
+        calories: matched.calories,
+        proteinG: matched.proteinG,
+        carbsG: matched.carbsG,
+        fatG: matched.fatG,
+        fiberG: matched.fiberG,
+      };
+
+      const scaledCals = Math.round(p100ml.calories * factor);
+      const scaledProt = Math.round(p100ml.proteinG * factor);
+      const scaledCarbs = Math.round(p100ml.carbsG * factor);
+      const scaledFat = Math.round(p100ml.fatG * factor);
+      const scaledFib = p100ml.fiberG !== undefined ? Math.round(p100ml.fiberG * factor) : undefined;
+      const scaledRange = matched.calorieRange
+        ? {
+            low: Math.round(matched.calorieRange.low * factor),
+            high: Math.round(matched.calorieRange.high * factor),
+          }
+        : undefined;
+
+      resultMap.set(requested.name, {
+        calories: scaledCals,
+        proteinG: scaledProt,
+        carbsG: scaledCarbs,
+        fatG: scaledFat,
+        fiberG: scaledFib,
+        source: "ai_estimate",
+        calorieRange: scaledRange,
+        grams: detectedMl,
+        basis: "per_100ml",
+      });
+    } else {
+      // Non-gram, non-ml (e.g. piece, plate, katori, serving)
+      const qty = requested.quantity ?? 1;
+      let scaledCals: number;
+      let scaledProt: number;
+      let scaledCarbs: number;
+      let scaledFat: number;
+      let scaledFib: number | undefined;
+      let scaledRange: { low: number; high: number } | undefined;
+
+      if (matched.nutritionPerUnit && qty !== 1) {
+        scaledCals = Math.round(matched.nutritionPerUnit.calories * qty);
+        scaledProt = Math.round(matched.nutritionPerUnit.proteinG * qty);
+        scaledCarbs = Math.round(matched.nutritionPerUnit.carbsG * qty);
+        scaledFat = Math.round(matched.nutritionPerUnit.fatG * qty);
+        scaledFib =
+          matched.nutritionPerUnit.fiberG !== undefined
+            ? Math.round(matched.nutritionPerUnit.fiberG * qty)
+            : undefined;
+        scaledRange = matched.calorieRange
+          ? {
+              low: Math.round(matched.calorieRange.low * qty),
+              high: Math.round(matched.calorieRange.high * qty),
+            }
+          : undefined;
+      } else {
+        scaledCals = Math.round(matched.calories);
+        scaledProt = Math.round(matched.proteinG);
+        scaledCarbs = Math.round(matched.carbsG);
+        scaledFat = Math.round(matched.fatG);
+        scaledFib = matched.fiberG !== undefined ? Math.round(matched.fiberG) : undefined;
+        scaledRange = matched.calorieRange
+          ? {
+              low: Math.round(matched.calorieRange.low),
+              high: Math.round(matched.calorieRange.high),
+            }
+          : undefined;
+      }
+
+      resultMap.set(requested.name, {
+        calories: scaledCals,
+        proteinG: scaledProt,
+        carbsG: scaledCarbs,
+        fatG: scaledFat,
+        fiberG: scaledFib,
+        source: "ai_estimate",
+        calorieRange: scaledRange,
+        grams: null, // Unknown non-canonical serving/unit -> grams must be null!
+        basis: matched.basis ?? "per_serving",
+      });
+    }
   }
 
   return resultMap;

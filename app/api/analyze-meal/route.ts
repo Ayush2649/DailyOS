@@ -12,6 +12,7 @@ import {
   getMealVisionProvider,
   PhotoUnavailableError,
 } from "@/lib/ai/providers";
+import { parsePortionFromText, cleanDishName } from "@/lib/ai/providers/common";
 
 export const maxDuration = 30;
 
@@ -125,9 +126,12 @@ export async function POST(req: NextRequest) {
 
   const userId = (session?.user as any)?.id || session?.user?.email || "anonymous";
 
+  const tServer0 = performance.now();
+
   // Server-side image preprocessing & downscaling
   let scaledBase64 = imageBase64;
   let scaledMime = mimeType;
+  const tPrep0 = performance.now();
   try {
     const preprocessed = await preprocessMealImage(imageBase64, mimeType);
     scaledBase64 = preprocessed.base64;
@@ -135,6 +139,7 @@ export async function POST(req: NextRequest) {
   } catch (prepErr: any) {
     console.warn("[analyze-meal] Preprocessing warning, using raw buffer:", prepErr?.message);
   }
+  const imagePrepMs = performance.now() - tPrep0;
 
   try {
     let visionData: {
@@ -144,7 +149,9 @@ export async function POST(req: NextRequest) {
       ambiguity: "low" | "medium" | "high";
       notes: string;
     };
+    let visionResultRaw: any = null;
 
+    const tVision0 = performance.now();
     if (GROQ_VISION_ENABLED) {
       // ── Optional Groq Qwen Vision Path (behind GROQ_VISION_ENABLED flag) ──
       const userPromptText =
@@ -173,13 +180,27 @@ export async function POST(req: NextRequest) {
         schemaName: "analyze-meal-vision",
         feature: "analyzeMeal",
       });
+      visionResultRaw = visionResult;
       visionData = {
-        foods: visionResult.data.visibleItems.map((item) => ({
-          name: item,
-          quantity: 1,
-          unit: "serving",
-          confidence: 0.6,
-        })),
+        foods: visionResult.data.visibleItems.map((item) => {
+          const portion = parsePortionFromText(item);
+          const name =
+            cleanDishName(
+              item
+                .replace(
+                  /(?:~|approx\.?|about)?\s*\d+(?:\.\d+)?\s*(?:(?:-|to)\s*\d+(?:\.\d+)?\s*)?(?:g|grams?|ml|milliliters?|katori|bowl|plate|cup|glass|piece|pieces|slice|slices|tbsp|tsp|serving|servings)\b/gi,
+                  ""
+                )
+                .replace(/[()]/g, "")
+                .trim()
+            ) || cleanDishName(item);
+          return {
+            name,
+            quantity: portion?.quantity ?? 1,
+            unit: portion?.unit ?? "serving",
+            confidence: 0.6,
+          };
+        }),
         candidates: visionResult.data.candidates,
         visibleItems: visionResult.data.visibleItems,
         ambiguity: visionResult.data.ambiguity,
@@ -194,6 +215,7 @@ export async function POST(req: NextRequest) {
         hint,
         userKey: userId,
       });
+      visionResultRaw = visionResult;
 
       visionData = {
         foods: visionResult.foods,
@@ -203,6 +225,7 @@ export async function POST(req: NextRequest) {
         notes: visionResult.notes,
       };
     }
+    const visionProviderMs = performance.now() - tVision0;
 
     // Flatbread rule: check visible items and candidates for flatbread presence
     const hasFlatbread =
@@ -243,15 +266,73 @@ export async function POST(req: NextRequest) {
     const nutritionFoods: InputFoodItem[] =
       visionData.foods && visionData.foods.length > 0
         ? visionData.foods
-        : visionData.visibleItems.map((item) => ({ name: item, quantity: 1, unit: "serving" }));
+        : visionData.visibleItems.map((item) => {
+            const portion = parsePortionFromText(item);
+            const name =
+              cleanDishName(
+                item
+                  .replace(
+                    /(?:~|approx\.?|about)?\s*\d+(?:\.\d+)?\s*(?:(?:-|to)\s*\d+(?:\.\d+)?\s*)?(?:g|grams?|ml|milliliters?|katori|bowl|plate|cup|glass|piece|pieces|slice|slices|tbsp|tsp|serving|servings)\b/gi,
+                    ""
+                  )
+                  .replace(/[()]/g, "")
+                  .trim()
+              ) || cleanDishName(item);
+            return {
+              name,
+              quantity: portion?.quantity ?? 1,
+              unit: portion?.unit ?? "serving",
+            };
+          });
 
+    const tDb0 = performance.now();
     const routed = routeFoodItems(nutritionFoods);
+    const dbLookupMs = performance.now() - tDb0;
+
+    const tEst0 = performance.now();
     const estimatedMap = routed.aiEligible.length > 0
       ? await estimateNutritionBatch(routed.aiEligible, { userKey: userId })
       : new Map();
+    const nutritionEstimationMs = performance.now() - tEst0;
+
     const finalFoods = mergeRoutedNutrition(routed, estimatedMap);
 
+    const tCalc0 = performance.now();
     const nutritionResult = calculateMealNutrition(finalFoods, primaryCandidate.name);
+    const nutritionCalcMs = performance.now() - tCalc0;
+
+    const totalServerMs = performance.now() - tServer0;
+
+    const retryBackoffMs =
+      (visionResultRaw?.retryBackoffMs ?? 0) +
+      ((estimatedMap as any)?.retryBackoffMs ?? 0);
+
+    const stageTimings = {
+      imagePrepMs: Math.round(imagePrepMs * 10) / 10,
+      visionProviderMs: Math.round(visionProviderMs * 10) / 10,
+      dbLookupMs: Math.round(dbLookupMs * 10) / 10,
+      nutritionEstimationMs: Math.round(nutritionEstimationMs * 10) / 10,
+      nutritionCalcMs: Math.round(nutritionCalcMs * 10) / 10,
+      totalServerMs: Math.round(totalServerMs * 10) / 10,
+      retryBackoffMs: Math.round(retryBackoffMs * 10) / 10,
+    };
+
+    const apiCalls = [
+      ...(visionResultRaw?.calls || []),
+      ...((estimatedMap as any)?.calls || []),
+    ];
+
+    try {
+      console.info(
+        JSON.stringify({
+          type: "meal_analysis_trace",
+          dish: primaryCandidate.name,
+          timings: stageTimings,
+          apiCallCount: apiCalls.length,
+          apiCalls,
+        })
+      );
+    } catch {}
 
     // Response preserves all fields required by DietPage.tsx frontend, enriched with candidate & range details
     return NextResponse.json({
@@ -276,6 +357,8 @@ export async function POST(req: NextRequest) {
       estimatedCount: nutritionResult.estimatedCount,
       verifiedCount: nutritionResult.verifiedCount,
       hasIncompleteNutrition: nutritionResult.hasIncompleteNutrition,
+      timings: stageTimings,
+      calls: apiCalls,
       ...(needsClarification ? { needsClarification } : {}),
     });
   } catch (err: any) {

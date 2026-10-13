@@ -34,6 +34,15 @@ export interface InputFoodItem {
     fiberG?: number;
     source?: NutritionSource;
     calorieRange?: { low: number; high: number };
+    grams?: number | null;
+    basis?: "per_100g" | "per_100ml" | "per_unit" | "per_serving";
+    nutritionPer100g?: {
+      calories: number;
+      proteinG: number;
+      carbsG: number;
+      fatG: number;
+      fiberG?: number;
+    };
   };
 }
 
@@ -124,7 +133,7 @@ export function normalizeQuantityToGrams(
   item: FoodCompositionItem | null,
   quantity = 1,
   unit = "serving"
-): number {
+): number | null {
   const q = Math.max(0.1, quantity);
   const u = (unit || "").toLowerCase().trim();
 
@@ -164,8 +173,8 @@ export function normalizeQuantityToGrams(
     return Math.round(q * item.gramsPerDefaultUnit);
   }
 
-  // Fallback for unknown items: assume ~100g per unit
-  return Math.round(q * 100);
+  // For non-canonical / unknown items: NEVER invent 100g for unknown servings/units!
+  return null;
 }
 
 // ── Deterministic Meal Nutrition Calculation ──────────────────────────────────
@@ -224,7 +233,7 @@ export function calculateMealNutrition(
     const unit = f.unit || (matched ? matched.defaultUnit : "serving");
 
     if (matched) {
-      const grams = normalizeQuantityToGrams(matched, qty, unit);
+      const grams = normalizeQuantityToGrams(matched, qty, unit) ?? Math.round(qty * matched.gramsPerDefaultUnit);
       const cals = Math.round((matched.per100g.calories * grams) / 100);
       const prot = Math.round((matched.per100g.proteinG * grams) / 100);
       const carb = Math.round((matched.per100g.carbsG * grams) / 100);
@@ -258,12 +267,38 @@ export function calculateMealNutrition(
     } else if (f.estimatedNutrition) {
       // Estimated nutrition provided: clearly labeled as "estimated" (never verified!)
       const est = f.estimatedNutrition;
-      const grams = normalizeQuantityToGrams(null, qty, unit);
-      const cals = Math.round(est.calories);
-      const prot = Math.round(est.proteinG ?? 0);
-      const carb = Math.round(est.carbsG ?? 0);
-      const fat = Math.round(est.fatG ?? 0);
-      const fib = Math.round(est.fiberG ?? 0);
+      const detectedGrams = normalizeQuantityToGrams(null, qty, unit);
+      const grams = detectedGrams ?? (typeof est.grams === "number" ? est.grams : null);
+      const u = (unit || "").toLowerCase().trim();
+
+      let cals: number;
+      let prot: number;
+      let carb: number;
+      let fat: number;
+      let fib: number;
+      let calRange = est.calorieRange;
+
+      if (est.nutritionPer100g && detectedGrams !== null && (u === "g" || u === "gram" || u === "grams")) {
+        const factor = detectedGrams / 100;
+        const p100 = est.nutritionPer100g;
+        cals = Math.round(p100.calories * factor);
+        prot = Math.round(p100.proteinG * factor);
+        carb = Math.round(p100.carbsG * factor);
+        fat = Math.round(p100.fatG * factor);
+        fib = p100.fiberG !== undefined ? Math.round(p100.fiberG * factor) : Math.round(est.fiberG ?? 0);
+        if (calRange) {
+          calRange = {
+            low: Math.round(calRange.low * factor),
+            high: Math.round(calRange.high * factor),
+          };
+        }
+      } else {
+        cals = Math.round(est.calories);
+        prot = Math.round(est.proteinG ?? 0);
+        carb = Math.round(est.carbsG ?? 0);
+        fat = Math.round(est.fatG ?? 0);
+        fib = Math.round(est.fiberG ?? 0);
+      }
 
       calculatedItems.push({
         name: rawName,
@@ -281,7 +316,7 @@ export function calculateMealNutrition(
         fiberG: fib,
         confidence: itemConf,
         verified: false, // Never mark estimated as verified!
-        calorieRange: est.calorieRange,
+        calorieRange: calRange,
       });
 
       totalCalories += cals;
@@ -366,7 +401,12 @@ export function calculateMealNutrition(
       hasUnresolvedItems ||
       unknownFoods.length > 0 ||
       totalCalories === 0 ||
-      (estimatedCount > 0 && avgConfidence < 0.7),
+      calculatedItems.some(
+        (item) =>
+          item.nutritionStatus === "estimated" &&
+          item.confidence != null &&
+          item.confidence < 0.7
+      ),
     hasUnresolvedItems,
     unresolvedCount,
     estimatedCount,
