@@ -18,9 +18,8 @@ export const THEMES = [
 ];
 
 /**
- * SATAT is Light-First and Light-Only.
- * ThemeProvider enforces SATAT Light across the application, neutralizes
- * any legacy theme classes or dark mode states, and guarantees consistent rendering.
+ * SATAT ThemeProvider
+ * Supports Dark-First default with full user persistence and system preference responsiveness.
  */
 type ThemeProviderProps = ComponentProps<typeof NextThemesProvider>;
 
@@ -36,8 +35,8 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
+      defaultTheme="dark"
+      enableSystem={true}
       disableTransitionOnChange
       {...props}
     >

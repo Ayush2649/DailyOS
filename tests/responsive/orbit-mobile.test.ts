@@ -17,20 +17,18 @@ describe("Orbit Visual Identity — Continuous Intelligent Motion", () => {
     });
   });
 
-  it("OrbitMark vector source uses single continuous proprietary path and NO central target circle", () => {
+  it("OrbitMark vector source renders celestial orbit architecture with elliptical ring, central core, and satellite", () => {
     const fs = require("fs");
     const path = require("path");
     const markSource = fs.readFileSync(path.resolve(__dirname, "../../components/orbit/OrbitMark.tsx"), "utf8");
 
-    // Must NOT contain circular bullseye / target circle
-    expect(markSource).not.toContain('<circle');
-    expect(markSource).not.toContain('cx="12"');
-
-    // Must contain single continuous path with stroke
-    expect(markSource).toContain('<path');
-    expect(markSource).toContain('stroke="currentColor"');
-    expect(markSource).toContain('strokeLinecap="round"');
-    expect(markSource).toContain('strokeLinejoin="round"');
+    // Must contain celestial orbit elements
+    expect(markSource).toContain("<ellipse");
+    expect(markSource).toContain('rx="9.4"');
+    expect(markSource).toContain('ry="4.6"');
+    expect(markSource).toContain("orbit-core");
+    expect(markSource).toContain("orbit-satellite");
+    expect(markSource).toContain("orbit-ring");
   });
 });
 

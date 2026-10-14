@@ -29,8 +29,8 @@ export default function AppearanceSettings() {
   }
 
   const options = [
-    { id: "light", label: "Light (Default)", icon: Sun },
-    { id: "dark", label: "Dark", icon: Moon },
+    { id: "dark", label: "Dark (Default)", icon: Moon },
+    { id: "light", label: "Light", icon: Sun },
     { id: "system", label: "System", icon: Laptop },
   ];
 
@@ -38,8 +38,8 @@ export default function AppearanceSettings() {
     <div
       className="rounded-2xl p-4 sm:p-5"
       style={{
-        background: "var(--satat-surface, #0D0F11)",
-        border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
       }}
     >
       <div className="mb-3">
@@ -47,7 +47,7 @@ export default function AppearanceSettings() {
           Interface Theme
         </h3>
         <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-          Choose your interface appearance. Light mode is default.
+          Choose your interface appearance. Dark mode is default.
         </p>
       </div>
 
@@ -61,8 +61,8 @@ export default function AppearanceSettings() {
               onClick={() => setTheme(id)}
               className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl text-xs font-semibold transition-all"
               style={{
-                background: isSelected ? "var(--brand-subtle)" : "var(--satat-surface-elevated, #121519)",
-                border: isSelected ? "1px solid var(--brand)" : "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+                background: isSelected ? "var(--brand-subtle)" : "var(--surface-elevated)",
+                border: isSelected ? "1px solid var(--brand)" : "1px solid var(--border-subtle)",
                 color: isSelected ? "var(--brand)" : "var(--text-secondary)",
               }}
             >

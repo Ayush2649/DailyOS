@@ -299,7 +299,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
         {/* Current streak */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
-            <Flame className="w-3.5 h-3.5" style={{ color: "var(--satat-peach, #F2A080)" }} />
+            <Flame className="w-3.5 h-3.5" style={{ color: "var(--warning)" }} />
             <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
               Streak
             </span>
@@ -312,7 +312,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
         {/* Best streak */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
-            <Trophy className="w-3.5 h-3.5" style={{ color: "var(--satat-warning, #E0AB57)" }} />
+            <Trophy className="w-3.5 h-3.5" style={{ color: "var(--warning)" }} />
             <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
               Best
             </span>
@@ -325,7 +325,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
         {/* This month active days */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
-            <Calendar className="w-3.5 h-3.5" style={{ color: "var(--satat-brand, #6E8BFF)" }} />
+            <Calendar className="w-3.5 h-3.5" style={{ color: "var(--brand)" }} />
             <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
               Month
             </span>
@@ -338,14 +338,14 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
         {/* Today status */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
-            <Clock className="w-3.5 h-3.5" style={{ color: activeDatesSet.has(todayStr) ? "var(--satat-mint, #63D2B8)" : "var(--text-muted)" }} />
+            <Clock className="w-3.5 h-3.5" style={{ color: activeDatesSet.has(todayStr) ? "var(--success)" : "var(--text-muted)" }} />
             <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
               Today
             </span>
           </div>
           <p
             className="text-xs font-semibold leading-tight flex items-center gap-1.5 mt-1"
-            style={{ color: activeDatesSet.has(todayStr) ? "var(--satat-mint, #63D2B8)" : "var(--text-secondary)" }}
+            style={{ color: activeDatesSet.has(todayStr) ? "var(--success)" : "var(--text-secondary)" }}
           >
             {activeDatesSet.has(todayStr) ? (
               <>
@@ -374,8 +374,8 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                   onClick={handleJumpToToday}
                   className="text-[11px] font-semibold px-2 py-0.5 rounded-full hover:underline"
                   style={{
-                    background: "rgba(110, 139, 255, 0.12)",
-                    color: "var(--satat-brand, #6E8BFF)",
+                    background: "var(--brand-subtle)",
+                    color: "var(--brand)",
                   }}
                 >
                   Jump to Today
@@ -434,16 +434,16 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                   className="h-9 sm:h-10 rounded-lg flex flex-col items-center justify-center relative transition-all"
                   style={{
                     background: isToday
-                      ? "rgba(110, 139, 255, 0.15)"
+                      ? "var(--brand-subtle)"
                       : isSelected
-                      ? "var(--satat-surface-elevated, #121519)"
+                      ? "var(--surface-elevated)"
                       : isActive
-                      ? "rgba(99, 210, 184, 0.08)"
+                      ? "rgba(34, 197, 94, 0.08)"
                       : "transparent",
                     border: isToday
-                      ? "1.5px solid var(--satat-brand, #6E8BFF)"
+                      ? "1.5px solid var(--brand)"
                       : isSelected
-                      ? "1px solid var(--satat-border-strong, rgba(255,255,255,0.15))"
+                      ? "1px solid var(--border-strong)"
                       : "1px solid transparent",
                     opacity: isFuture ? 0.35 : 1,
                   }}
@@ -452,7 +452,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                     className="text-xs font-semibold tabular-nums leading-none"
                     style={{
                       color: isToday
-                        ? "var(--satat-brand, #6E8BFF)"
+                        ? "var(--brand)"
                         : isFuture
                         ? "var(--text-muted)"
                         : "var(--text-primary)",
@@ -467,7 +467,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                       <span
                         className="w-1.5 h-1.5 rounded-full"
                         style={{
-                          background: isToday ? "var(--satat-brand, #6E8BFF)" : "var(--satat-mint, #63D2B8)",
+                          background: isToday ? "var(--brand)" : "var(--success)",
                         }}
                       />
                     )}
@@ -482,8 +482,8 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
             <div
               className="p-3 rounded-xl mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs"
               style={{
-                background: "var(--satat-surface-elevated, #121519)",
-                border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
+                background: "var(--surface-elevated)",
+                border: "1px solid var(--border-subtle)",
               }}
             >
               <div className="flex items-center gap-2">
@@ -493,7 +493,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                 {selectedDetails.isToday && (
                   <span
                     className="text-[10px] font-semibold px-1.5 py-0.2 rounded"
-                    style={{ background: "rgba(110, 139, 255, 0.15)", color: "var(--satat-brand, #6E8BFF)" }}
+                    style={{ background: "var(--brand-subtle)", color: "var(--brand)" }}
                   >
                     Today
                   </span>
@@ -507,7 +507,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
 
               <div className="flex items-center gap-3 flex-wrap">
                 {selectedDetails.hasWorkout ? (
-                  <span style={{ color: "var(--satat-brand, #6E8BFF)" }}>
+                  <span style={{ color: "var(--brand)" }}>
                     💪 Workout ({selectedDetails.session?.exercises.length || 0} ex)
                   </span>
                 ) : (
@@ -515,7 +515,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                 )}
 
                 {selectedDetails.tasksDone > 0 ? (
-                  <span style={{ color: "var(--satat-mint, #63D2B8)" }}>
+                  <span style={{ color: "var(--success)" }}>
                     ✓ {selectedDetails.tasksDone} {selectedDetails.tasksDone === 1 ? "task" : "tasks"}
                   </span>
                 ) : (
@@ -523,7 +523,7 @@ export default function ActivityHeatmap({ sessions, tasks, allMeals, loading }: 
                 )}
 
                 {selectedDetails.calories > 0 ? (
-                  <span style={{ color: "var(--satat-peach, #F2A080)" }}>
+                  <span style={{ color: "var(--warning)" }}>
                     🥗 {Math.round(selectedDetails.calories)} kcal
                   </span>
                 ) : (
@@ -635,10 +635,10 @@ function AnnualHeatmapGrid({
   };
 
   const LEVEL_BG = [
-    "var(--satat-surface-elevated, #121519)",
-    "rgba(110, 139, 255, 0.25)",
-    "rgba(99, 210, 184, 0.45)",
-    "var(--satat-mint, #63D2B8)",
+    "var(--surface-elevated)",
+    "rgba(79, 107, 255, 0.25)",
+    "rgba(79, 107, 255, 0.55)",
+    "var(--brand)",
   ];
 
   return (
@@ -679,9 +679,9 @@ function AnnualHeatmapGrid({
                     width: CELL,
                     height: CELL,
                     borderRadius: 2,
-                    background: isFuture ? "var(--satat-surface-elevated, #121519)" : LEVEL_BG[level],
+                    background: isFuture ? "var(--surface-elevated)" : LEVEL_BG[level],
                     opacity: isFuture ? 0.2 : 1,
-                    outline: isToday ? "1.5px solid var(--satat-brand, #6E8BFF)" : undefined,
+                    outline: isToday ? "1.5px solid var(--brand)" : undefined,
                     outlineOffset: "1px",
                   }}
                 />

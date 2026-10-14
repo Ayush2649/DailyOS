@@ -28,13 +28,13 @@ function ActionButton({ action, onExecute }: ActionButtonProps) {
         href={action.href}
         className={`${baseClasses} ${
           action.primary
-            ? "bg-brand text-black hover:opacity-90 shadow-sm"
-            : "border text-primary hover:bg-white/5"
+            ? "shadow-sm hover:opacity-90"
+            : "border hover:bg-white/5"
         }`}
         style={
           action.primary
-            ? { backgroundColor: "var(--satat-brand, #6E8BFF)", color: "#000000" }
-            : { borderColor: "var(--border, rgba(255,255,255,0.08))", color: "var(--text-primary)" }
+            ? { backgroundColor: "var(--brand)", color: "var(--brand-text)" }
+            : { borderColor: "var(--border)", color: "var(--text-primary)" }
         }
       >
         {content}
@@ -48,13 +48,13 @@ function ActionButton({ action, onExecute }: ActionButtonProps) {
       onClick={() => onExecute?.(action)}
       className={`${baseClasses} ${
         action.primary
-          ? "bg-brand text-black hover:opacity-90 shadow-sm"
-          : "border text-primary hover:bg-white/5"
+          ? "shadow-sm hover:opacity-90"
+          : "border hover:bg-white/5"
       }`}
       style={
         action.primary
-          ? { backgroundColor: "var(--satat-brand, #6E8BFF)", color: "#000000" }
-          : { borderColor: "var(--border, rgba(255,255,255,0.08))", color: "var(--text-primary)" }
+          ? { backgroundColor: "var(--brand)", color: "var(--brand-text)" }
+          : { borderColor: "var(--border)", color: "var(--text-primary)" }
       }
     >
       {content}
@@ -88,38 +88,38 @@ export function OrbitRecommendationCard({
     <div
       className="mt-3 p-3.5 rounded-xl border select-none transition-all"
       style={{
-        background: "var(--surface-elevated, #14171A)",
-        borderColor: "var(--border, rgba(255, 255, 255, 0.08))",
+        background: "var(--surface-elevated)",
+        borderColor: "var(--border)",
       }}
     >
       <div className="flex items-center gap-2 mb-1.5">
         <div
           className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
-          style={{ background: "rgba(110, 139, 255, 0.12)" }}
+          style={{ background: "var(--brand-subtle)" }}
         >
           {getCategoryIcon()}
         </div>
         <span
           className="text-[10px] font-bold uppercase tracking-wider"
-          style={{ color: "var(--satat-brand, #6E8BFF)" }}
+          style={{ color: "var(--brand)" }}
         >
           {recommendation.category} Recommendation
         </span>
       </div>
 
       <div className="space-y-1">
-        <h4 className="text-sm font-semibold" style={{ color: "var(--text-primary, #F2F3F0)" }}>
+        <h4 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
           {recommendation.title}
         </h4>
         {recommendation.subtitle && (
-          <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary, #AEB3B0)" }}>
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
             {recommendation.subtitle}
           </p>
         )}
       </div>
 
       {recommendation.details && recommendation.details.length > 0 && (
-        <ul className="mt-2 space-y-1 text-xs" style={{ color: "var(--text-muted, #7F8682)" }}>
+        <ul className="mt-2 space-y-1 text-xs" style={{ color: "var(--text-muted)" }}>
           {recommendation.details.map((d, idx) => (
             <li key={idx} className="flex items-start gap-1.5">
               <span className="w-1 h-1 rounded-full bg-brand mt-1.5 shrink-0" />
@@ -150,28 +150,28 @@ export function OrbitInsightCard({ insight, onExecuteAction }: OrbitInsightCardP
     <div
       className="p-3.5 rounded-xl border space-y-2 select-none"
       style={{
-        background: "var(--surface-elevated, #14171A)",
-        borderColor: "var(--border, rgba(255, 255, 255, 0.08))",
+        background: "var(--surface-elevated)",
+        borderColor: "var(--border)",
       }}
     >
       <div className="flex items-center gap-2">
         <div
           className="w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: "var(--satat-brand, #6E8BFF)" }}
-        />
+          style={{ backgroundColor: "var(--brand)" }}
+        ></div>
         <span
           className="text-[10px] font-bold uppercase tracking-wider"
-          style={{ color: "var(--satat-brand, #6E8BFF)" }}
+          style={{ color: "var(--brand)" }}
         >
-          Orbit Insight · {insight.category}
+          Orbit Insight : {insight.category}
         </span>
       </div>
 
-      <h4 className="text-xs font-semibold" style={{ color: "var(--text-primary, #F2F3F0)" }}>
+      <h4 className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
         {insight.title}
       </h4>
 
-      <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary, #AEB3B0)" }}>
+      <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
         {insight.content}
       </p>
 
