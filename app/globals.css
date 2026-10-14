@@ -407,75 +407,323 @@ button:disabled { cursor: not-allowed; }
 .badge-danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .badge-info { color: var(--info); background: color-mix(in srgb, var(--info) 12%, transparent); }
 
-/* ── Animations ── */
+/* ── Motion & Animation System ── */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-distance-md, 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--motion-distance-md, 8px)));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(var(--motion-scale-sm, 0.97));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-distance-sm, 4px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes shimmer {
   from { background-position: -200% 0; }
   to { background-position: 200% 0; }
 }
+
 @keyframes progress-fill {
   from { width: 0%; }
 }
+
 @keyframes countup {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes checkmark {
-  0% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% { opacity: 0.6; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-.animate-fade-in { animation: fadeIn 0.14s ease-out both; }
-.animate-slide-up { animation: fadeIn 0.14s ease-out both; }
-.animate-slide-down { animation: fadeIn 0.14s ease-out both; }
-.animate-scale-in { animation: fadeIn 0.14s ease-out both; }
-.animate-progress { animation: progress-fill 0.35s ease-out both; }
-.animate-checkmark { animation: checkmark 0.16s ease-out both; }
+.animate-fade-in { animation: fadeIn var(--duration-normal, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+.animate-slide-up { animation: slideUp var(--duration-normal, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+.animate-slide-down { animation: slideDown var(--duration-normal, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+.animate-scale-in { animation: scaleIn var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+.animate-rise { animation: rise var(--duration-normal, 250ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+.animate-progress { animation: progress-fill var(--duration-emphasis, 600ms) var(--ease-in-out, cubic-bezier(0.65, 0, 0.35, 1)) both; }
+.animate-checkmark { animation: checkmark var(--duration-fast, 150ms) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both; }
 
 /* ── Task completion micro-animation ──────────────────────────────────────── */
 /* 1. Icon: springy scale-up + overshoot + settle */
 @keyframes check-pop {
-  0%   { opacity: 0.7; }
-  100% { opacity: 1; }
+  0%   { opacity: 0.7; transform: scale(0.85); }
+  60%  { opacity: 1; transform: scale(var(--motion-scale-pop, 1.05)); }
+  100% { opacity: 1; transform: scale(1); }
 }
 /* 2. Ripple ring: expands outward and fades */
 @keyframes completion-ripple {
   0%   { transform: scale(0.9); opacity: 0.16; }
   100% { transform: scale(1.2); opacity: 0; }
 }
-/* 3. Card: brief green glow ring */
+/* 3. Card: brief subtle accent glow ring */
 @keyframes task-complete-glow {
   0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  45% { box-shadow: 0 0 0 2px var(--accent-soft); }
+  45% { box-shadow: 0 0 0 2px var(--brand-subtle, rgba(79, 107, 255, 0.18)); }
 }
-.animate-check-pop  { animation: check-pop 0.18s ease-out both; }
+.animate-check-pop  { animation: check-pop var(--duration-fast, 150ms) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both; }
 .animate-ripple     { animation: completion-ripple 0.2s ease-out forwards; }
 .completing-glow    { animation: task-complete-glow 0.22s ease-out forwards; }
 
-/* ── Bold & expressive motion primitives ── */
-.animate-rise { animation: fadeIn 0.14s ease-out both; }
-
 /* Tactile press — apply to any interactive element */
-.pressable { transition: color 0.14s ease, background-color 0.14s ease; }
-.pressable:active { filter: brightness(0.97); }
+.pressable {
+  transition: transform var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+              background-color var(--duration-instant, 100ms) ease,
+              border-color var(--duration-instant, 100ms) ease;
+}
+.pressable:active {
+  transform: scale(var(--motion-scale-press, 0.98));
+}
 
-/* Staggered children */
+/* Staggered children choreography */
 .stagger > * { animation-delay: 0ms; }
-.stagger > *:nth-child(2) { animation-delay: 20ms; }
-.stagger > *:nth-child(3) { animation-delay: 40ms; }
-.stagger > *:nth-child(4) { animation-delay: 60ms; }
-.stagger > *:nth-child(5) { animation-delay: 80ms; }
-.stagger > *:nth-child(6) { animation-delay: 100ms; }
-.stagger > *:nth-child(7) { animation-delay: 120ms; }
-.stagger > *:nth-child(8) { animation-delay: 140ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(7) { animation-delay: 240ms; }
+.stagger > *:nth-child(8) { animation-delay: 280ms; }
 
-/* Respect reduced-motion preference */
+/* Respect reduced-motion preference: suppress non-essential animations & long transitions */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    /* Reduced-motion: let native transitions run; removed forced !important overrides */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Crisp keyboard focus indicators */
+:focus-visible {
+  outline: 2px solid var(--brand, #4F6BFF);
+  outline-offset: 2px;
+}
+
+/* ── Orbit AI Celestial Motion System ── */
+
+/* 1. Exact mathematical elliptical satellite trajectory (-28° inclined, rx=9.4, ry=4.6) */
+@keyframes orbit-satellite-travel {
+  0.0%   { transform: translate(0.003px, 0.000px); }
+  2.8%   { transform: translate(-0.567px, 1.028px); }
+  5.6%   { transform: translate(-1.368px, 2.074px); }
+  8.3%   { transform: translate(-2.377px, 3.104px); }
+  11.1%  { transform: translate(-3.561px, 4.089px); }
+  13.9%  { transform: translate(-4.886px, 4.998px); }
+  16.7%  { transform: translate(-6.311px, 5.803px); }
+  19.4%  { transform: translate(-7.793px, 6.480px); }
+  22.2%  { transform: translate(-9.287px, 7.009px); }
+  25.0%  { transform: translate(-10.747px, 7.373px); }
+  27.8%  { transform: translate(-12.129px, 7.561px); }
+  30.6%  { transform: translate(-13.391px, 7.568px); }
+  33.3%  { transform: translate(-14.494px, 7.393px); }
+  36.1%  { transform: translate(-15.406px, 7.042px); }
+  38.9%  { transform: translate(-16.098px, 6.525px); }
+  41.7%  { transform: translate(-16.550px, 5.859px); }
+  44.4%  { transform: translate(-16.747px, 5.062px); }
+  47.2%  { transform: translate(-16.684px, 4.160px); }
+  50.0%  { transform: translate(-16.363px, 3.180px); }
+  52.8%  { transform: translate(-15.793px, 2.152px); }
+  55.6%  { transform: translate(-14.992px, 1.106px); }
+  58.3%  { transform: translate(-13.983px, 0.076px); }
+  61.1%  { transform: translate(-12.799px, -0.909px); }
+  63.9%  { transform: translate(-11.474px, -1.818px); }
+  66.7%  { transform: translate(-10.049px, -2.623px); }
+  69.4%  { transform: translate(-8.567px, -3.300px); }
+  72.2%  { transform: translate(-7.073px, -3.829px); }
+  75.0%  { transform: translate(-5.613px, -4.193px); }
+  77.8%  { transform: translate(-4.231px, -4.381px); }
+  80.6%  { transform: translate(-2.969px, -4.388px); }
+  83.3%  { transform: translate(-1.866px, -4.213px); }
+  86.1%  { transform: translate(-0.954px, -3.862px); }
+  88.9%  { transform: translate(-0.262px, -3.345px); }
+  91.7%  { transform: translate(0.190px, -2.679px); }
+  94.4%  { transform: translate(0.387px, -1.882px); }
+  97.2%  { transform: translate(0.324px, -0.980px); }
+  100.0% { transform: translate(0.003px, 0.000px); }
+}
+
+/* 2. Idle State: Planet breathing 100% -> 105% */
+@keyframes orbit-planet-pulse-idle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* 3. Idle State: Aura subtle glow breathing */
+@keyframes orbit-aura-pulse-idle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+/* 4. Thinking State: Active cognitive pulse */
+@keyframes orbit-planet-pulse-thinking {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+/* 5. Thinking State: Brightened cognitive radiance */
+@keyframes orbit-aura-pulse-thinking {
+  0%, 100% {
+    transform: scale(1.04);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 1.35;
+  }
+}
+
+/* 6. Success State: Single gentle glow bloom */
+@keyframes orbit-aura-pulse-success {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  40% {
+    transform: scale(1.25);
+    opacity: 1.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+}
+
+/* 7. Error Shake */
+@keyframes orbit-error-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-1.5px); }
+  40%, 80% { transform: translateX(1.5px); }
+}
+
+/* Base styles for all Orbit marks */
+.orbit-mark {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.orbit-mark .orbit-core-group,
+.orbit-mark .orbit-aura {
+  transform-origin: 12px 12px;
+  transform-box: view-box;
+}
+
+/* ── STATE 1: IDLE (3.5s smooth continuous celestial orbit & gentle breathing) ── */
+.orbit-mark--idle .orbit-core-group {
+  animation: orbit-planet-pulse-idle 3.5s ease-in-out infinite;
+}
+.orbit-mark--idle .orbit-aura {
+  animation: orbit-aura-pulse-idle 3.5s ease-in-out infinite;
+}
+.orbit-mark--idle .orbit-satellite-group {
+  animation: orbit-satellite-travel 3.5s linear infinite;
+}
+
+/* ── STATE 2: THINKING (1.2s accelerated orbital speed & heightened glow) ── */
+.orbit-mark--thinking .orbit-core-group {
+  animation: orbit-planet-pulse-thinking 1.2s ease-in-out infinite;
+}
+.orbit-mark--thinking .orbit-aura {
+  animation: orbit-aura-pulse-thinking 1.2s ease-in-out infinite;
+}
+.orbit-mark--thinking .orbit-satellite-group {
+  animation: orbit-satellite-travel 1.2s linear infinite;
+}
+
+/* ── STATE 3: RESPONDING (1.6s harmonic cognitive tempo) ── */
+.orbit-mark--responding .orbit-core-group {
+  animation: orbit-planet-pulse-thinking 1.6s ease-in-out infinite;
+}
+.orbit-mark--responding .orbit-aura {
+  animation: orbit-aura-pulse-thinking 1.6s ease-in-out infinite;
+}
+.orbit-mark--responding .orbit-satellite-group {
+  animation: orbit-satellite-travel 1.6s linear infinite;
+}
+
+/* ── STATE 4: SUCCESS (Single glow pulse then settling back to idle) ── */
+.orbit-mark--success .orbit-aura {
+  animation: orbit-aura-pulse-success 0.9s ease-out 1 forwards;
+}
+.orbit-mark--success .orbit-satellite-group {
+  animation: orbit-satellite-travel 3.5s linear infinite;
+}
+
+/* ── STATE 5: ERROR ── */
+.orbit-mark--error {
+  animation: orbit-error-shake 0.4s ease-in-out 1;
+}
+.orbit-mark--error .orbit-satellite-group {
+  animation: orbit-satellite-travel 6s linear infinite;
+  opacity: 0.6;
+}
+.orbit-mark--error .orbit-aura {
+  opacity: 0.4;
+}
+
+/* Reduced motion preference override */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-mark .orbit-core-group,
+  .orbit-mark .orbit-aura,
+  .orbit-mark .orbit-satellite-group,
+  .orbit-mark--error {
+    animation: none !important;
+    transform: none !important;
   }
 }
 

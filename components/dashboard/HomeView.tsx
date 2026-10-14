@@ -16,6 +16,7 @@ import {
   updateTask,
 } from "@/lib/firestore";
 import ActivityHeatmap from "@/components/dashboard/ActivityHeatmap";
+import { DayMomentumProgress } from "@/components/dashboard/DayMomentumProgress";
 import { todayString, localDateString } from "@/lib/utils";
 import type { Task, MealEntry, MacroGoals, WorkoutSession, BodyWeightEntry, UserProfileDocument } from "@/types";
 
@@ -355,476 +356,333 @@ export default function HomeView() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto space-y-4 animate-pulse py-2">
+      <div className="max-w-4xl mx-auto space-y-6 py-4 animate-pulse">
         <div className="flex items-center justify-between">
-          <div className="space-y-1.5">
-            <div className="h-3 w-28 bg-white/5 rounded" />
-            <div className="h-6 w-40 bg-white/10 rounded" />
+          <div className="space-y-2">
+            <div className="h-4 w-32 bg-[var(--surface-elevated)] rounded-md" />
+            <div className="h-7 w-48 bg-[var(--surface-elevated)] rounded-lg" />
           </div>
-          <div className="w-8 h-8 rounded-full bg-white/5" />
+          <div className="w-10 h-10 rounded-full bg-[var(--surface-elevated)]" />
         </div>
-        <div className="h-44 rounded-2xl bg-white/5" />
-        <div className="h-32 rounded-2xl bg-white/5" />
-        <div className="h-32 rounded-2xl bg-white/5" />
+        <div className="h-48 rounded-2xl bg-[var(--surface-elevated)] border border-[var(--border)]" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-7 h-64 rounded-2xl bg-[var(--surface-elevated)] border border-[var(--border)]" />
+          <div className="lg:col-span-5 h-64 rounded-2xl bg-[var(--surface-elevated)] border border-[var(--border)]" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 py-1 select-none animate-fade-in">
-      {/* ── 1. PRIMARY PAGE HEADING (Section 1 & 2) ── */}
-      <div className="pt-1 pb-1">
-        <h1
-          className="text-[24px] sm:text-[26px] font-bold tracking-tight leading-[1.2]"
-          style={{ fontFamily: "var(--font-display)", color: "var(--text-primary)" }}
-        >
-          {getGreeting(firstName)}
-        </h1>
-        <p className="text-xs sm:text-sm mt-1 font-medium" style={{ color: "var(--text-secondary)" }}>
-          {formatCurrentDate()}
-        </p>
-      </div>
-
-      {/* ── 2. TODAY AT A GLANCE (The Visual Centerpiece, Section 2, 3, 5, 6) ── */}
-      <div
-        className="rounded-2xl p-4 sm:p-5"
-        style={{
-          background: "var(--satat-surface, #0D0F11)",
-          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
-        }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Today
-          </span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold tabular-nums" style={{ color: "var(--satat-brand, #6E8BFF)" }}>
-              {dayProgressPct}%
-            </span>
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              day progress
-            </span>
-          </div>
+    <div className="max-w-4xl mx-auto space-y-6 py-2 select-none animate-fade-in">
+      {/* ── 1. COMMAND HEADER: GREETING & STREAK ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)] font-display">
+            {getGreeting(firstName)}
+          </h1>
+          <p className="text-xs sm:text-sm mt-1 font-medium text-[var(--text-secondary)]">
+            {formatCurrentDate()}
+          </p>
         </div>
 
-        {/* Day Progress Visual Bar */}
-        <div className="w-full h-2 rounded-full overflow-hidden mb-4" style={{ background: "var(--surface-inset)" }}>
-          <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{
-              width: `${dayProgressPct}%`,
-              background: "var(--satat-brand, #6E8BFF)",
-            }}
-          />
-        </div>
-
-        {/* 4 Quantitative Metric Columns (Numbers First, Meaning First, Section 4) */}
-        <div className="grid grid-cols-4 gap-2 pt-1 border-t" style={{ borderColor: "var(--satat-border-subtle, rgba(255,255,255,0.05))" }}>
-          {/* Tasks Metric */}
-          <Link href="/dashboard/tasks" className="block p-1 hover:opacity-85 transition-opacity">
-            <span className="text-base sm:text-lg font-semibold tabular-nums block leading-tight" style={{ color: "var(--text-primary)" }}>
-              {completedTodayTasks.length} / {todayTasks.length}
-            </span>
-            <span className="text-[11px] font-semibold block mt-0.5" style={{ color: "var(--text-muted)" }}>
-              Tasks
-            </span>
-            <span className="text-[10px] block mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>
-              {pendingTasks.length === 0 ? "✓ Done" : `${pendingTasks.length} left`}
-            </span>
-          </Link>
-
-          {/* Workout Metric */}
-          <Link href="/dashboard/workout" className="block p-1 hover:opacity-85 transition-opacity">
-            <span
-              className="text-base sm:text-lg font-semibold tabular-nums block leading-tight"
-              style={{ color: todaySession ? "var(--satat-mint, #63D2B8)" : "var(--satat-brand, #6E8BFF)" }}
-            >
-              {todaySession ? "✓ Done" : "Planned"}
-            </span>
-            <span className="text-[11px] font-semibold block mt-0.5" style={{ color: "var(--text-muted)" }}>
-              Workout
-            </span>
-            <span className="text-[10px] block mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>
-              {todaySession ? `${todaySession.durationMinutes || 45}m` : "45m target"}
-            </span>
-          </Link>
-
-          {/* Calories Metric */}
-          <Link href="/dashboard/diet" className="block p-1 hover:opacity-85 transition-opacity">
-            <span className="text-base sm:text-lg font-semibold tabular-nums block leading-tight" style={{ color: "var(--text-primary)" }}>
-              {Math.round(totals.cal)}
-            </span>
-            <span className="text-[11px] font-semibold block mt-0.5" style={{ color: "var(--text-muted)" }}>
-              kcal
-            </span>
-            <span className="text-[10px] block mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>
-              {caloriesRemaining > 0 ? `${caloriesRemaining} left` : "Goal met"}
-            </span>
-          </Link>
-
-          {/* Protein Metric */}
-          <Link href="/dashboard/diet" className="block p-1 hover:opacity-85 transition-opacity">
-            <span className="text-base sm:text-lg font-semibold tabular-nums block leading-tight" style={{ color: "var(--text-primary)" }}>
-              {Math.round(totals.p)}g
-            </span>
-            <span className="text-[11px] font-semibold block mt-0.5" style={{ color: "var(--text-muted)" }}>
-              Protein
-            </span>
-            <span className="text-[10px] block mt-0.5 truncate" style={{ color: "var(--text-secondary)" }}>
-              {proteinRemaining > 0 ? `${proteinRemaining}g left` : "Goal met"}
-            </span>
-          </Link>
-        </div>
-      </div>
-
-      {/* ── 3. THIS WEEK & RECENT PROGRESS (Section 7 & 8) ── */}
-      <div
-        className="rounded-2xl p-4 sm:p-5"
-        style={{
-          background: "var(--satat-surface, #0D0F11)",
-          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
-        }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-              This Week
-            </span>
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
-            >
-              {weeklyConsistencyPct}% consistency
-            </span>
-          </div>
-          <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
-            {weeklyDeltaText}
-          </span>
-        </div>
-
-        {/* 7-Day Mini Timeline (M T W T F S S) */}
-        <div className="grid grid-cols-7 gap-1.5 py-1">
-          {weekDays.map((day) => (
-            <div
-              key={day.dateStr}
-              className="flex flex-col items-center justify-center p-2 rounded-xl transition-all"
-              style={{
-                background: day.isToday
-                  ? "rgba(110, 139, 255, 0.12)"
-                  : day.isActive
-                  ? "var(--satat-surface-elevated, #121519)"
-                  : "transparent",
-                border: day.isToday
-                  ? "1.5px solid var(--satat-brand, #6E8BFF)"
-                  : "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
-                opacity: day.isFuture ? 0.35 : 1,
-              }}
-            >
-              <span className="text-[10px] font-semibold leading-none mb-1" style={{ color: "var(--text-muted)" }}>
-                {day.label}
-              </span>
-              <span
-                className="text-xs font-semibold tabular-nums leading-none"
-                style={{ color: day.isToday ? "var(--satat-brand, #6E8BFF)" : "var(--text-primary)" }}
-              >
-                {day.dayNum}
-              </span>
-              <div className="h-1 flex items-center justify-center mt-1">
-                {day.isActive ? (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: day.isToday ? "var(--satat-brand, #6E8BFF)" : "var(--satat-mint, #63D2B8)" }}
-                  />
-                ) : (
-                  <span className="w-1 h-1 rounded-full bg-white/10" />
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Comparative Indicators (Section 8: Today vs Yesterday) */}
-        <div
-          className="mt-3 pt-2.5 flex items-center justify-between text-xs flex-wrap gap-2 border-t"
-          style={{ borderColor: "var(--satat-border-subtle, rgba(255,255,255,0.05))" }}
-        >
-          <span style={{ color: "var(--text-secondary)" }}>
-            Tasks: <strong className="font-semibold" style={{ color: "var(--text-primary)" }}>{completedTodayTasks.length} done</strong> ({taskDeltaText})
-          </span>
-          {latestWeight && (
-            <span style={{ color: "var(--text-secondary)" }}>
-              Weight: <strong className="font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>{latestWeight} kg</strong>
-              {weightDelta && (
-                <span className="text-[11px] ml-1" style={{ color: "var(--text-muted)" }}>
-                  ({parseFloat(weightDelta) > 0 ? `+${weightDelta}` : weightDelta} kg)
-                </span>
-              )}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* ── 4. NUTRITION (Numeric First, Section 9) ── */}
-      <div
-        className="rounded-2xl p-4 sm:p-5"
-        style={{
-          background: "var(--satat-surface, #0D0F11)",
-          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
-        }}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Nutrition
-          </span>
-          <Link
-            href="/dashboard/diet"
-            className="text-xs font-semibold flex items-center gap-1 hover:underline"
-            style={{ color: "var(--satat-brand, #6E8BFF)" }}
-          >
-            <span>+ Log Meal</span>
-          </Link>
-        </div>
-
-        {/* Main numbers */}
-        <div className="flex items-baseline justify-between mb-2">
-          <div>
-            <span className="text-2xl font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
-              {Math.round(totals.cal)}
-            </span>
-            <span className="text-xs font-medium ml-1" style={{ color: "var(--text-muted)" }}>
-              / {calorieGoal} kcal
-            </span>
-          </div>
-          <span className="text-xs font-medium tabular-nums" style={{ color: "var(--text-secondary)" }}>
-            {caloriesRemaining > 0 ? `${caloriesRemaining} kcal remaining` : "Target achieved"}
-          </span>
-        </div>
-
-        {/* Progress bar */}
-        <div className="w-full h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "var(--surface-inset)" }}>
-          <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{
-              width: `${caloriePct}%`,
-              background: "var(--satat-brand, #6E8BFF)",
-            }}
-          />
-        </div>
-
-        {/* Macro Numbers */}
-        <div className="grid grid-cols-3 gap-2 text-xs pt-1">
-          <div className="p-2 rounded-xl" style={{ background: "var(--satat-surface-elevated, #121519)" }}>
-            <span className="text-[10px] block" style={{ color: "var(--text-muted)" }}>Protein</span>
-            <span className="font-semibold tabular-nums block mt-0.5" style={{ color: "var(--satat-brand, #6E8BFF)" }}>
-              {Math.round(totals.p)} / {proteinGoal}g
-            </span>
-            <span className="text-[10px] block mt-0.5" style={{ color: "var(--text-secondary)" }}>
-              {proteinRemaining > 0 ? `${proteinRemaining}g left` : "Met"}
-            </span>
-          </div>
-
-          <div className="p-2 rounded-xl" style={{ background: "var(--satat-surface-elevated, #121519)" }}>
-            <span className="text-[10px] block" style={{ color: "var(--text-muted)" }}>Carbs</span>
-            <span className="font-semibold tabular-nums block mt-0.5" style={{ color: "var(--satat-peach, #F2A080)" }}>
-              {Math.round(totals.c)} / {goals?.carbsG ?? 200}g
-            </span>
-            <span className="text-[10px] block mt-0.5" style={{ color: "var(--text-secondary)" }}>
-              {Math.max(0, (goals?.carbsG ?? 200) - Math.round(totals.c))}g left
-            </span>
-          </div>
-
-          <div className="p-2 rounded-xl" style={{ background: "var(--satat-surface-elevated, #121519)" }}>
-            <span className="text-[10px] block" style={{ color: "var(--text-muted)" }}>Fat</span>
-            <span className="font-semibold tabular-nums block mt-0.5" style={{ color: "var(--satat-warning, #E0AB57)" }}>
-              {Math.round(totals.f)} / {goals?.fatG ?? 65}g
-            </span>
-            <span className="text-[10px] block mt-0.5" style={{ color: "var(--text-secondary)" }}>
-              {Math.max(0, (goals?.fatG ?? 65) - Math.round(totals.f))}g left
-            </span>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--brand-subtle)] border border-[var(--brand-muted)] text-[var(--brand)] text-xs font-semibold shadow-xs">
+            <Flame className="w-3.5 h-3.5 fill-current" />
+            <span>{weeklyConsistencyPct}% consistency</span>
           </div>
         </div>
       </div>
 
-      {/* ── 5. TRAINING (Status-First, Section 10) ── */}
-      <div
-        className="rounded-2xl p-4 sm:p-5"
-        style={{
-          background: "var(--satat-surface, #0D0F11)",
-          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
-        }}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-            Training
-          </span>
-          <span
-            className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{
-              background: todaySession ? "rgba(99, 210, 184, 0.12)" : "rgba(110, 139, 255, 0.12)",
-              color: todaySession ? "var(--satat-mint, #63D2B8)" : "var(--satat-brand, #6E8BFF)",
-            }}
-          >
-            {todaySession ? "✓ Completed" : "Scheduled"}
-          </span>
-        </div>
+      {/* ── 2. DAY MOMENTUM CENTERPIECE ── */}
+      <div className="rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border border-[var(--border)] shadow-xs transition-shadow">
+        <DayMomentumProgress progressPct={dayProgressPct} />
 
-        <div className="flex items-center justify-between mt-1">
-          <div>
-            <h3 className="text-sm font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-              {todaySession
-                ? `${todaySession.exercises.length > 0 ? `${todaySession.exercises.length} Exercises` : "Cardio"} Logged`
-                : profile?.workoutPlanAssignment?.planName || "Daily Training Session"}
-            </h3>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
-              {todaySession
-                ? `${todaySession.durationMinutes || 45} mins · ${todaySession.exercises.reduce((a, e) => a + e.sets.length, 0)} sets completed`
-                : `Target: 45 min · ${profile?.workoutPlanAssignment?.daysPerWeek || 4} days/week`}
-            </p>
-          </div>
-
-          <Link
-            href="/dashboard/workout"
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shrink-0"
-            style={{
-              background: todaySession ? "var(--satat-surface-elevated, #121519)" : "var(--satat-brand, #6E8BFF)",
-              color: todaySession ? "var(--text-primary)" : "var(--brand-text, #08090A)",
-              border: todaySession ? "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))" : "none",
-            }}
-          >
-            <span>{todaySession ? "View session" : "Start workout"}</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-
-      {/* ── 6. TODAY'S FOCUS (Compact Action List, Section 11) ── */}
-      <div
-        className="rounded-2xl p-4 sm:p-5"
-        style={{
-          background: "var(--satat-surface, #0D0F11)",
-          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
-        }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-              Today&apos;s Focus
-            </span>
-            <span className="text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
-              {completedTodayTasks.length} / {todayTasks.length} completed
-            </span>
-          </div>
+        {/* 4 Quantitative Pillar Tiles */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Tasks Pillar */}
           <Link
             href="/dashboard/tasks"
-            className="text-xs font-semibold hover:underline"
-            style={{ color: "var(--satat-brand, #6E8BFF)" }}
+            className="group pressable p-3 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border-subtle)] hover:border-[var(--brand-subtle)] transition-all flex flex-col justify-between"
           >
-            + Add task
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
+                Tasks
+              </span>
+              <CheckSquare className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors" />
+            </div>
+            <div>
+              <div className="text-lg sm:text-xl font-bold font-display tabular-nums text-[var(--text-primary)]">
+                {completedTodayTasks.length}/{todayTasks.length}
+              </div>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
+                {pendingTasks.length === 0 ? "✓ Completed" : `${pendingTasks.length} remaining`}
+              </p>
+            </div>
+          </Link>
+
+          {/* Workout Pillar */}
+          <Link
+            href="/dashboard/workout"
+            className="group pressable p-3 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border-subtle)] hover:border-[var(--brand-subtle)] transition-all flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
+                Training
+              </span>
+              <Dumbbell className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors" />
+            </div>
+            <div>
+              <div
+                className={`text-lg sm:text-xl font-bold font-display tabular-nums ${
+                  todaySession ? "text-[var(--success)]" : "text-[var(--text-primary)]"
+                }`}
+              >
+                {todaySession ? "✓ Done" : "Planned"}
+              </div>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
+                {todaySession
+                  ? `${todaySession.durationMinutes || 45}m logged`
+                  : "Session scheduled"}
+              </p>
+            </div>
+          </Link>
+
+          {/* Calories Pillar */}
+          <Link
+            href="/dashboard/diet"
+            className="group pressable p-3 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border-subtle)] hover:border-[var(--brand-subtle)] transition-all flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
+                Calories
+              </span>
+              <Utensils className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors" />
+            </div>
+            <div>
+              <div className="text-lg sm:text-xl font-bold font-display tabular-nums text-[var(--text-primary)]">
+                {Math.round(totals.cal)}
+              </div>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
+                {caloriesRemaining > 0 ? `${caloriesRemaining} kcal left` : "Target reached"}
+              </p>
+            </div>
+          </Link>
+
+          {/* Protein Pillar */}
+          <Link
+            href="/dashboard/diet"
+            className="group pressable p-3 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border-subtle)] hover:border-[var(--brand-subtle)] transition-all flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
+                Protein
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--macro-protein)]" />
+            </div>
+            <div>
+              <div className="text-lg sm:text-xl font-bold font-display tabular-nums text-[var(--text-primary)]">
+                {Math.round(totals.p)}g
+              </div>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
+                {proteinRemaining > 0 ? `${proteinRemaining}g remaining` : "Target reached"}
+              </p>
+            </div>
           </Link>
         </div>
-
-        {todayTasks.length === 0 ? (
-          <div className="text-center py-3">
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              No tasks scheduled for today
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-1 divide-y" style={{ borderColor: "var(--satat-border-subtle, rgba(255,255,255,0.05))" }}>
-            {todayTasks.slice(0, 4).map((task) => {
-              const isDone = task.status === "completed";
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => handleToggleTask(task.id, task.status)}
-                  className="flex items-center justify-between py-2.5 px-1 cursor-pointer transition-colors hover:bg-white/[0.02]"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div
-                      className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors"
-                      style={{
-                        background: isDone ? "var(--satat-brand, #6E8BFF)" : "transparent",
-                        borderColor: isDone ? "var(--satat-brand, #6E8BFF)" : "var(--satat-border, rgba(255,255,255,0.15))",
-                        color: isDone ? "var(--brand-text, #08090A)" : "transparent",
-                      }}
-                    >
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    </div>
-                    <span
-                      className={`text-xs font-medium truncate ${isDone ? "line-through opacity-40" : ""}`}
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {task.title}
-                    </span>
-                  </div>
-
-                  {task.priority === "high" && !isDone && (
-                    <span
-                      className="text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded shrink-0 ml-2"
-                      style={{ background: "rgba(234, 119, 119, 0.15)", color: "var(--satat-error, #EA7777)" }}
-                    >
-                      High
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-
-            {todayTasks.length > 4 && (
-              <Link
-                href="/dashboard/tasks"
-                className="block text-center pt-2.5 text-xs font-semibold hover:underline"
-                style={{ color: "var(--satat-brand, #6E8BFF)" }}
-              >
-                +{todayTasks.length - 4} more in Plan →
-              </Link>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* ── 7. CONSISTENCY & STREAK (Section 25 Fix: Anchored to Today, Current Month by Default) ── */}
-      <div>
+      {/* ── 3. CONTEXTUAL ORBIT NEURAL DIRECTIVE ── */}
+      <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--brand-muted)] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-[var(--brand-subtle)] border border-[var(--brand-muted)] text-[var(--brand)] flex items-center justify-center shrink-0">
+            <OrbitMark size={16} state="idle" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--brand)]">
+              Orbit Directive
+            </div>
+            <p className="text-xs sm:text-sm text-[var(--text-primary)] font-medium truncate sm:whitespace-normal">
+              {orbitInsight.text}
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href={orbitInsight.actionHref.startsWith("#") ? "/dashboard/orbit" : orbitInsight.actionHref}
+          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--brand-text)] text-xs font-semibold shrink-0 transition-colors shadow-xs"
+        >
+          <span>{orbitInsight.actionLabel}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      {/* ── 4. TWO-COLUMN COMMAND GRID: PRIORITIES & RHYTHM ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left Column: Today's Priorities */}
+        <div className="lg:col-span-7 rounded-2xl p-5 bg-[var(--surface)] border border-[var(--border)] shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  Today&apos;s Priorities
+                </span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+                  {completedTodayTasks.length}/{todayTasks.length}
+                </span>
+              </div>
+              <Link
+                href="/dashboard/tasks"
+                className="text-xs font-semibold text-[var(--brand)] hover:underline inline-flex items-center gap-1"
+              >
+                <span>+ Add task</span>
+              </Link>
+            </div>
+
+            {todayTasks.length === 0 ? (
+              <div className="text-center py-8 px-4 rounded-xl border border-dashed border-[var(--border)]">
+                <p className="text-xs text-[var(--text-muted)]">
+                  No tasks scheduled for today. Plan ahead to keep momentum.
+                </p>
+                <Link
+                  href="/dashboard/tasks"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand)] hover:underline"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Create your first task</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-1 divide-y divide-[var(--border-subtle)]">
+                {todayTasks.slice(0, 5).map((task) => {
+                  const isDone = task.status === "completed";
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => handleToggleTask(task.id, task.status)}
+                      className="flex items-center justify-between py-2.5 px-1.5 cursor-pointer transition-colors hover:bg-[var(--surface-hover)] rounded-lg group pressable"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                            isDone
+                              ? "bg-[var(--brand)] border-[var(--brand)] text-[var(--brand-text)] animate-check-pop"
+                              : "border-[var(--border)] group-hover:border-[var(--brand)] bg-transparent"
+                          }`}
+                        >
+                          {isDone && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                        <span
+                          className={`text-xs sm:text-sm font-medium truncate ${
+                            isDone
+                              ? "line-through text-[var(--text-muted)]"
+                              : "text-[var(--text-primary)]"
+                          }`}
+                        >
+                          {task.title}
+                        </span>
+                      </div>
+
+                      {task.priority === "high" && !isDone && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[rgba(234,119,119,0.15)] text-[var(--error)] shrink-0 ml-2">
+                          High
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {todayTasks.length > 5 && (
+                  <Link
+                    href="/dashboard/tasks"
+                    className="block text-center pt-3 text-xs font-semibold text-[var(--brand)] hover:underline"
+                  >
+                    +{todayTasks.length - 5} more in Plan →
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Weekly Rhythm & Comparative Insights */}
+        <div className="lg:col-span-5 rounded-2xl p-5 bg-[var(--surface)] border border-[var(--border)] shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                This Week Rhythm
+              </span>
+              <span className="text-xs font-medium text-[var(--text-secondary)]">
+                {weeklyDeltaText}
+              </span>
+            </div>
+
+            {/* 7-Day Mini Timeline */}
+            <div className="grid grid-cols-7 gap-1.5 py-1">
+              {weekDays.map((day) => (
+                <div
+                  key={day.dateStr}
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                    day.isToday
+                      ? "bg-[var(--brand-subtle)] border-1.5 border-[var(--brand)]"
+                      : day.isActive
+                      ? "bg-[var(--surface-elevated)] border border-[var(--border-subtle)]"
+                      : "bg-transparent border border-transparent"
+                  } ${day.isFuture ? "opacity-35" : ""}`}
+                >
+                  <span className="text-[10px] font-semibold leading-none mb-1 text-[var(--text-muted)]">
+                    {day.label}
+                  </span>
+                  <span
+                    className={`text-xs font-semibold tabular-nums leading-none ${
+                      day.isToday ? "text-[var(--brand)]" : "text-[var(--text-primary)]"
+                    }`}
+                  >
+                    {day.dayNum}
+                  </span>
+                  <div className="h-1 flex items-center justify-center mt-1.5">
+                    {day.isActive ? (
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          day.isToday ? "bg-[var(--brand)]" : "bg-[var(--success)]"
+                        }`}
+                      />
+                    ) : (
+                      <span className="w-1 h-1 rounded-full bg-[var(--border)]" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Micro Comparative Summary */}
+          <div className="mt-4 pt-3 flex items-center justify-between text-xs border-t border-[var(--border-subtle)] flex-wrap gap-2">
+            <span className="text-[var(--text-secondary)]">
+              Tasks: <strong className="font-semibold text-[var(--text-primary)]">{completedTodayTasks.length} done</strong> ({taskDeltaText})
+            </span>
+            {latestWeight && (
+              <span className="text-[var(--text-secondary)]">
+                Weight: <strong className="font-semibold tabular-nums text-[var(--text-primary)]">{latestWeight} kg</strong>
+                {weightDelta && (
+                  <span className="text-[11px] ml-1 text-[var(--text-muted)]">
+                    ({parseFloat(weightDelta) > 0 ? `+${weightDelta}` : weightDelta} kg)
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 5. COMPOUNDING MOMENTUM HEATMAP ── */}
+      <div className="rounded-2xl p-4 sm:p-5 bg-[var(--surface)] border border-[var(--border)] shadow-xs">
         <ActivityHeatmap
           sessions={sessions}
           tasks={tasks}
           allMeals={allMeals}
           loading={loading}
         />
-      </div>
-
-      {/* ── 8. ORBIT AI (Moved Down, Concise: 1 Insight, 1 Action, Section 12 & 13) ── */}
-      <div
-        className="p-3.5 rounded-2xl flex items-center justify-between gap-3"
-        style={{
-          background: "var(--satat-surface, #0D0F11)",
-          border: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))",
-        }}
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border"
-            style={{
-              background: "rgba(110, 139, 255, 0.12)",
-              borderColor: "rgba(110, 139, 255, 0.20)",
-              color: "var(--satat-brand, #6E8BFF)",
-            }}
-          >
-            <OrbitMark size={14} />
-          </div>
-          <p className="text-xs leading-snug truncate" style={{ color: "var(--text-primary)" }}>
-            {orbitInsight.text}
-          </p>
-        </div>
-
-        <Link
-          href={orbitInsight.actionHref.startsWith("#") ? "/dashboard/orbit" : orbitInsight.actionHref}
-          className="text-xs font-semibold shrink-0 hover:underline flex items-center gap-1 transition-colors"
-          style={{ color: "var(--satat-brand, #6E8BFF)" }}
-        >
-          <span>{orbitInsight.actionLabel}</span>
-          <ArrowRight className="w-3 h-3" />
-        </Link>
       </div>
     </div>
   );

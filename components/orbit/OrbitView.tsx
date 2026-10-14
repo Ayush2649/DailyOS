@@ -7,7 +7,7 @@ import {
   TrendingUp, X, Sparkles, AlertCircle, RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { OrbitIcon, OrbitMark } from "@/components/orbit/OrbitMark";
+import { OrbitIcon, OrbitMark, type OrbitState } from "@/components/orbit/OrbitMark";
 import NotificationBell from "@/components/ui/NotificationBell";
 import { MarkdownText } from "@/components/ui/MarkdownText";
 import { OrbitRecommendationCard, OrbitInsightCard } from "@/components/orbit/OrbitActionCard";
@@ -37,9 +37,18 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
   const [focusMode, setFocusMode] = useState<OrbitFocusMode>("all");
   const [error, setError] = useState<string | null>(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [orbitState, setOrbitState] = useState<OrbitState>("idle");
 
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Clean up any pending state transition timers on unmount
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    };
+  }, []);
 
   // Handle mobile virtual keyboard dynamic resizing
   useEffect(() => {
@@ -163,6 +172,8 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
       persistMessages(nextMessages);
       setInput("");
       setLoading(true);
+      setOrbitState("thinking");
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
 
       // Reset textarea height
       if (inputRef.current) {
@@ -207,8 +218,15 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
         const updated = [...nextMessages, assistantMsg];
         setMessages(updated);
         persistMessages(updated);
+
+        // Trigger one gentle glow pulse on response completion, then return to idle
+        setOrbitState("success");
+        transitionTimerRef.current = setTimeout(() => {
+          setOrbitState("idle");
+        }, 900);
       } catch (err: any) {
         setError("Orbit couldn't connect right now. Please try again.");
+        setOrbitState("error");
       } finally {
         setLoading(false);
       }
@@ -218,8 +236,10 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
 
   // Clear conversation
   const handleReset = () => {
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     setMessages([]);
     setError(null);
+    setOrbitState("idle");
     try {
       sessionStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -294,14 +314,24 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
       >
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+            className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all duration-300",
+              orbitState === "error"
+                ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                : orbitState === "success"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                : "border-[rgba(110,139,255,0.25)] bg-[rgba(110,139,255,0.12)] text-[var(--satat-brand,#6E8BFF)]"
+            )}
             style={{
-              background: "rgba(110, 139, 255, 0.12)",
-              borderColor: "rgba(110, 139, 255, 0.25)",
-              color: "var(--satat-brand, #6E8BFF)",
+              color:
+                orbitState === "error"
+                  ? "var(--peach, #F3A583)"
+                  : orbitState === "success"
+                  ? "var(--mint, #5BC7B2)"
+                  : "var(--satat-brand, #6E8BFF)",
             }}
           >
-            <OrbitIcon size={18} />
+            <OrbitIcon size={18} state={orbitState} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -312,13 +342,37 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
                 Orbit
               </h1>
               <span
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: "var(--mint, #5BC7B2)" }}
-                title="Active"
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                  orbitState === "thinking" || orbitState === "responding" ? "animate-pulse" : ""
+                )}
+                style={{
+                  backgroundColor:
+                    orbitState === "error"
+                      ? "var(--peach, #F3A583)"
+                      : orbitState === "thinking" || orbitState === "responding"
+                      ? "var(--satat-brand, #6E8BFF)"
+                      : "var(--mint, #5BC7B2)",
+                }}
+                title={
+                  orbitState === "thinking"
+                    ? "Thinking..."
+                    : orbitState === "responding"
+                    ? "Responding..."
+                    : orbitState === "error"
+                    ? "Error"
+                    : "Active"
+                }
               />
             </div>
-            <p className="text-[11px] font-medium leading-none mt-1" style={{ color: "var(--text-secondary)" }}>
-              Personal AI Companion
+            <p className="text-[11px] font-medium leading-none mt-1 transition-colors duration-200" style={{ color: "var(--text-secondary)" }}>
+              {orbitState === "thinking"
+                ? "Analyzing context..."
+                : orbitState === "responding"
+                ? "Generating response..."
+                : orbitState === "error"
+                ? "Connection interrupted"
+                : "Personal AI Companion"}
             </p>
           </div>
         </div>
@@ -436,7 +490,7 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
                 color: "var(--satat-brand, #6E8BFF)",
               }}
             >
-              <OrbitIcon size={32} />
+              <OrbitIcon size={32} state={orbitState} />
             </div>
 
             <h2
@@ -636,36 +690,32 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
                   color: "var(--satat-brand, #6E8BFF)",
                 }}
               >
-                <OrbitIcon size={13} animated={true} />
+                <OrbitIcon size={13} state={orbitState === "responding" ? "responding" : "thinking"} />
               </div>
               <span className="text-xs font-bold" style={{ color: "var(--text-primary)" }}>
                 Orbit
               </span>
               <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-                thinking...
+                {orbitState === "responding" ? "synthesizing response..." : "thinking..."}
               </span>
             </div>
 
             <div
-              className="rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 border"
+              className="rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-3 border"
               style={{
                 background: "rgba(255, 255, 255, 0.02)",
                 borderColor: "var(--border, rgba(255, 255, 255, 0.06))",
               }}
             >
-              <div className="flex items-center gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className="w-1.5 h-1.5 rounded-full animate-pulse"
-                    style={{
-                      backgroundColor: "var(--satat-brand, #6E8BFF)",
-                      animationDelay: `${i * 180}ms`,
-                    }}
-                  />
-                ))}
+              <div
+                className="w-5 h-5 flex items-center justify-center shrink-0"
+                style={{ color: "var(--satat-brand, #6E8BFF)" }}
+              >
+                <OrbitIcon size={16} state={orbitState === "responding" ? "responding" : "thinking"} />
               </div>
-              <span className="text-xs text-muted pl-1">Analyzing context...</span>
+              <span className="text-xs text-muted">
+                {orbitState === "responding" ? "Formulating recommendation..." : "Analyzing context..."}
+              </span>
             </div>
           </div>
         )}
@@ -673,7 +723,7 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
         {/* ERROR STATE */}
         {error && (
           <div
-            className="p-3 rounded-xl border flex items-center justify-between gap-3 text-xs"
+            className="p-3 rounded-xl border flex items-center justify-between gap-3 text-xs animate-shake"
             style={{
               background: "rgba(243, 165, 131, 0.08)",
               borderColor: "rgba(243, 165, 131, 0.25)",
@@ -681,7 +731,15 @@ export function OrbitView({ isOverlay = false, onClose, className }: OrbitViewPr
             }}
           >
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+              <div
+                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+                style={{
+                  background: "rgba(243, 165, 131, 0.15)",
+                  color: "var(--peach, #F3A583)",
+                }}
+              >
+                <OrbitIcon size={13} state="error" />
+              </div>
               <span>{error}</span>
             </div>
             <button

@@ -1,20 +1,20 @@
 /**
  * SATAT Design System — Canonical Semantic Design Tokens
- * 65% Ivory/White Foundation | 20% Warm Charcoal Text | 10% Forest Brand | 5% Sage Accent
+ * Dark-First Operating System Foundation | Neutral Near-Black Surfaces | Restrained Cobalt Accent
  * "Progress, made continuous."
  */
 
 :root,
-.light {
-  color-scheme: light;
+.dark {
+  color-scheme: dark;
 
-  /* Foundation (65%) — Ivory Canvas & Pure White Card Surfaces */
-  --satat-bg: #F8F7F2;
-  --satat-surface: #FFFFFF;
-  --satat-surface-elevated: #FFFFFF;
-  --satat-surface-high: #EDECE6;
-  --satat-surface-subtle: #F3F3EE;
-  --satat-surface-inset: #ECEAE3;
+  /* Foundation — Deep Neutral Canvas & Precise Charcoal Surfaces */
+  --satat-bg: #0B0E11;
+  --satat-surface: #12161A;
+  --satat-surface-elevated: #181E24;
+  --satat-surface-high: #212730;
+  --satat-surface-subtle: #0E1216;
+  --satat-surface-inset: #080A0C;
 
   --background: var(--satat-bg);
   --surface: var(--satat-surface);
@@ -23,30 +23,30 @@
   --surface-subtle: var(--satat-surface-subtle);
   --surface-inset: var(--satat-surface-inset);
 
-  /* Content (20%) — Warm Charcoal & Editorial Text */
-  --satat-text-primary: #171A17;
-  --satat-text-secondary: #686D67;
-  --satat-text-muted: #8B908A;
+  /* Content — High-Legibility Neutral & Editorial Text */
+  --satat-text-primary: #F5F7FA;
+  --satat-text-secondary: #9BA3AF;
+  --satat-text-muted: #6B7280;
 
   --text-primary: var(--satat-text-primary);
   --text-secondary: var(--satat-text-secondary);
   --text-muted: var(--satat-text-muted);
 
   /* Hairline Precision Borders */
-  --satat-border: #E5E4DD;
-  --satat-border-subtle: #EDECE6;
-  --satat-border-strong: #D5D5CC;
+  --satat-border: rgba(255, 255, 255, 0.08);
+  --satat-border-subtle: rgba(255, 255, 255, 0.05);
+  --satat-border-strong: rgba(255, 255, 255, 0.14);
 
   --border: var(--satat-border);
   --border-subtle: var(--satat-border-subtle);
   --border-strong: var(--satat-border-strong);
 
-  /* Brand (10%) — Deep Forest Green (Discipline, Authority, Nature) */
-  --satat-brand: #173D32;
-  --satat-brand-hover: #245747;
-  --satat-brand-active: #1D493C;
-  --satat-brand-subtle: rgba(23, 61, 50, 0.08);
-  --satat-brand-text: #F8F7F2;
+  /* Brand — Restrained SATAT Cobalt */
+  --satat-brand: #4F6BFF;
+  --satat-brand-hover: #637DFF;
+  --satat-brand-active: #3D57E6;
+  --satat-brand-subtle: rgba(79, 107, 255, 0.12);
+  --satat-brand-text: #FFFFFF;
 
   --brand: var(--satat-brand);
   --brand-hover: var(--satat-brand-hover);
@@ -54,67 +54,57 @@
   --brand-subtle: var(--satat-brand-subtle);
   --brand-text: var(--satat-brand-text);
 
-  /* Forest Supporting Variations */
-  --satat-forest-2: #1D493C;
-  --satat-forest-hover: #245747;
-  --satat-forest-support: #3E7563;
+  /* Accent — Luminous Precision Cobalt */
+  --satat-accent: #4F6BFF;
+  --satat-accent-hover: #637DFF;
+  --satat-accent-active: #3D57E6;
+  --satat-accent-subtle: rgba(79, 107, 255, 0.14);
+  --satat-accent-soft: rgba(79, 107, 255, 0.22);
+  --satat-accent-text: #FFFFFF;
 
-  /* Accent (5%) — Calm Sage (Continuous Momentum & Guidance) */
-  --satat-sage: #A8B89D;
-  --satat-sage-soft: #D8E1D2;
-  --satat-sage-subtle: rgba(168, 184, 157, 0.16);
-
-  --accent: var(--satat-sage);
-  --accent-hover: #96A78B;
-  --accent-subtle: var(--satat-sage-subtle);
-  --accent-soft: var(--satat-sage-soft);
-  --accent-text: #173D32;
-
-  /* Backward compatibility aliases */
-  --mint: var(--satat-sage);
-  --mint-subtle: var(--satat-sage-subtle);
-  --mint-strong: #3E7563;
-  --peach: #D8E1D2;
-  --peach-subtle: rgba(216, 225, 210, 0.25);
-  --peach-strong: #A8B89D;
+  --accent: var(--satat-accent);
+  --accent-hover: var(--satat-accent-hover);
+  --accent-subtle: var(--satat-accent-subtle);
+  --accent-soft: var(--satat-accent-soft);
+  --accent-text: var(--satat-accent-text);
 
   /* Semantics */
-  --satat-success: #2E7D5B;
-  --satat-warning: #C27D38;
-  --satat-error: #B84743;
-  --satat-info: #3E7563;
+  --satat-success: #22C55E;
+  --satat-warning: #F59E0B;
+  --satat-error: #EF4444;
+  --satat-info: #4F6BFF;
 
   --success: var(--satat-success);
-  --success-subtle: rgba(46, 125, 91, 0.12);
+  --success-subtle: rgba(34, 197, 94, 0.14);
   --progress: var(--satat-brand);
   --progress-hover: var(--satat-brand-hover);
   --progress-subtle: var(--satat-brand-subtle);
   --progress-text: var(--satat-brand-text);
 
   --warning: var(--satat-warning);
-  --warning-subtle: rgba(194, 125, 56, 0.12);
+  --warning-subtle: rgba(245, 158, 11, 0.14);
   --error: var(--satat-error);
-  --error-subtle: rgba(184, 71, 67, 0.12);
+  --error-subtle: rgba(239, 68, 68, 0.14);
   --info: var(--satat-info);
-  --info-subtle: rgba(62, 117, 99, 0.12);
+  --info-subtle: rgba(79, 107, 255, 0.14);
 
   /* Macros */
-  --macro-protein: #173D32;
-  --macro-carbs: #A8B89D;
-  --macro-fat: #C27D38;
+  --macro-protein: #4F6BFF;
+  --macro-carbs: #38BDF8;
+  --macro-fat: #F59E0B;
 
   /* System aliases */
-  --secondary: var(--satat-forest-support);
-  --secondary-hover: var(--satat-brand-hover);
-  --secondary-subtle: var(--satat-brand-subtle);
-  --secondary-text: var(--satat-brand-text);
+  --secondary: var(--satat-surface-elevated);
+  --secondary-hover: var(--satat-surface-high);
+  --secondary-subtle: var(--satat-surface-subtle);
+  --secondary-text: var(--satat-text-primary);
   --surface-page: var(--background);
   --surface-base: var(--surface);
-  --surface-raised: var(--surface-subtle);
+  --surface-raised: var(--surface-elevated);
   --surface-0: var(--surface);
   --surface-1: var(--background);
-  --surface-2: var(--surface-subtle);
-  --surface-3: var(--surface-inset);
+  --surface-2: var(--surface-elevated);
+  --surface-3: var(--surface-high);
   --border-default: var(--border);
   --text-1: var(--text-primary);
   --text-2: var(--text-secondary);
@@ -125,17 +115,20 @@
   --status-warning: var(--warning);
   --status-danger: var(--error);
   --status-info: var(--info);
-  --accent-glow: rgba(168, 184, 157, 0.2);
+  --accent-glow: rgba(79, 107, 255, 0.2);
   --accent-gradient: var(--brand);
 
-  /* Restrained Atmospheric Shadows */
-  --shadow-xs: 0 1px 2px rgba(23, 26, 23, 0.03);
-  --shadow-sm: 0 1px 2px rgba(23, 26, 23, 0.03), 0 2px 6px rgba(23, 26, 23, 0.02);
-  --shadow-md: 0 2px 4px rgba(23, 26, 23, 0.03), 0 8px 20px rgba(23, 26, 23, 0.04);
-  --shadow-lg: 0 4px 8px rgba(23, 26, 23, 0.04), 0 16px 36px rgba(23, 26, 23, 0.06);
+  /* Elevation Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.65);
   --shadow-card: var(--shadow-sm);
   --shadow-raised: var(--shadow-md);
-  --shadow-dialog: 0 20px 48px rgba(23, 26, 23, 0.12);
+  --shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.85);
+
+  --glass-bg: rgba(18, 22, 26, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
 
   /* Typography Scale */
   --font-display: var(--font-plus-jakarta), sans-serif;
@@ -174,24 +167,37 @@
   --radius-panel: 20px;
   --radius-app-shell: 20px;
 
-  /* Glass Primitives */
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.85);
+  /* Motion & Animation Scale */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-emphasis: 600ms;
 
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --motion-distance-sm: 4px;
+  --motion-distance-md: 8px;
+  --motion-distance-lg: 16px;
+
+  --motion-scale-press: 0.98;
+  --motion-scale-sm: 0.97;
+  --motion-scale-pop: 1.03;
 }
 
-.dark {
-  color-scheme: dark;
+.light {
+  color-scheme: light;
 
-  /* Foundation (65%) — Deep Forest Charcoal Canvas */
-  --satat-bg: #101412;
-  --satat-surface: #181D1A;
-  --satat-surface-elevated: #202722;
-  --satat-surface-high: #272F2A;
-  --satat-surface-subtle: #141A17;
-  --satat-surface-inset: #0C0F0E;
+  /* Foundation — Clean Architectural White & Light Grey Surfaces */
+  --satat-bg: #F8F9FA;
+  --satat-surface: #FFFFFF;
+  --satat-surface-elevated: #FFFFFF;
+  --satat-surface-high: #EDF0F3;
+  --satat-surface-subtle: #F1F3F5;
+  --satat-surface-inset: #E9ECEF;
 
   --background: var(--satat-bg);
   --surface: var(--satat-surface);
@@ -200,29 +206,29 @@
   --surface-subtle: var(--satat-surface-subtle);
   --surface-inset: var(--satat-surface-inset);
 
-  /* Content (20%) — Warm Ivory & Muted Editorial Text */
-  --satat-text-primary: #F4F5EF;
-  --satat-text-secondary: #A2A89F;
-  --satat-text-muted: #71786E;
+  /* Content — High-Contrast Dark Text */
+  --satat-text-primary: #111827;
+  --satat-text-secondary: #4B5563;
+  --satat-text-muted: #9CA3AF;
 
   --text-primary: var(--satat-text-primary);
   --text-secondary: var(--satat-text-secondary);
   --text-muted: var(--satat-text-muted);
 
   /* Borders */
-  --satat-border: rgba(255, 255, 255, 0.08);
-  --satat-border-subtle: rgba(255, 255, 255, 0.05);
-  --satat-border-strong: rgba(255, 255, 255, 0.14);
+  --satat-border: #E5E7EB;
+  --satat-border-subtle: #F3F4F6;
+  --satat-border-strong: #D1D5DB;
 
   --border: var(--satat-border);
   --border-subtle: var(--satat-border-subtle);
   --border-strong: var(--satat-border-strong);
 
-  /* Brand (10%) — Luminous Forest */
-  --satat-brand: #2A5447;
-  --satat-brand-hover: #3E7563;
-  --satat-brand-active: #346354;
-  --satat-brand-subtle: rgba(168, 184, 157, 0.12);
+  /* Brand — High-Contrast Accessible Cobalt (WCAG AA Compliant on Light) */
+  --satat-brand: #3B54D4;
+  --satat-brand-hover: #2F44B0;
+  --satat-brand-active: #263794;
+  --satat-brand-subtle: rgba(59, 84, 212, 0.08);
   --satat-brand-text: #FFFFFF;
 
   --brand: var(--satat-brand);
@@ -231,65 +237,57 @@
   --brand-subtle: var(--satat-brand-subtle);
   --brand-text: var(--satat-brand-text);
 
-  --satat-forest-2: #346354;
-  --satat-forest-hover: #3E7563;
-  --satat-forest-support: #558E7B;
+  /* Accent */
+  --satat-accent: #3B54D4;
+  --satat-accent-hover: #2F44B0;
+  --satat-accent-active: #263794;
+  --satat-accent-subtle: rgba(59, 84, 212, 0.08);
+  --satat-accent-soft: rgba(59, 84, 212, 0.14);
+  --satat-accent-text: #FFFFFF;
 
-  /* Accent (5%) — Luminous Calm Sage */
-  --satat-sage: #B4C4AA;
-  --satat-sage-soft: #27332C;
-  --satat-sage-subtle: rgba(180, 196, 170, 0.14);
-
-  --accent: var(--satat-sage);
-  --accent-hover: #C5D4BB;
-  --accent-subtle: var(--satat-sage-subtle);
-  --accent-soft: var(--satat-sage-soft);
-  --accent-text: #FFFFFF;
-
-  --mint: var(--satat-sage);
-  --mint-subtle: var(--satat-sage-subtle);
-  --mint-strong: #558E7B;
-  --peach: #27332C;
-  --peach-subtle: rgba(39, 51, 44, 0.5);
-  --peach-strong: #B4C4AA;
+  --accent: var(--satat-accent);
+  --accent-hover: var(--satat-accent-hover);
+  --accent-subtle: var(--satat-accent-subtle);
+  --accent-soft: var(--satat-accent-soft);
+  --accent-text: var(--satat-accent-text);
 
   /* Semantics */
-  --satat-success: #4EAA82;
-  --satat-warning: #E0A05A;
-  --satat-error: #D66360;
-  --satat-info: #558E7B;
+  --satat-success: #16A34A;
+  --satat-warning: #D97706;
+  --satat-error: #DC2626;
+  --satat-info: #3B54D4;
 
   --success: var(--satat-success);
-  --success-subtle: rgba(78, 170, 130, 0.14);
+  --success-subtle: rgba(22, 163, 74, 0.12);
   --progress: var(--satat-brand);
   --progress-hover: var(--satat-brand-hover);
   --progress-subtle: var(--satat-brand-subtle);
   --progress-text: var(--satat-brand-text);
 
   --warning: var(--satat-warning);
-  --warning-subtle: rgba(224, 160, 90, 0.14);
+  --warning-subtle: rgba(217, 119, 6, 0.12);
   --error: var(--satat-error);
-  --error-subtle: rgba(214, 99, 96, 0.14);
+  --error-subtle: rgba(220, 38, 38, 0.12);
   --info: var(--satat-info);
-  --info-subtle: rgba(85, 142, 123, 0.14);
+  --info-subtle: rgba(59, 84, 212, 0.12);
 
   /* Macros */
-  --macro-protein: #2A5447;
-  --macro-carbs: #B4C4AA;
-  --macro-fat: #E0A05A;
+  --macro-protein: #3B54D4;
+  --macro-carbs: #0284C7;
+  --macro-fat: #D97706;
 
   /* System aliases */
-  --secondary: var(--satat-forest-support);
-  --secondary-hover: var(--satat-forest-hover);
-  --secondary-subtle: var(--satat-brand-subtle);
-  --secondary-text: #FFFFFF;
+  --secondary: var(--satat-surface-elevated);
+  --secondary-hover: var(--satat-surface-high);
+  --secondary-subtle: var(--satat-surface-subtle);
+  --secondary-text: var(--satat-text-primary);
   --surface-page: var(--background);
   --surface-base: var(--surface);
-  --surface-raised: var(--surface-elevated);
+  --surface-raised: var(--surface-subtle);
   --surface-0: var(--surface);
   --surface-1: var(--background);
-  --surface-2: var(--surface-elevated);
-  --surface-3: var(--surface-high);
+  --surface-2: var(--surface-subtle);
+  --surface-3: var(--surface-inset);
   --border-default: var(--border);
   --text-1: var(--text-primary);
   --text-2: var(--text-secondary);
@@ -300,18 +298,38 @@
   --status-warning: var(--warning);
   --status-danger: var(--error);
   --status-info: var(--info);
-  --accent-glow: rgba(180, 196, 170, 0.15);
+  --accent-glow: rgba(59, 84, 212, 0.15);
   --accent-gradient: var(--brand);
 
-  /* Elevation */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.6);
+  /* Elevation Shadows */
+  --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(17, 24, 39, 0.08), 0 2px 4px -1px rgba(17, 24, 39, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(17, 24, 39, 0.08), 0 4px 6px -2px rgba(17, 24, 39, 0.04);
   --shadow-card: var(--shadow-sm);
   --shadow-raised: var(--shadow-md);
-  --shadow-dialog: 0 24px 48px rgba(0, 0, 0, 0.8);
+  --shadow-dialog: 0 20px 25px -5px rgba(17, 24, 39, 0.12), 0 10px 10px -5px rgba(17, 24, 39, 0.04);
 
-  --glass-bg: rgba(24, 29, 26, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(229, 231, 235, 0.9);
+
+  /* Motion & Animation Scale */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-emphasis: 600ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  --motion-distance-sm: 4px;
+  --motion-distance-md: 8px;
+  --motion-distance-lg: 16px;
+
+  --motion-scale-press: 0.98;
+  --motion-scale-sm: 0.97;
+  --motion-scale-pop: 1.03;
 }

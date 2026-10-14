@@ -71,11 +71,11 @@ export default function Navigation() {
         <div className="px-4 mb-4">
           <button
             onClick={() => setShowTrackSheet(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
             style={{
-              background: "rgba(110, 139, 255, 0.12)",
-              color: "var(--satat-brand, #6E8BFF)",
-              border: "1px solid rgba(110, 139, 255, 0.25)",
+              background: "var(--brand-subtle)",
+              color: "var(--brand)",
+              border: "1px solid color-mix(in srgb, var(--brand) 25%, transparent)",
             }}
           >
             <Plus className="w-3.5 h-3.5" />
@@ -151,7 +151,7 @@ export default function Navigation() {
               ) : (
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-                  style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+                  style={{ background: "var(--brand-subtle)", color: "var(--brand)" }}
                 >
                   <User className="w-4 h-4" />
                 </div>
@@ -165,7 +165,7 @@ export default function Navigation() {
                 title="Sign out"
                 aria-label="Sign out"
                 className="btn-icon p-1.5 rounded-lg hover:bg-white/5 transition-colors"
-                style={{ color: "var(--satat-error, #EA7777)" }}
+                style={{ color: "var(--error)" }}
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -200,7 +200,7 @@ export default function Navigation() {
                   ) : (
                     <div
                       className="w-6 h-6 rounded-full flex items-center justify-center text-[10px]"
-                      style={{ background: "rgba(110, 139, 255, 0.12)", color: "var(--satat-brand, #6E8BFF)" }}
+                      style={{ background: "var(--brand-subtle)", color: "var(--brand)" }}
                     >
                       <User className="w-3 h-3" />
                     </div>
@@ -216,12 +216,12 @@ export default function Navigation() {
                   <div
                     className="absolute right-0 top-full mt-2 w-56 rounded-xl overflow-hidden z-50 animate-scale-in"
                     style={{
-                      background: "var(--satat-surface, #0D0F11)",
-                      border: "1px solid var(--satat-border, rgba(255,255,255,0.08))",
-                      boxShadow: "0 16px 36px rgba(0,0,0,0.8)",
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      boxShadow: "var(--shadow-dialog)",
                     }}
                   >
-                    <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--satat-border-subtle, rgba(255,255,255,0.05))" }}>
+                    <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                       <p className="text-xs font-semibold truncate" style={{ color: "var(--text-primary)" }}>
                         {session.user.name}
                       </p>
@@ -241,7 +241,7 @@ export default function Navigation() {
                     <button
                       onClick={() => signOut({ callbackUrl: "/" })}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-colors hover:bg-red-500/10"
-                      style={{ color: "var(--satat-error, #EA7777)" }}
+                      style={{ color: "var(--error)" }}
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Sign out</span>
