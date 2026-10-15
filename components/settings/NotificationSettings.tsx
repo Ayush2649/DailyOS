@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import {
   Bell, BellOff, Utensils, Dumbbell, CheckSquare,
   Check, Loader2, Clock, Share, Plus, Send,
@@ -194,7 +195,8 @@ function IOSInstallGuide() {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { data: session, status: sessionStatus } = useSession();
-  const userId = getUserKey(session) ?? "";
+  const { firebaseUser, isReady } = useFirebaseAuth();
+  const userId = firebaseUser?.uid ?? getUserKey(session) ?? "";
   const { isIOS, isStandalone, notifSupported } = useIOSPWAStatus();
 
   const [mounted, setMounted] = useState(false);
@@ -215,15 +217,13 @@ export default function NotificationSettings() {
   }, []);
 
   useEffect(() => {
-    if (sessionStatus === "loading") return;
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    if (sessionStatus === "loading" || !isReady || !firebaseUser || !userId) return;
     getNotificationPrefs(userId).then(p => {
       if (p) setPrefs(p);
+    }).catch((err) => {
+      console.error("Error loading notification prefs:", err);
     }).finally(() => setLoading(false));
-  }, [userId, sessionStatus]);
+  }, [userId, sessionStatus, isReady, firebaseUser]);
 
   const requestPermission = async () => {
     if (!("Notification" in window) || typeof Notification === "undefined") return;

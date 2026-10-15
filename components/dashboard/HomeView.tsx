@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import Link from "next/link";
 import {
   Dumbbell, Utensils, CheckSquare, ChevronRight,
@@ -62,7 +63,8 @@ function getCurrentWeekDates(refDate: Date = new Date()) {
 
 export default function HomeView() {
   const { data: session } = useSession();
-  const userId = (session?.user as any)?.id as string | undefined;
+  const { firebaseUser, isReady } = useFirebaseAuth();
+  const userId = firebaseUser?.uid ?? (session?.user as any)?.id as string | undefined;
   const firstName = session?.user?.name?.split(" ")[0] ?? "there";
 
   const [meals, setMeals] = useState<MealEntry[]>([]);
@@ -76,8 +78,9 @@ export default function HomeView() {
 
   // Load production data
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !firebaseUser || !isReady) return;
     const today = todayString();
+    setLoading(true);
     Promise.all([
       getMeals(userId, today),
       getMacroGoals(userId),
@@ -141,8 +144,11 @@ export default function HomeView() {
           })),
         });
       })
+      .catch((err) => {
+        console.error("Error loading home data:", err);
+      })
       .finally(() => setLoading(false));
-  }, [userId]);
+  }, [userId, firebaseUser, isReady]);
 
   // Derived metrics for Today
   const today = todayString();

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import {
   Plus, Dumbbell, Trash2, ChevronDown, ChevronUp, Sparkles, Scale, Clock,
   Save, History, X, Loader2, Flame, Activity, PersonStanding, Bike,
@@ -40,7 +41,8 @@ function calcCardioCals(activity: CardioActivity, durationMinutes: number, weigh
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function WorkoutPage() {
   const { data: session } = useSession();
-  const userId = (session?.user as any)?.id ?? session?.user?.email ?? "";
+  const { firebaseUser, isReady } = useFirebaseAuth();
+  const userId = firebaseUser?.uid ?? (session?.user as any)?.id ?? session?.user?.email ?? "";
   const { toast } = useToast();
 
   const [view, setView] = useState<"log" | "history" | "templates">("log");
@@ -100,7 +102,7 @@ export default function WorkoutPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !firebaseUser || !isReady) return;
     getWorkoutSessions(userId).then((sessions) => {
       setPastSessions(sessions);
       // Write to Orbit context so chatbot knows workout history
@@ -124,12 +126,18 @@ export default function WorkoutPage() {
           summary: s.summary,
         })),
       });
+    }).catch((err) => {
+      console.error("Error loading workout sessions:", err);
     });
-    getWorkoutTemplates(userId).then(setUserTemplates);
+    getWorkoutTemplates(userId).then(setUserTemplates).catch((err) => {
+      console.error("Error loading workout templates:", err);
+    });
     getUserProfile(userId).then((profile) => {
       if (profile?.workoutPlanAssignment) {
         setAssignedRoutine(profile.workoutPlanAssignment);
       }
+    }).catch((err) => {
+      console.error("Error loading profile:", err);
     });
     getBodyWeightEntries(userId).then((entries) => {
       setBodyWeightEntries(entries);
@@ -141,8 +149,10 @@ export default function WorkoutPage() {
           recentSessions: [],
         });
       }
+    }).catch((err) => {
+      console.error("Error loading body weight entries:", err);
     });
-  }, [userId]);
+  }, [userId, firebaseUser, isReady]);
 
   // Today's session (if already logged)
   const todaySession = pastSessions.find((s) => s.date === todayString()) ?? null;
