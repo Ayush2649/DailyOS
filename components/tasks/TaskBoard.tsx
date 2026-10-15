@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import {
   Plus, FolderOpen, Trash2, CheckCircle2, Circle, Palette, X,
   ChevronLeft, ChevronRight, AlertCircle, CalendarClock, History,
@@ -101,7 +102,8 @@ function groupByCompletionDate(tasks: Task[]): [string, Task[]][] {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function TaskBoard() {
   const { data: session } = useSession();
-  const userId = (session?.user as any)?.id ?? session?.user?.email ?? "";
+  const { firebaseUser, isReady } = useFirebaseAuth();
+  const userId = firebaseUser?.uid ?? (session?.user as any)?.id ?? session?.user?.email ?? "";
   const { toast } = useToast();
   const today = todayString();
 
@@ -120,7 +122,7 @@ export default function TaskBoard() {
 
   // ── Data loading ──
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !firebaseUser || !isReady) return;
     getProjects(userId).then(async (ps) => {
       if (ps.length === 0) {
         const starter = await ensureStarterProject(userId);
@@ -128,13 +130,15 @@ export default function TaskBoard() {
         setSelectedProject(starter.id);
       } else {
         setProjects(ps);
-        if (!selectedProject) setSelectedProject(ps[0].id);
+        setSelectedProject((prev) => prev || ps[0].id);
       }
+    }).catch((err) => {
+      console.error("Error loading projects:", err);
     });
-  }, [userId]);
+  }, [userId, firebaseUser, isReady]);
 
   useEffect(() => {
-    if (!userId || !selectedProject) return;
+    if (!userId || !selectedProject || !firebaseUser || !isReady) return;
     setLoading(true);
     getTasks(userId, selectedProject).then((loaded) => {
       setTasks(loaded);
@@ -155,8 +159,10 @@ export default function TaskBoard() {
         ).map(tk => ({ title: tk.title, dueDate: tk.dueDate!, priority: tk.priority ?? undefined })),
         totalPending: loaded.filter(tk => tk.status === "pending").length,
       });
+    }).catch((err) => {
+      console.error("Error loading tasks:", err);
     }).finally(() => setLoading(false));
-  }, [userId, selectedProject, projects]);
+  }, [userId, selectedProject, projects, firebaseUser, isReady]);
 
   // ── Computed ──
   const weekDates    = getWeekDates(weekAnchor);

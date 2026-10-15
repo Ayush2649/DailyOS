@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useFirebaseAuth } from "@/components/FirebaseAuthProvider";
 import { Utensils, Dumbbell, CheckSquare, Scale, X, Loader2, Check } from "lucide-react";
 import { logBodyWeight } from "@/lib/firestore";
 import { useToast } from "@/components/ui/Toast";
@@ -15,7 +16,8 @@ interface TrackSheetProps {
 export default function TrackSheet({ isOpen, onClose }: TrackSheetProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const userId = (session?.user as any)?.id ?? session?.user?.email ?? "";
+  const { firebaseUser } = useFirebaseAuth();
+  const userId = firebaseUser?.uid ?? (session?.user as any)?.id ?? session?.user?.email ?? "";
   const { toast } = useToast();
 
   const [weightKg, setWeightKg] = useState("");

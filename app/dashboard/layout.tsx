@@ -9,6 +9,7 @@ import ProductTour from "@/components/ui/ProductTour";
 import AriaChatbot from "@/components/ui/AriaChatbot";
 import NotificationScheduler from "@/components/NotificationScheduler";
 import PageBackground from "@/components/ui/PageBackground";
+import { FirebaseAuthGate } from "@/components/FirebaseAuthProvider";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -43,7 +44,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Navigation />
         <main className="app-shell-main">
           <div className="app-shell-content">
-            {children}
+            <FirebaseAuthGate>
+              {children}
+            </FirebaseAuthGate>
           </div>
         </main>
       </div>

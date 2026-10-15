@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper Functions ───────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null && request.auth.uid != '';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    function willBeDocOwner() {
+      return isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    function ownerUnchanged() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    function validProjectId(projectId) {
+      return !projectId.matches('^default_.*') || projectId == ('default_' + request.auth.uid);
+    }
+
+    // ── 1. userProfiles ────────────────────────────────────────────────────────
+    // Document ID is userId.
+    // Client has read-only access to their own profile.
+    // Client writes are explicitly denied — all profile mutations must occur
+    // through server-side Admin SDK API routes (/api/onboarding/*).
+    match /userProfiles/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // ── 2. macroGoals ──────────────────────────────────────────────────────────
+    // Document ID is userId.
+    // Owner can read and write their own macro targets.
+    match /macroGoals/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ── 3. notificationPrefs ───────────────────────────────────────────────────
+    // Document ID is userId.
+    // Owner can read, listen to (onSnapshot), and write their own preferences.
+    match /notificationPrefs/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ── 4. projects ────────────────────────────────────────────────────────────
+    // Document ownership is defined by data.userId.
+    // Supports auto-generated IDs and deterministic starter project IDs (default_{userId}).
+    match /projects/{projectId} {
+      allow read, delete: if isDocOwner();
+      allow create: if willBeDocOwner() && validProjectId(projectId);
+      allow update: if isDocOwner() && willBeDocOwner() && ownerUnchanged();
+    }
+
+    // ── 5. tasks ───────────────────────────────────────────────────────────────
+    // Document ownership is defined by data.userId.
+    match /tasks/{taskId} {
+      allow read, delete: if isDocOwner();
+      allow create: if willBeDocOwner();
+      allow update: if isDocOwner() && willBeDocOwner() && ownerUnchanged();
+    }
+
+    // ── 6. workouts ────────────────────────────────────────────────────────────
+    // Document ownership is defined by data.userId.
+    match /workouts/{workoutId} {
+      allow read, delete: if isDocOwner();
+      allow create: if willBeDocOwner();
+      allow update: if isDocOwner() && willBeDocOwner() && ownerUnchanged();
+    }
+
+    // ── 7. bodyweight ──────────────────────────────────────────────────────────
+    // Document ownership is defined by data.userId.
+    match /bodyweight/{entryId} {
+      allow read, delete: if isDocOwner();
+      allow create: if willBeDocOwner();
+      allow update: if isDocOwner() && willBeDocOwner() && ownerUnchanged();
+    }
+
+    // ── 8. meals ───────────────────────────────────────────────────────────────
+    // Document ownership is defined by data.userId.
+    match /meals/{mealId} {
+      allow read, delete: if isDocOwner();
+      allow create: if willBeDocOwner();
+      allow update: if isDocOwner() && willBeDocOwner() && ownerUnchanged();
+    }
+
+    // ── 9. mealTemplates ───────────────────────────────────────────────────────
+    // Document ownership is defined by data.userId.
+    match /mealTemplates/{templateId} {
+      allow read, delete: if isDocOwner();
+      allow create: if willBeDocOwner();
+      allow update: if isDocOwner() && willBeDocOwner() && ownerUnchanged();
+    }
+
+    // ── 10. workoutTemplates ───────────────────────────────────────────────────
+    // Document ownership is defined by data.userId.
+    match /workoutTemplates/{templateId} {
+      allow read, delete: if isDocOwner();
+      allow create: if willBeDocOwner();
+      allow update: if isDocOwner() && willBeDocOwner() && ownerUnchanged();
+    }
+
+    // ── 11. Server-Only Collections ────────────────────────────────────────────
+    // Exclusively managed via backend Firebase Admin SDK routes.
+    // Client SDK direct access is strictly forbidden.
+    match /push_subscriptions/{subId} {
+      allow read, write: if false;
+    }
+
+    match /healthTokens/{tokenId} {
+      allow read, write: if false;
+    }
+
+    match /healthActivity/{activityId} {
+      allow read, write: if false;
+    }
+
+    // ── 12. Catch-All Deny ─────────────────────────────────────────────────────
+    // Any collection or document path not explicitly allowed above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
