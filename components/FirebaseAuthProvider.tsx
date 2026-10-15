@@ -35,7 +35,10 @@ export function useFirebaseAuth(): FirebaseAuthContextType {
 
 export function FirebaseAuthProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status: sessionStatus } = useSession();
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(() => auth.currentUser);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    return auth.currentUser;
+  });
   const [status, setStatus] = useState<FirebaseAuthStatus>("loading");
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
